@@ -27,75 +27,68 @@
   --radius-window: 16px;
   --radius-pill: 999px;
 
-  /* 色相：全站唯一的彩度來源，深淺兩色共用。218 ＝ Apple 午夜色那條藍，
-     淺色是它的高明度版本。飽和度刻意壓在 8~36%，超過就會變成
-     「有主題色的 App」而不是中性工具。 */
-  --hue: 218;
+  /* 色票：亮色是藍灰（slate），暗色是深藍。中性面走同一條藍灰軸，
+     彩度只留給狀態色與強調色——這個工具的主體是數字，UI 不該搶戲。 */
 
-  --bg-0: hsl(var(--hue) 24% 93%);
-  --bg-1: hsl(var(--hue) 40% 99.5%);
-  --bg-2: hsl(var(--hue) 36% 96.8%);
-  --sidebar: hsl(var(--hue) 30% 97.5% / 0.76);
-  --toolbar: hsl(var(--hue) 34% 99% / 0.82);
-  --glass: hsl(var(--hue) 40% 99.5% / 0.94);
-  --glass-2: hsl(var(--hue) 30% 20% / 0.045);
+  --bg-0: #f2f4f9;
+  --bg-1: #ffffff;
+  --bg-2: #f2f4f9;
+  --sidebar: rgba(255, 255, 255, 0.76);
+  --toolbar: rgba(244, 246, 250, 0.85);
+  --glass: #ffffff;
+  --glass-2: rgba(20, 40, 80, 0.045);
 
-  /* hairlines — mac 的分隔線幾乎看不見，靠明度差不是靠線 */
-  --border: hsl(var(--hue) 24% 18% / 0.1);
-  --border-strong: hsl(var(--hue) 24% 18% / 0.17);
-  /* 控制項的框：按鈕與卡片同是 --bg-1，沒有陰影之後就只剩這條線在分界，
-     所以它比分隔線濃一級——分隔線是「不該被看見」，這條是「必須看得見」。 */
-  --control-border: hsl(var(--hue) 24% 16% / 0.34);
+  /* hairlines — 分隔線是「不該被看見」，控制項的框是「必須看得見」，濃度差一級 */
+  --border: rgba(20, 40, 80, 0.11);
+  --border-strong: rgba(20, 40, 80, 0.14);
+  --control-border: rgba(20, 40, 80, 0.22);
 
-  /* text */
-  --text: hsl(var(--hue) 18% 10% / 0.86);
-  --text-dim: hsl(var(--hue) 14% 12% / 0.52);
-  --text-faint: hsl(var(--hue) 12% 14% / 0.3);
+  /* text：主／次／弱三階 */
+  --text: rgba(10, 20, 40, 0.9);
+  --text-dim: rgba(10, 20, 40, 0.7);
+  --text-faint: rgba(10, 20, 40, 0.54);
   --text-on-accent: #ffffff;
 
-  /* 強調色＝低彩度的紫灰（不是系統藍）：這個工具的畫面主體是遊戲素材，
-     UI 的選取／主要動作退成近中性色，彩度才留給內容本身。
-     狀態色（good/warn/danger）仍保留顏色，因為那是語意不是強調。 */
-  --accent: hsl(var(--hue) 16% 37%);
-  --accent-press: hsl(var(--hue) 18% 26%);
-  --accent-soft: hsl(var(--hue) 30% 20% / 0.075);
-  --good: #34c759;
-  --warn: #ff9500;
-  --danger: #ff3b30;
-  --worn: #e07a1f;
-  --purple: #8e57d1;
+  /* 強調色：亮色是深藍灰、暗色是青綠（見 §8）。狀態色（good/warn/danger）
+     保留顏色，因為那是語意不是強調。 */
+  --accent: #334155;
+  --accent-hover: #3f5069;
+  --accent-press: #1f2937;
+  --accent-soft: rgba(51, 65, 85, 0.1);
+  --good: #22a355;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
 
-  /* 選取：清單列用淺灰填色、文字維持原色（mac 白底介面的選取感）。
-     深色實心只留給「主要動作按鈕」，不用來標示選取。 */
-  --select: hsl(var(--hue) 30% 20% / 0.09);
-
-  /* 衍生別名（沿用舊名，避免各 component 一次全改） */
-  --hover: hsl(var(--hue) 30% 20% / 0.052);
+  /* 選取：清單列用淺灰填色、文字維持原色。實心強調色只留給「主要動作按鈕」。 */
+  --select: rgba(20, 40, 80, 0.08);
+  --hover: rgba(20, 40, 80, 0.05);
+  --pressed: rgba(20, 40, 80, 0.1);
 
   /* 浮起在內容之上的兩種面：畫布上的控制鈕、以及選單／浮層 */
-  --overlay: hsl(var(--hue) 40% 100% / 0.86);
-  --overlay-hover: hsl(var(--hue) 40% 100%);
-  --popover: hsl(var(--hue) 34% 99% / 0.97);
+  --overlay: rgba(255, 255, 255, 0.86);
+  --overlay-hover: #ffffff;
+  --popover: rgba(248, 249, 252, 0.95);
   --knob: #ffffff;
-  /* 疊在表面上的極淺一層（斑馬紋、chip hover 之類），深色時要翻成白色疊加 */
-  --wash: hsl(var(--hue) 30% 20% / 0.022);
-  --wash-strong: hsl(var(--hue) 30% 20% / 0.11);
-  --chip: hsl(var(--hue) 30% 20% / 0.065);
-  --input-bg: hsl(var(--hue) 40% 99.8%);
-  --scrollbar: hsl(var(--hue) 20% 18% / 0.26);
+  /* 疊在表面上的極淺一層（斑馬紋、chip hover 之類） */
+  --wash: rgba(20, 40, 80, 0.03);
+  --wash-strong: rgba(20, 40, 80, 0.1);
+  --chip: rgba(20, 40, 80, 0.06);
+  --input-bg: rgba(20, 40, 80, 0.04);
+  --scrollbar: rgba(20, 40, 80, 0.16);
+  --marked: rgba(51, 65, 85, 0.2);
 
-  /* 視窗外緣：無邊框透明視窗貼在桌面上時，只有這一條線在界定「App 到哪裡為止」。
-     mac 的做法是兩層——外圈一條壓暗的細線，內側頂端一道白色高光，
-     合起來才有「玻璃面板疊在桌面上」的厚度感，單畫一條線會像貼紙。 */
-  --window-edge: hsl(var(--hue) 24% 14% / 0.38);
-  --window-highlight: hsl(0 0% 100% / 0.6);
+  /* 視窗外緣：無邊框透明視窗貼在桌面上時，只有這條線在界定「App 到哪裡為止」。
+     外圈一條壓暗的細線，內側頂端一道白色高光，合起來才有厚度感。 */
+  --window-edge: rgba(20, 40, 80, 0.22);
+  --window-highlight: rgba(255, 255, 255, 0.6);
 
   /* 層次一律用線與底色差，不用投影：三個 shadow token 保留名稱但都是 none，
      這樣沿用舊 token 的地方不會突然壞掉，也不會有人再把陰影加回來。 */
   --shadow-1: none;
   --shadow-2: none;
   --shadow-pop: none;
-  --ring: 0 0 0 3px hsl(var(--hue) 30% 30% / 0.24);
+  --ring: 0 0 0 3px rgba(51, 65, 85, 0.22);
 
   /* mac 的字：拉丁 SF Pro、中文蘋方。兩者都是 Apple 隨系統附的，Windows 上要另外裝
      （SF Pro 可從 Apple 開發者網站免費下載）；沒裝就整串往下掉到微軟正黑體。
@@ -137,7 +130,7 @@ body {
 }
 
 ::selection {
-  background: hsl(var(--hue) 40% 40% / 0.2);
+  background: var(--marked);
 }
 
 :focus {
@@ -182,7 +175,7 @@ button:hover:not(:disabled) {
   background: var(--bg-2);
 }
 button:active:not(:disabled) {
-  background: hsl(var(--hue) 24% 91%);
+  background: var(--pressed);
 }
 button:disabled {
   opacity: 0.4;
@@ -196,7 +189,7 @@ button.primary {
   border-color: var(--accent);
 }
 button.primary:hover:not(:disabled) {
-  background: hsl(var(--hue) 15% 45%);
+  background: var(--accent-hover);
 }
 button.primary:active:not(:disabled) {
   background: var(--accent-press);
@@ -689,61 +682,61 @@ input[type="range"]::-webkit-slider-thumb {
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* 午夜色：Apple 的 Midnight 是帶藍的深黑。色相與淺色共用 --hue: 218，
-     深淺之間只差明度與疊加方向。 */
-  --bg-0: hsl(var(--hue) 26% 9.5%);
-  --bg-1: hsl(var(--hue) 22% 14.5%);
-  --bg-2: hsl(var(--hue) 24% 11.5%);
-  --sidebar: hsl(var(--hue) 24% 11.5% / 0.8);
-  --toolbar: hsl(var(--hue) 22% 13.5% / 0.84);
-  --glass: hsl(var(--hue) 22% 16% / 0.94);
-  --glass-2: hsl(var(--hue) 30% 92% / 0.055);
+  /* 深藍（slate）：不是把亮色反相——疊加層從「黑色疊加」翻成「白色疊加」，
+     狀態色換成深底專用的版本（同色相但更亮），否則在深底上會糊掉。 */
+  --bg-0: #131924;
+  --bg-1: #1a222f;
+  --bg-2: #131924;
+  --sidebar: rgba(19, 25, 36, 0.8);
+  --toolbar: rgba(11, 18, 31, 0.88);
+  --glass: #1a222f;
+  --glass-2: rgba(170, 195, 235, 0.06);
 
-  --border: hsl(var(--hue) 24% 88% / 0.13);
-  --border-strong: hsl(var(--hue) 24% 88% / 0.24);
-  --control-border: hsl(var(--hue) 24% 90% / 0.36);
+  --border: rgba(170, 195, 235, 0.11);
+  --border-strong: rgba(170, 195, 235, 0.18);
+  --control-border: rgba(170, 195, 235, 0.28);
 
-  --text: hsl(var(--hue) 14% 97% / 0.92);
-  --text-dim: hsl(var(--hue) 12% 94% / 0.56);
-  --text-faint: hsl(var(--hue) 12% 92% / 0.34);
+  --text: rgba(232, 238, 250, 0.95);
+  --text-dim: rgba(232, 238, 250, 0.8);
+  --text-faint: rgba(232, 238, 250, 0.58);
+  /* 青綠很亮，白字疊上去讀不出來，實心強調色上的字要用深色 */
+  --text-on-accent: #0b121f;
 
-  --accent: hsl(var(--hue) 26% 44%);
-  --accent-press: hsl(var(--hue) 28% 36%);
-  --accent-soft: hsl(var(--hue) 40% 92% / 0.1);
+  --accent: #3dd6c3;
+  --accent-hover: #55e0cf;
+  --accent-press: #2aa998;
+  --accent-soft: rgba(61, 214, 195, 0.12);
   --good: #30d158;
   --warn: #ff9f0a;
   --danger: #ff453a;
-  --worn: #ff9f0a;
-  --purple: #bf5af2;
+  --danger-soft: rgba(255, 69, 58, 0.15);
 
   /* 疊加層在深底上要用白色，用黑色等於什麼都沒發生 */
-  --select: hsl(var(--hue) 40% 92% / 0.13);
-  --hover: hsl(var(--hue) 40% 92% / 0.07);
-  --chip: hsl(var(--hue) 40% 92% / 0.09);
-  --input-bg: hsl(var(--hue) 30% 7.5%);
-  --scrollbar: hsl(var(--hue) 30% 90% / 0.26);
+  --select: rgba(160, 190, 230, 0.13);
+  --hover: rgba(160, 190, 230, 0.06);
+  --pressed: rgba(160, 190, 230, 0.12);
+  --chip: rgba(160, 190, 230, 0.09);
+  --input-bg: rgba(160, 190, 230, 0.07);
+  --scrollbar: rgba(170, 195, 235, 0.18);
+  --marked: rgba(61, 214, 195, 0.24);
 
-  --overlay: hsl(var(--hue) 22% 20% / 0.86);
-  --overlay-hover: hsl(var(--hue) 22% 24%);
-  --popover: hsl(var(--hue) 22% 17.5% / 0.97);
+  --overlay: rgba(26, 34, 47, 0.86);
+  --overlay-hover: #28313e;
+  --popover: #1a222f;
 
-  --wash: hsl(var(--hue) 40% 92% / 0.03);
-  --wash-strong: hsl(var(--hue) 40% 92% / 0.12);
+  --wash: rgba(160, 190, 230, 0.03);
+  --wash-strong: rgba(160, 190, 230, 0.12);
 
-  /* 深底的視窗要靠亮邊才浮得起來，壓暗的線在深桌面上等於看不見 */
-  --window-edge: hsl(var(--hue) 24% 90% / 0.34);
-  --window-highlight: hsl(0 0% 100% / 0.14);
+  --window-edge: rgba(170, 195, 235, 0.28);
+  --window-highlight: rgba(255, 255, 255, 0.1);
 
-  --ring: 0 0 0 3px hsl(var(--hue) 40% 70% / 0.3);
+  --ring: 0 0 0 3px rgba(61, 214, 195, 0.3);
 }
 
 /* 箭頭顏色寫死在 data URI 裡，深色要另給一份 */
 :root[data-theme="dark"] select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'><path d='M2 5.6 5 2.6l3 3M2 8.4l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.55)' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
-:root[data-theme="dark"] button:active:not(:disabled) {
-  background: hsl(218 22% 21%);
-}
 :root[data-theme="dark"] ::selection {
-  background: hsl(var(--hue) 40% 70% / 0.3);
+  background: var(--marked);
 }

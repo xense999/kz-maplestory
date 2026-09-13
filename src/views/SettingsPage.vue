@@ -259,7 +259,7 @@ async function copyDiscord() {
 .heart:hover:not(:disabled) {
   color: var(--danger);
   border-color: var(--danger);
-  background: hsl(3 100% 59% / 0.1);
+  background: var(--danger-soft);
 }
 
 /* 遮罩蓋到導覽列上（fixed 而非 absolute），只留標題列——那裡有視窗按鈕，
@@ -271,7 +271,7 @@ async function copyDiscord() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: hsl(var(--hue) 24% 8% / 0.42);
+  background: rgba(6, 10, 18, 0.42);
   backdrop-filter: blur(2px);
   border-radius: 0 0 var(--win-radius, 0px) var(--win-radius, 0px);
   corner-shape: superellipse(1.5);
@@ -309,7 +309,7 @@ async function copyDiscord() {
   border-radius: var(--radius-xs);
 }
 .about-close:hover:not(:disabled) {
-  background: hsl(3 100% 59% / 0.15);
+  background: var(--danger-soft);
   color: var(--danger);
 }
 
