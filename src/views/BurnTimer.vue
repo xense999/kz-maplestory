@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import TimerCard from "../components/TimerCard.vue";
-import { SPECS, useBurnStore, type TimerId } from "../stores/burn";
+import { useBurnStore, type TimerId } from "../stores/burn";
 import { ringing, stopAlarm, testBeep } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
 import { openFloatWindow } from "../float";
@@ -35,28 +35,21 @@ onMounted(() => {
   void store.init();
 });
 onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
-
-const dueCount = computed(
-  () => SPECS.filter((s) => (store.remaining(s.id) ?? 1) <= 0).length,
-);
 </script>
 
 <template>
   <div class="page">
-    <header class="toolbar">
-      <span class="toolbar-title">輪燒計時器</span>
-      <span v-if="dueCount" class="badge over">{{ dueCount }} 個到期</span>
-      <div class="spacer"></div>
-      <button v-if="ringing" class="primary" @click="stopAlarm()">停止提醒</button>
-      <button class="plain" title="開一個永遠置頂的小視窗，遊戲中也看得到倒數" @click="openFloatWindow()">
-        浮動視窗
-      </button>
-      <button class="plain" title="試聽提醒音" @click="testBeep()">試聽</button>
-    </header>
-
     <div class="body">
       <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列；兩顆技能是它底下的操作 -->
-      <TimerCard id="rental" :recording="recording === 'rental'" @record="onRecord" />
+      <TimerCard id="rental" :recording="recording === 'rental'" @record="onRecord">
+        <template #head>
+          <button v-if="ringing" class="primary" @click="stopAlarm()">停止提醒</button>
+          <button title="開一個永遠置頂的小視窗，遊戲中也看得到倒數" @click="openFloatWindow()">
+            浮動視窗
+          </button>
+          <button title="試聽提醒音" @click="testBeep()">試聽</button>
+        </template>
+      </TimerCard>
 
       <div class="pair">
         <TimerCard
@@ -97,10 +90,5 @@ const dueCount = computed(
   .pair {
     grid-template-columns: 1fr;
   }
-}
-.badge.over {
-  color: var(--danger);
-  background: hsl(3 100% 59% / 0.14);
-  font-weight: 600;
 }
 </style>

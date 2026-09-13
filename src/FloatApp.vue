@@ -111,6 +111,7 @@ function state(s: TimerSnap) {
   flex: 1;
 }
 .close {
+  border: none;
   width: 20px;
   height: 20px;
   padding: 0;

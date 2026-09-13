@@ -87,10 +87,11 @@
   --window-edge: hsl(var(--hue) 24% 14% / 0.38);
   --window-highlight: hsl(0 0% 100% / 0.6);
 
-  /* elevation */
-  --shadow-1: 0 1px 1.5px hsl(var(--hue) 30% 12% / 0.07), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.09);
-  --shadow-2: 0 4px 14px hsl(var(--hue) 30% 12% / 0.12), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.08);
-  --shadow-pop: 0 12px 34px hsl(var(--hue) 30% 12% / 0.2), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.13);
+  /* 層次一律用線與底色差，不用投影：三個 shadow token 保留名稱但都是 none，
+     這樣沿用舊 token 的地方不會突然壞掉，也不會有人再把陰影加回來。 */
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-pop: none;
   --ring: 0 0 0 3px hsl(var(--hue) 30% 30% / 0.24);
 
   /* mac 的字：拉丁 SF Pro、中文蘋方。兩者都是 Apple 隨系統附的，Windows 上要另外裝
@@ -166,7 +167,8 @@ button {
   font-weight: 500;
   color: var(--text);
   background: var(--bg-1);
-  border: none;
+  /* 按鈕跟卡片都是 --bg-1，只靠陰影分不出邊界，所以描一圈實線 */
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-1);
   cursor: pointer;
@@ -188,7 +190,7 @@ button:disabled {
 button.primary {
   color: var(--text-on-accent);
   background: var(--accent);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  border-color: var(--accent);
 }
 button.primary:hover:not(:disabled) {
   background: hsl(var(--hue) 15% 45%);
@@ -200,6 +202,7 @@ button.primary:active:not(:disabled) {
 /* 無框：工具列 / 列內的次要動作 */
 button.plain {
   background: transparent;
+  border-color: transparent;
   box-shadow: none;
   color: var(--text-dim);
 }
@@ -266,7 +269,6 @@ select {
   background: var(--input-bg);
   border: 0.5px solid var(--border-strong);
   border-radius: var(--radius-pill);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
   outline: none;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
@@ -311,7 +313,6 @@ input[type="radio"] {
   background: var(--bg-1);
   border: 0.5px solid var(--border-strong);
   border-radius: 4px;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
@@ -349,7 +350,7 @@ input[type="range"]::-webkit-slider-thumb {
   margin-top: -6px;
   border-radius: 50%;
   background: var(--knob);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--border-strong);
 }
 
 /* mac segmented control */
@@ -383,7 +384,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text);
   font-weight: 500;
   background: var(--bg-1);
-  box-shadow: var(--shadow-1);
+  border: 1px solid var(--border-strong);
 }
 
 /* 膠囊開關。
@@ -392,6 +393,7 @@ input[type="range"]::-webkit-slider-thumb {
    自帶外觀可言，畫什麼就是什麼。 */
 .switch {
   appearance: none;
+  border: none;
   width: 42px;
   height: 24px;
   padding: 0;
@@ -399,7 +401,6 @@ input[type="range"]::-webkit-slider-thumb {
   border: none;
   border-radius: var(--radius-pill);
   background: var(--wash-strong);
-  box-shadow: inset 0 0 0 0.5px var(--border-strong);
   cursor: pointer;
   position: relative;
   transition: background 0.18s ease;
@@ -416,7 +417,6 @@ input[type="range"]::-webkit-slider-thumb {
   height: 18px;
   border-radius: 50%;
   background: var(--knob);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 0.18s ease;
 }
 /* 開啟＝強調色，不用 --good：綠色在這套 token 裡是「狀態正常」的語意，
@@ -438,18 +438,17 @@ input[type="range"]::-webkit-slider-thumb {
 .glass,
 .panel {
   background: var(--bg-1);
-  border: 0.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   corner-shape: superellipse(1.5);
-  box-shadow: var(--shadow-1);
 }
 
+/* 卡片沒有投影，所以邊界全靠這條線——比 hairline 粗一級才撐得住 */
 .card {
   background: var(--bg-1);
-  border: 0.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   corner-shape: superellipse(1.5);
-  box-shadow: var(--shadow-1);
   overflow: hidden;
 }
 .card-head {
@@ -731,9 +730,6 @@ input[type="range"]::-webkit-slider-thumb {
   --window-edge: hsl(var(--hue) 24% 90% / 0.34);
   --window-highlight: hsl(0 0% 100% / 0.14);
 
-  --shadow-1: 0 1px 1.5px hsl(0 0% 0% / 0.4), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.08);
-  --shadow-2: 0 4px 14px hsl(0 0% 0% / 0.5), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.1);
-  --shadow-pop: 0 12px 34px hsl(0 0% 0% / 0.62), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.12);
   --ring: 0 0 0 3px hsl(var(--hue) 40% 70% / 0.3);
 }
 

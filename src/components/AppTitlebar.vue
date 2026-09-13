@@ -134,6 +134,7 @@ onUnmounted(() => {
   flex: none;
 }
 .gear {
+  border: none;
   width: 32px;
   height: 32px;
   padding: 0;
@@ -169,7 +170,7 @@ onUnmounted(() => {
   background: var(--popover);
   border-radius: var(--radius-lg);
   corner-shape: superellipse(1.5);
-  box-shadow: var(--shadow-pop);
+  border: 1px solid var(--border-strong);
   backdrop-filter: blur(28px) saturate(1.8);
   animation: pop-in 0.14s ease-out;
 }
@@ -208,6 +209,7 @@ onUnmounted(() => {
   gap: 2px;
 }
 .wbtn {
+  border: none;
   width: 42px;
   height: 30px;
   padding: 0;

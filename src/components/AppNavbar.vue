@@ -47,6 +47,7 @@ const active = defineModel<string>({ required: true });
   display: none;
 }
 .navtab {
+  border: none;
   height: 38px;
   gap: 8px;
   padding: 0 18px;
@@ -63,6 +64,6 @@ const active = defineModel<string>({ required: true });
 .navtab.on {
   color: var(--text);
   background: var(--bg-1);
-  box-shadow: var(--shadow-1);
+  border: 1px solid var(--border-strong);
 }
 </style>

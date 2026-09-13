@@ -81,6 +81,8 @@ function applyCustom() {
       <span class="name">{{ store.spec(id).label }}</span>
       <span v-if="store.spec(id).hint" class="hint">{{ store.spec(id).hint }}</span>
       <div class="spacer"></div>
+      <!-- 這張卡片自己沒有的東西（浮動視窗、試聽…）由外面塞進來 -->
+      <slot name="head" />
 
       <!-- 按鍵：只監聽不攔截，所以可以直接掛在放技能的那顆鍵上 -->
       <div v-if="store.spec(id).hotkeyable" class="hk">
@@ -352,7 +354,7 @@ function applyCustom() {
   background: var(--warn);
 }
 .timer.due {
-  box-shadow: 0 0 0 1.5px var(--danger), var(--shadow-1);
+  border-color: var(--danger);
 }
 .timer.due .digits {
   color: var(--danger);
