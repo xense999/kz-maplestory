@@ -47,7 +47,8 @@ function onTab(id: string) {
       @toggle-settings="showSettings = !showSettings"
     />
 
-    <AppNavbar :model-value="showSettings ? '' : active" @update:model-value="onTab" />
+    <!-- 設定是離開功能頁的一個獨立畫面，分頁列留著只會讓人以為它是第 N 個分頁 -->
+    <AppNavbar v-if="!showSettings" v-model="active" @update:model-value="onTab" />
 
     <!-- 分頁切走時把元件留著（計時器不能因為換頁就停），所以用 keep-alive -->
     <main class="content">
