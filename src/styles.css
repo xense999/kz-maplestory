@@ -51,9 +51,10 @@
 
   /* 強調色：亮色是深藍灰、暗色是青綠（見 §8）。狀態色（good/warn/danger）
      保留顏色，因為那是語意不是強調。 */
-  --accent: #334155;
-  --accent-hover: #3f5069;
-  --accent-press: #1f2937;
+  /* 帶一點透明度：實心色塊在白卡上整片深藍灰太重，透出一點底色就退下來了 */
+  --accent: rgba(51, 65, 85, 0.86);
+  --accent-hover: rgba(51, 65, 85, 0.74);
+  --accent-press: rgba(31, 41, 55, 0.94);
   --accent-soft: rgba(51, 65, 85, 0.1);
   --good: #22a355;
   --warn: #d97706;

@@ -167,16 +167,19 @@ export const useBurnStore = defineStore("burn", () => {
     return t.endAt === null ? null : t.endAt - now.value;
   }
 
-  /** 從現在重新起算。滑鼠按鈕走這裡，所以隨時都能重設。 */
+  /**
+   * 從現在重新起算，並且一定收掉正在響的提醒。
+   *
+   * ★這裡刻意不去分辨「在響的是不是自己這一輪」：實際用起來，
+   * 時間到、重按技能、鈴還在叫、還要再手動按一次停止——多這一步就是錯的。
+   * 重新起算本身就是「我知道了」，鈴一律停。到期的卡片還留著紅框，不會漏看。
+   */
   function start(id: TimerId) {
     const t = timers[id];
-    const wasDue = t.fired;
     t.runMs = t.durationMs;
     t.endAt = Date.now() + t.durationMs;
     t.fired = false;
-    // 只收掉「自己這一輪」的鈴聲：出租到期正在響時去按技能鍵，
-    // 不該把還沒處理的出租提醒一起掐掉
-    if (wasDue) stopAlarm();
+    stopAlarm();
   }
 
   /**
@@ -196,6 +199,7 @@ export const useBurnStore = defineStore("burn", () => {
     const t = timers[id];
     t.endAt = null;
     t.fired = false;
+    stopAlarm();
   }
 
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */

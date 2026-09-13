@@ -142,34 +142,32 @@ function onCustomFocusOut(e: FocusEvent) {
         >
           {{ span(p) }}
         </button>
-        <!-- 自訂欄位是浮層，不佔版面：塞在這一列裡的話展開就會把卡片撐高 -->
-        <div class="customwrap">
-          <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
-            自訂
-          </button>
+        <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
+          自訂
+        </button>
+      </div>
 
-          <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
-            <input
-              v-model.number="customH"
-              type="number"
-              min="0"
-              max="24"
-              aria-label="小時"
-              @keydown.enter="commitCustom()"
-            />
-            <span class="unit">小時</span>
-            <input
-              v-model.number="customM"
-              type="number"
-              min="0"
-              max="45"
-              step="15"
-              aria-label="分鐘"
-              @keydown.enter="commitCustom()"
-            />
-            <span class="unit">分</span>
-          </div>
-        </div>
+      <!-- 自訂就接在檔位後面同一列。欄位高度跟膠囊對齊，展開不會把卡片撐高 -->
+      <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
+        <input
+          v-model.number="customH"
+          type="number"
+          min="0"
+          max="24"
+          aria-label="小時"
+          @keydown.enter="commitCustom()"
+        />
+        <span class="unit">小時</span>
+        <input
+          v-model.number="customM"
+          type="number"
+          min="0"
+          max="45"
+          step="15"
+          aria-label="分鐘"
+          @keydown.enter="commitCustom()"
+        />
+        <span class="unit">分</span>
       </div>
 
       <span v-if="!customOpen && isCustom()" class="custom-now">
@@ -279,9 +277,6 @@ function onCustomFocusOut(e: FocusEvent) {
   align-items: center;
   gap: var(--sp-2);
 }
-.customwrap {
-  position: relative;
-}
 .chip {
   height: 32px;
   padding: 0 14px;
@@ -307,21 +302,14 @@ function onCustomFocusOut(e: FocusEvent) {
   background: var(--accent);
 }
 .custom {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 30;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  background: var(--popover);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  backdrop-filter: blur(28px) saturate(1.8);
 }
 .custom input {
-  width: 72px;
+  width: 74px;
+  /* 跟時長膠囊同高，展開時這一列的高度才不會跳 */
+  height: 32px;
 }
 .unit {
   font-size: 15px;
