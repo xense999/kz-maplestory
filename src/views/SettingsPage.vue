@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { getVersion } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { setTheme, themePref, type ThemePref } from "../theme";
+
+const AUTHOR_DISCORD = "xense999";
+const GITHUB_URL = "https://github.com/xense999";
+const SUPPORT_URL = "https://portaly.cc/xense999/support";
 
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
   { id: "light", label: "淺色", hint: "固定淺色" },
@@ -10,9 +15,22 @@ const THEMES: { id: ThemePref; label: string; hint: string }[] = [
 ];
 
 const version = ref("");
+const showAbout = ref(false);
+const discordCopied = ref(false);
+
 onMounted(async () => {
   version.value = await getVersion();
 });
+
+async function copyDiscord() {
+  try {
+    await navigator.clipboard.writeText(AUTHOR_DISCORD);
+    discordCopied.value = true;
+    setTimeout(() => (discordCopied.value = false), 1600);
+  } catch (e) {
+    console.error(e);
+  }
+}
 </script>
 
 <template>
@@ -38,17 +56,66 @@ onMounted(async () => {
           </div>
         </div>
       </section>
+    </div>
 
-      <section class="card block">
-        <h2 class="btitle">關於</h2>
-        <div class="row">
-          <div class="rlabel">
-            <span class="rname">久世管理器</span>
-            <span class="rhint">楓之谷輪燒計時工具</span>
-          </div>
-          <span class="ver">v{{ version }}</span>
+    <!-- 底部固定列：贊助與關於，跟久世登入器同一組 -->
+    <div class="bottom-bar">
+      <div class="spacer"></div>
+      <button class="icon heart" title="請作者喝杯咖啡" @click="openUrl(SUPPORT_URL)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      </button>
+      <button class="icon" title="關於" @click="showAbout = true">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+          <circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 11v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <circle cx="12" cy="7.75" r="1.05" fill="currentColor" />
+        </svg>
+      </button>
+    </div>
+
+    <div v-if="showAbout" class="overlay" @click.self="showAbout = false">
+      <div class="about card">
+        <div class="ahead">
+          <span class="atitle">關於</span>
+          <div class="spacer"></div>
+          <button class="icon sm" title="關閉" @click="showAbout = false">
+            <svg viewBox="0 0 12 12" width="11" height="11">
+              <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.4"
+                    stroke-linecap="round" />
+            </svg>
+          </button>
         </div>
-      </section>
+
+        <div class="arow">
+          <span class="rname">久世管理器</span>
+          <div class="spacer"></div>
+          <span class="ver">{{ version ? `v${version}` : "—" }}</span>
+        </div>
+
+        <button class="contact" @click="copyDiscord()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M20.3 4.9A19.8 19.8 0 0 0 15.4 3.4l-.24.5a18.3 18.3 0 0 1 4.34 1.35 16.4 16.4 0 0 0-5-1.58 18 18 0 0 0-3 0 16.4 16.4 0 0 0-5 1.58 18.3 18.3 0 0 1 4.34-1.35l-.24-.5A19.8 19.8 0 0 0 3.7 4.9C1.2 8.6.5 12.2.85 15.8a19.9 19.9 0 0 0 6.06 3.06l.73-1.13a13 13 0 0 1-2.05-.98l.5-.37a14.2 14.2 0 0 0 12.02 0l.5.37a13 13 0 0 1-2.05.98l.73 1.13a19.9 19.9 0 0 0 6.06-3.06c.42-4.17-.71-7.74-2.71-10.9ZM9.1 13.9c-.97 0-1.77-.9-1.77-2s.78-2 1.77-2 1.79.9 1.77 2c0 1.1-.79 2-1.77 2Zm5.8 0c-.97 0-1.77-.9-1.77-2s.78-2 1.77-2 1.79.9 1.77 2c0 1.1-.78 2-1.77 2Z" />
+          </svg>
+          <span class="ctext">
+            <span class="cname">Discord</span>
+            <span class="csub" :class="{ copied: discordCopied }">
+              {{ discordCopied ? "已複製 ✓" : `${AUTHOR_DISCORD} · 點擊複製帳號` }}
+            </span>
+          </span>
+        </button>
+
+        <button class="contact" @click="openUrl(GITHUB_URL)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.22-3.37-1.22-.46-1.18-1.11-1.5-1.11-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05a9.34 9.34 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z" />
+          </svg>
+          <span class="ctext">
+            <span class="cname">GitHub</span>
+            <span class="csub">xense999</span>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -59,6 +126,7 @@ onMounted(async () => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .body {
   flex: 1;
@@ -103,9 +171,105 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--text-faint);
 }
+
+.bottom-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+.icon {
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  flex: none;
+  color: var(--text-dim);
+}
+.icon:hover:not(:disabled) {
+  color: var(--text);
+}
+/* 贊助鍵是這一頁唯一帶感情的東西，hover 才露出紅色 */
+.heart:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: hsl(3 100% 59% / 0.1);
+}
+.icon.sm {
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--hue) 24% 10% / 0.32);
+  backdrop-filter: blur(2px);
+}
+.about {
+  width: 340px;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ahead {
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+.atitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.arow {
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--sp-2);
+}
 .ver {
   font-size: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+}
+
+.contact {
+  height: 52px;
+  justify-content: flex-start;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+}
+.contact:hover:not(:disabled) {
+  color: var(--text);
+}
+.ctext {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+.cname {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.csub {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.csub.copied {
+  color: var(--good);
 }
 </style>
