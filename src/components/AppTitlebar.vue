@@ -2,8 +2,7 @@
 import { onMounted, onUnmounted } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-defineProps<{ title: string; settingsOpen: boolean }>();
-const emit = defineEmits<{ toggleSettings: [] }>();
+defineProps<{ title: string }>();
 
 const appWin = getCurrentWindow();
 const maximized = defineModel<boolean>("maximized", { default: false });
@@ -35,19 +34,6 @@ onUnmounted(() => unlisten?.());
 
 <template>
   <div class="titlebar" @mousedown="onTitlebarDown" @dblclick="onTitlebarDblClick">
-    <button
-      class="gear"
-      :class="{ on: settingsOpen }"
-      :title="settingsOpen ? '回到功能頁' : '設定'"
-      @click="emit('toggleSettings')"
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" />
-        <circle cx="12" cy="12" r="3" />
-      </svg>
-    </button>
-
     <span class="tb-brand">{{ title }}</span>
     <div class="tb-spacer"></div>
 
@@ -80,7 +66,7 @@ onUnmounted(() => unlisten?.());
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 8px;
+  padding: 0 8px 0 var(--sp-4);
   background: var(--bg-1);
   border-bottom: 0.5px solid var(--border);
   backdrop-filter: blur(24px) saturate(1.8);
@@ -95,32 +81,6 @@ onUnmounted(() => unlisten?.());
 .tb-spacer {
   flex: 1;
   height: 100%;
-}
-
-/* 設定：標題列最左一顆齒輪，按下去整個內容區換成設定頁（不是浮層） */
-.gear {
-  border: none;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  flex: none;
-  background: transparent;
-  box-shadow: none;
-  border-radius: var(--radius-xs);
-  color: var(--text-dim);
-}
-.gear:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--text);
-}
-.gear.on {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.gear svg {
-  width: 18px;
-  height: 18px;
-  display: block;
 }
 
 .win-controls {

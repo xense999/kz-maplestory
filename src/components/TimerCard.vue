@@ -245,7 +245,7 @@ function onCustomFocusOut(e: FocusEvent) {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: var(--bg-1);
-  border: 1px solid var(--control-border);
+  border: 1px solid var(--btn-border);
   border-radius: var(--radius-sm);
   box-shadow: none;
 }
@@ -282,9 +282,9 @@ function onCustomFocusOut(e: FocusEvent) {
   padding: 0 14px;
   font-size: 15px;
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--btn-text);
   background: var(--bg-1);
-  border: 1px solid var(--control-border);
+  border: 1px solid var(--btn-border);
   border-radius: var(--radius);
   box-shadow: none;
 }

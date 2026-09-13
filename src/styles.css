@@ -48,6 +48,9 @@
   --text-dim: rgba(10, 20, 40, 0.7);
   --text-faint: rgba(10, 20, 40, 0.54);
   --text-on-accent: #ffffff;
+  /* 按鈕自己的一組：字與框都走中性灰，比內文的藍黑更沉、也更像可按的東西 */
+  --btn-text: #4a5568;
+  --btn-border: rgba(60, 72, 92, 0.34);
 
   /* 強調色：亮色是深藍灰、暗色是青綠（見 §8）。狀態色（good/warn/danger）
      保留顏色，因為那是語意不是強調。 */
@@ -162,10 +165,10 @@ button {
   padding: 0 15px;
   font-size: 16px;
   font-weight: 500;
-  color: var(--text);
+  color: var(--btn-text);
   background: var(--bg-1);
   /* 按鈕跟卡片都是 --bg-1，只靠陰影分不出邊界，所以描一圈實線 */
-  border: 1px solid var(--control-border);
+  border: 1px solid var(--btn-border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
   cursor: pointer;
@@ -702,6 +705,8 @@ input[type="range"]::-webkit-slider-thumb {
   --text-faint: rgba(232, 238, 250, 0.58);
   /* 青綠很亮，白字疊上去讀不出來，實心強調色上的字要用深色 */
   --text-on-accent: #0b121f;
+  --btn-text: rgba(226, 232, 240, 0.86);
+  --btn-border: rgba(180, 200, 225, 0.34);
 
   --accent: #3dd6c3;
   --accent-hover: #55e0cf;

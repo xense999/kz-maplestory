@@ -21,9 +21,9 @@ const PEAK = 0.5;
 function loadVolume() {
   try {
     const v = Number(localStorage.getItem(VOLUME_KEY));
-    return v >= 0 && v <= 1 ? v : 0.7;
+    return v >= 0 && v <= 1 ? v : 1;
   } catch {
-    return 0.7;
+    return 1;
   }
 }
 

@@ -254,7 +254,12 @@ async function copyDiscord() {
 }
 .row-title {
   font-size: 16px;
+  font-weight: 600;
   color: var(--text);
+}
+/* 這一頁的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
+.row button {
+  font-weight: 600;
 }
 .ctrl {
   display: flex;
