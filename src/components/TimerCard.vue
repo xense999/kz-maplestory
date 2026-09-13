@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
 
 const props = defineProps<{
@@ -77,6 +77,13 @@ function commitCustom() {
   customOpen.value = false;
 }
 
+// 展開就把游標送進小時欄位：沒有焦點在裡面的話，點別處也不會觸發 focusout
+watch(customOpen, async (open) => {
+  if (!open) return;
+  await nextTick();
+  customEl.value?.querySelector("input")?.focus();
+});
+
 /** 焦點還在這一區裡面（小時→分鐘）就不算離開 */
 function onCustomFocusOut(e: FocusEvent) {
   const next = e.relatedTarget as Node | null;
@@ -135,33 +142,37 @@ function onCustomFocusOut(e: FocusEvent) {
         >
           {{ span(p) }}
         </button>
-        <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
-          自訂
-        </button>
+        <!-- 自訂欄位是浮層，不佔版面：塞在這一列裡的話展開就會把卡片撐高 -->
+        <div class="customwrap">
+          <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
+            自訂
+          </button>
+
+          <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
+            <input
+              v-model.number="customH"
+              type="number"
+              min="0"
+              max="24"
+              aria-label="小時"
+              @keydown.enter="commitCustom()"
+            />
+            <span class="unit">小時</span>
+            <input
+              v-model.number="customM"
+              type="number"
+              min="0"
+              max="45"
+              step="15"
+              aria-label="分鐘"
+              @keydown.enter="commitCustom()"
+            />
+            <span class="unit">分</span>
+          </div>
+        </div>
       </div>
 
-      <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
-        <input
-          v-model.number="customH"
-          type="number"
-          min="0"
-          max="24"
-          aria-label="小時"
-          @keydown.enter="commitCustom()"
-        />
-        <span class="unit">小時</span>
-        <input
-          v-model.number="customM"
-          type="number"
-          min="0"
-          max="45"
-          step="15"
-          aria-label="分鐘"
-          @keydown.enter="commitCustom()"
-        />
-        <span class="unit">分</span>
-      </div>
-      <span v-else-if="isCustom()" class="custom-now">
+      <span v-if="!customOpen && isCustom()" class="custom-now">
         目前：{{ span(store.timers[id].durationMs) }}
       </span>
     </div>
@@ -254,11 +265,12 @@ function onCustomFocusOut(e: FocusEvent) {
   border-color: var(--accent);
   box-shadow: var(--ring);
 }
+/* 固定一列不換行：換行等於卡片高度會跳動 */
 .spans {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  flex-wrap: wrap;
+  min-height: 32px;
 }
 /* 時長是「幾個平行的選擇」而不是一個值的幾個檔位，所以不共用 segmented 軌道：
    各自獨立的圓角矩形，選中的那顆才填強調色 */
@@ -266,7 +278,9 @@ function onCustomFocusOut(e: FocusEvent) {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  flex-wrap: wrap;
+}
+.customwrap {
+  position: relative;
 }
 .chip {
   height: 32px;
@@ -293,9 +307,18 @@ function onCustomFocusOut(e: FocusEvent) {
   background: var(--accent);
 }
 .custom {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 12px;
+  background: var(--popover);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(28px) saturate(1.8);
 }
 .custom input {
   width: 72px;
