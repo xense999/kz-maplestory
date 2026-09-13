@@ -114,7 +114,23 @@ async function copyDiscord() {
 <template>
   <div class="page">
     <div class="body">
-      <!-- 一張卡＝一組設定，卡內一列一件事：左邊寫這是什麼，右邊放控制項 -->
+      <!-- 一張卡＝一件事：左邊寫這是什麼，右邊放控制項 -->
+      <section class="card">
+        <div class="row">
+          <span class="row-title">主題</span>
+          <div class="seg">
+            <button
+              v-for="t in THEMES"
+              :key="t.id"
+              :class="{ on: themePref === t.id }"
+              @click="setTheme(t.id)"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section class="card">
         <div class="row">
           <span class="row-title">通報音效</span>
@@ -130,20 +146,6 @@ async function copyDiscord() {
             />
             <span class="ctrl-val">{{ Math.round(volume * 100) }}%</span>
             <button @click="testBeep()">測試</button>
-          </div>
-        </div>
-        <div class="row-sep"></div>
-        <div class="row">
-          <span class="row-title">主題</span>
-          <div class="seg">
-            <button
-              v-for="t in THEMES"
-              :key="t.id"
-              :class="{ on: themePref === t.id }"
-              @click="setTheme(t.id)"
-            >
-              {{ t.label }}
-            </button>
           </div>
         </div>
       </section>
@@ -249,10 +251,6 @@ async function copyDiscord() {
   gap: var(--sp-4);
   min-height: 56px;
   padding: 10px var(--sp-4);
-}
-.row-sep {
-  height: 1px;
-  background: var(--border);
 }
 .row-title {
   font-size: 16px;
