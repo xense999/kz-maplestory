@@ -19,7 +19,7 @@
      規則：貼在外層轉角處的子元素，圓角 = 外層圓角 − 該層內距。
      本站的實例：面板 14 − 清單內距 6 = 列 8；選單 14 − 內距 4 = 項目 10。
      不貼著轉角的元素（中段的區塊、圖示卡）用 --radius 就好，不套規則。
-     控制項一律膠囊，這是 Tahoe 最好認的一項。 */
+     控制項是圓角矩形不是膠囊——只有開關那種「本來就是一顆藥丸」的東西才用 pill。 */
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius: 10px;
@@ -172,7 +172,7 @@ button {
   background: var(--bg-1);
   /* 按鈕跟卡片都是 --bg-1，只靠陰影分不出邊界，所以描一圈實線 */
   border: 1px solid var(--control-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-1);
   cursor: pointer;
   white-space: nowrap;
@@ -237,7 +237,7 @@ button.sm {
   color: var(--text);
   background: var(--overlay);
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   box-shadow: var(--shadow-2);
   backdrop-filter: blur(20px) saturate(1.8);
@@ -271,7 +271,7 @@ select {
   color: var(--text);
   background: var(--input-bg);
   border: 1px solid var(--control-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   outline: none;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
@@ -359,14 +359,14 @@ input[type="range"]::-webkit-slider-thumb {
 /* mac segmented control */
 .seg {
   display: inline-flex;
-  padding: 2px;
-  gap: 2px;
+  padding: 3px;
+  gap: 1px;
   background: var(--chip);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
 }
 .seg > * {
   height: 30px;
-  padding: 0 14px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -374,7 +374,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text-dim);
   background: transparent;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-xs);
   box-shadow: none;
   cursor: pointer;
   white-space: nowrap;

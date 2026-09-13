@@ -106,7 +106,7 @@ onUnmounted(() => unlisten?.());
   flex: none;
   background: transparent;
   box-shadow: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-xs);
   color: var(--text-dim);
 }
 .gear:hover:not(:disabled) {
@@ -134,7 +134,7 @@ onUnmounted(() => unlisten?.());
   padding: 0;
   background: transparent;
   box-shadow: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-xs);
   color: var(--text-dim);
 }
 .wbtn:hover:not(:disabled) {

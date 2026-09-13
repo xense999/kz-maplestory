@@ -49,6 +49,7 @@ const active = defineModel<string>({ required: true });
 /* 沒選到的分頁也要有自己的框：只有選中那顆有框的話，其他分頁看起來像純文字 */
 .navtab {
   border: 1px solid var(--control-border);
+  border-radius: var(--radius);
   height: 38px;
   gap: 8px;
   padding: 0 18px;

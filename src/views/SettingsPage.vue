@@ -223,25 +223,6 @@ async function copyDiscord() {
   gap: var(--sp-3);
 }
 
-/* 這一頁的分段控制器是方角的（不是全站那種膠囊）：軌道一塊淺底，
-   選中的那格是浮在上面的一塊面，兩格之間不留縫。 */
-.seg {
-  padding: 3px;
-  gap: 1px;
-  background: var(--chip);
-  border-radius: var(--radius-sm);
-}
-.seg > * {
-  height: 30px;
-  padding: 0 18px;
-  font-size: 15px;
-  border-radius: var(--radius-xs);
-}
-.seg > .on {
-  background: var(--bg-1);
-  border: none;
-}
-
 /* 設定列：整列固定高、左標題右控制項 */
 .row {
   display: flex;
