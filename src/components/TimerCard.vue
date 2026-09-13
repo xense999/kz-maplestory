@@ -211,6 +211,7 @@ function onCustomFocusOut(e: FocusEvent) {
 .name {
   font-size: 18px;
   font-weight: 700;
+  color: var(--text-strong);
   flex: none;
 }
 .hint {
