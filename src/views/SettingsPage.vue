@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { setTheme, themePref, type ThemePref } from "../theme";
+import { setVolume, testBeep, volume } from "../alarm";
 
 const AUTHOR_DISCORD = "xense999";
 const GITHUB_URL = "https://github.com/xense999";
@@ -115,6 +116,23 @@ async function copyDiscord() {
     <div class="body">
       <!-- 一張卡＝一組設定，卡內一列一件事：左邊寫這是什麼，右邊放控制項 -->
       <section class="card">
+        <div class="row">
+          <span class="row-title">通報音效</span>
+          <div class="ctrl">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              :value="Math.round(volume * 100)"
+              aria-label="音量"
+              @input="setVolume(Number(($event.target as HTMLInputElement).value) / 100)"
+            />
+            <span class="ctrl-val">{{ Math.round(volume * 100) }}%</span>
+            <button @click="testBeep()">測試</button>
+          </div>
+        </div>
+        <div class="row-sep"></div>
         <div class="row">
           <span class="row-title">主題</span>
           <div class="seg">
@@ -232,9 +250,28 @@ async function copyDiscord() {
   min-height: 56px;
   padding: 10px var(--sp-4);
 }
+.row-sep {
+  height: 1px;
+  background: var(--border);
+}
 .row-title {
   font-size: 16px;
   color: var(--text);
+}
+.ctrl {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.ctrl input[type="range"] {
+  width: 160px;
+}
+.ctrl-val {
+  width: 44px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  text-align: right;
 }
 
 .bottom-bar {

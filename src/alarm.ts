@@ -13,6 +13,31 @@ const BEEP_GAP_MS = 1_200;
 /** 響鈴中（UI 要據此顯示「停止提醒」） */
 export const ringing = ref(false);
 
+const VOLUME_KEY = "kz-maplestory:alarm-volume";
+/** 這一聲的峰值增益。0.5 已經相當響，所以音量 100% 就對到這個值。 */
+const PEAK = 0.5;
+
+function loadVolume() {
+  try {
+    const v = Number(localStorage.getItem(VOLUME_KEY));
+    return v >= 0 && v <= 1 ? v : 0.7;
+  } catch {
+    return 0.7;
+  }
+}
+
+/** 提醒音量（0~1） */
+export const volume = ref(loadVolume());
+
+export function setVolume(v: number) {
+  volume.value = Math.min(1, Math.max(0, v));
+  try {
+    localStorage.setItem(VOLUME_KEY, String(volume.value));
+  } catch {
+    /* 存不了就只在這次執行有效 */
+  }
+}
+
 let ctx: AudioContext | null = null;
 let timer: number | null = null;
 let stopAt = 0;
@@ -31,8 +56,11 @@ function beep(at: number, len = 0.14) {
   const gain = a.createGain();
   osc.type = "triangle";
   osc.frequency.setValueAtTime(880, at);
+  // 靜音時直接不發聲：exponentialRamp 到 0 會炸掉（它不接受 0）
+  const peak = PEAK * volume.value;
+  if (peak <= 0.0002) return;
   gain.gain.setValueAtTime(0.0001, at);
-  gain.gain.exponentialRampToValueAtTime(0.5, at + 0.012);
+  gain.gain.exponentialRampToValueAtTime(peak, at + 0.012);
   gain.gain.exponentialRampToValueAtTime(0.0001, at + len);
   osc.connect(gain).connect(a.destination);
   osc.start(at);
@@ -67,4 +95,9 @@ export function stopAlarm() {
   }
   stopAt = 0;
   ringing.value = false;
+}
+
+/** 試聽一次，只響一組（設定頁的「測試」用） */
+export function testBeep() {
+  pair();
 }
