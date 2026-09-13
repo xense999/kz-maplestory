@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, reactive, ref, watch } from "vue";
-import { startAlarm, stopAlarm } from "../alarm";
+import { ringing, startAlarm, stopAlarm } from "../alarm";
 import { onHotkey, unwatchKey, watchKey, type Hotkey } from "../hotkey";
 import { broadcastTimers, onFloatHello, pushFloatOpacity } from "../float";
 
@@ -122,6 +122,26 @@ export const useBurnStore = defineStore("burn", () => {
     ),
   ) as Record<TimerId, TimerState>;
 
+  /**
+   * 目前正在為「哪幾張卡」響鈴。
+   *
+   * 鈴聲只有一組，但誰引發的必須記著：出租到期時按技能鍵重新計時，不可以把
+   * 出租的提醒一起收掉——那是客戶的時間到了，得由人去處理。反過來，技能自己
+   * 到期時重按那顆鍵，鈴就該停，不必再多按一次停止。
+   */
+  const ringingFor = new Set<TimerId>();
+
+  // 鈴聲自己響完 10 秒（或使用者按了停止提醒）之後，欠帳一併清掉
+  watch(ringing, (on) => {
+    if (!on) ringingFor.clear();
+  });
+
+  /** 收掉這張卡的鈴；還有別張卡在響就繼續響 */
+  function clearAlarmFor(id: TimerId) {
+    ringingFor.delete(id);
+    if (ringingFor.size === 0) stopAlarm();
+  }
+
   const now = ref(Date.now());
   setInterval(() => {
     now.value = Date.now();
@@ -129,6 +149,7 @@ export const useBurnStore = defineStore("burn", () => {
       const t = timers[s.id];
       if (t.endAt !== null && !t.fired && now.value >= t.endAt) {
         t.fired = true;
+        ringingFor.add(s.id);
         startAlarm();
       }
     }
@@ -167,19 +188,13 @@ export const useBurnStore = defineStore("burn", () => {
     return t.endAt === null ? null : t.endAt - now.value;
   }
 
-  /**
-   * 從現在重新起算，並且一定收掉正在響的提醒。
-   *
-   * ★這裡刻意不去分辨「在響的是不是自己這一輪」：實際用起來，
-   * 時間到、重按技能、鈴還在叫、還要再手動按一次停止——多這一步就是錯的。
-   * 重新起算本身就是「我知道了」，鈴一律停。到期的卡片還留著紅框，不會漏看。
-   */
+  /** 從現在重新起算＝「我知道了」，所以順手收掉這張卡的鈴 */
   function start(id: TimerId) {
     const t = timers[id];
     t.runMs = t.durationMs;
     t.endAt = Date.now() + t.durationMs;
     t.fired = false;
-    stopAlarm();
+    clearAlarmFor(id);
   }
 
   /**
@@ -199,7 +214,7 @@ export const useBurnStore = defineStore("burn", () => {
     const t = timers[id];
     t.endAt = null;
     t.fired = false;
-    stopAlarm();
+    clearAlarmFor(id);
   }
 
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */
