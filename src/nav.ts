@@ -1,4 +1,5 @@
 import type { Component } from "vue";
+import HomePage from "./views/HomePage.vue";
 import BurnTimer from "./views/BurnTimer.vue";
 
 /**
@@ -14,6 +15,12 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
+  {
+    id: "home",
+    label: "主頁",
+    hint: "角色的等級與經驗進度",
+    view: HomePage,
+  },
   {
     id: "burn",
     label: "輪燒計時器",

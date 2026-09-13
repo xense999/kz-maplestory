@@ -6,6 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { setTheme, themePref, type ThemePref } from "../theme";
 import { setVolume, testBeep, volume } from "../alarm";
+import { apiKey, setApiKey } from "../apikey";
 
 const AUTHOR_DISCORD = "xense999";
 const GITHUB_URL = "https://github.com/xense999";
@@ -16,6 +17,9 @@ const THEMES: { id: ThemePref; label: string }[] = [
   { id: "light", label: "淺色" },
   { id: "dark", label: "深色" },
 ];
+
+/** 金鑰預設遮起來：這東西會被截圖、也會被旁邊的人看到 */
+const revealKey = ref(false);
 
 const version = ref("");
 const showAbout = ref(false);
@@ -126,6 +130,26 @@ async function copyDiscord() {
               @click="setTheme(t.id)"
             >
               {{ t.label }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <span class="row-title">API 金鑰</span>
+          <div class="ctrl">
+            <input
+              :type="revealKey ? 'text' : 'password'"
+              class="key"
+              :value="apiKey"
+              placeholder="貼上你自己的 API 金鑰"
+              spellcheck="false"
+              autocomplete="off"
+              @input="setApiKey(($event.target as HTMLInputElement).value)"
+            />
+            <button :title="revealKey ? '隱藏' : '顯示'" @click="revealKey = !revealKey">
+              {{ revealKey ? "隱藏" : "顯示" }}
             </button>
           </div>
         </div>
@@ -268,6 +292,9 @@ async function copyDiscord() {
 }
 .ctrl input[type="range"] {
   width: 160px;
+}
+.key {
+  width: 320px;
 }
 .ctrl-val {
   width: 44px;
