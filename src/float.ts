@@ -25,20 +25,25 @@ const OPACITY = "float:opacity";
 
 const OPACITY_KEY = "kz-maplestory:float-opacity";
 
-/** 浮動視窗底色的透明度（1＝實心，0＝只剩字浮在遊戲上；字本身永遠不透明） */
+/**
+ * 浮動視窗底色的濃度（0＝只剩字浮在遊戲上，0.5＝半透明底；字本身永遠不透明）。
+ * 上限就是 0.5——這塊東西是疊在遊戲畫面上的，底再濃就開始擋畫面了。
+ */
+const MAX_OPACITY = 0.5;
+
 export const floatOpacity = ref(loadOpacity());
 
 function loadOpacity() {
   try {
     const v = Number(localStorage.getItem(OPACITY_KEY));
-    return v >= 0 && v <= 1 ? v : 1;
+    return v >= 0 && v <= MAX_OPACITY ? v : MAX_OPACITY;
   } catch {
-    return 1;
+    return MAX_OPACITY;
   }
 }
 
 export function setFloatOpacity(v: number) {
-  floatOpacity.value = Math.min(1, Math.max(0, v));
+  floatOpacity.value = Math.min(MAX_OPACITY, Math.max(0, v));
   try {
     localStorage.setItem(OPACITY_KEY, String(floatOpacity.value));
   } catch {

@@ -6,7 +6,7 @@ import { onFloatOpacity, onTimersSync, sayHello, type TimerSnap } from "./float"
 const appWin = getCurrentWindow();
 const snaps = ref<TimerSnap[]>([]);
 const now = ref(Date.now());
-const opacity = ref(1);
+const opacity = ref(0.5);
 
 let tick: number | null = null;
 let hello: number | null = null;

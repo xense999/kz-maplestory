@@ -66,7 +66,7 @@ const opacityOpen = ref(false);
               <input
                 type="range"
                 min="0"
-                max="100"
+                max="50"
                 step="5"
                 :value="Math.round(floatOpacity * 100)"
                 @input="setFloatOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
