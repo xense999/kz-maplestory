@@ -25,20 +25,20 @@ const OPACITY = "float:opacity";
 
 const OPACITY_KEY = "kz-maplestory:float-opacity";
 
-/** 浮動視窗透明度（1＝不透明）。壓在 0.25 以上，再淡就看不到數字了 */
+/** 浮動視窗底色的透明度（1＝實心，0＝只剩字浮在遊戲上；字本身永遠不透明） */
 export const floatOpacity = ref(loadOpacity());
 
 function loadOpacity() {
   try {
     const v = Number(localStorage.getItem(OPACITY_KEY));
-    return v >= 0.25 && v <= 1 ? v : 1;
+    return v >= 0 && v <= 1 ? v : 1;
   } catch {
     return 1;
   }
 }
 
 export function setFloatOpacity(v: number) {
-  floatOpacity.value = Math.min(1, Math.max(0.25, v));
+  floatOpacity.value = Math.min(1, Math.max(0, v));
   try {
     localStorage.setItem(OPACITY_KEY, String(floatOpacity.value));
   } catch {

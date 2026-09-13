@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import { emit, listen } from "@tauri-apps/api/event";
 
 /**
  * 外觀：淺色 / 深色 / 跟隨系統。
@@ -25,8 +26,12 @@ function applyTheme() {
   document.documentElement.dataset.theme = resolved;
 }
 
+const THEME_EVENT = "theme:changed";
+
 export function setTheme(t: ThemePref) {
   themePref.value = t;
+  // 浮動視窗是另一個 webview，載入後不會再讀 localStorage，得主動通知
+  void emit(THEME_EVENT, t);
   try {
     localStorage.setItem(THEME_KEY, t);
   } catch {
@@ -38,4 +43,8 @@ export function setTheme(t: ThemePref) {
 export function initTheme() {
   applyTheme();
   darkQuery.addEventListener("change", applyTheme);
+  void listen<ThemePref>(THEME_EVENT, (e) => {
+    themePref.value = e.payload;
+    applyTheme();
+  });
 }

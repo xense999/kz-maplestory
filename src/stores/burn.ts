@@ -40,7 +40,7 @@ function snapDuration(ms: number) {
 export const SPECS: Spec[] = [
   {
     id: "rental",
-    label: "出租",
+    label: "出租計時",
     hint: "",
     durationMs: 30 * MIN,
     hotkeyable: false,

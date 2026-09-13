@@ -60,17 +60,19 @@ const opacityOpen = ref(false);
               浮動視窗
             </button>
 
-            <div v-if="opacityOpen" class="opacity">
+            <div v-if="opacityOpen" class="opacity-wrap">
+              <div class="opacity">
               <span class="olabel">透明度</span>
               <input
                 type="range"
-                min="25"
+                min="0"
                 max="100"
                 step="5"
                 :value="Math.round(floatOpacity * 100)"
                 @input="setFloatOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
               />
-              <span class="oval">{{ Math.round(floatOpacity * 100) }}%</span>
+                <span class="oval">{{ Math.round(floatOpacity * 100) }}%</span>
+              </div>
             </div>
           </div>
           <button title="試聽提醒音" @click="testBeep()">試聽</button>
@@ -110,11 +112,16 @@ const opacityOpen = ref(false);
 .floatctl {
   position: relative;
 }
-.opacity {
+/* 外層貼著按鈕底緣（top:100%），視覺間距用 padding 撐——中間留真空的話，
+   滑鼠往下移的瞬間就會離開 hover 區，拉桿在碰到之前就收起來了 */
+.opacity-wrap {
   position: absolute;
-  top: calc(100% + 6px);
+  top: 100%;
   right: 0;
   z-index: 30;
+  padding-top: 6px;
+}
+.opacity {
   display: flex;
   align-items: center;
   gap: var(--sp-2);

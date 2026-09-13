@@ -17,6 +17,7 @@ const store = useBurnStore();
 const customOpen = ref(false);
 const customH = ref(1);
 const customM = ref(0);
+const customEl = ref<HTMLElement | null>(null);
 
 /** 到期就停在 00:00：往上加的秒數只會讓人分不清「還剩」跟「超過」 */
 function clock(ms: number) {
@@ -63,15 +64,24 @@ function isCustom() {
   return !store.spec(props.id).presets?.includes(store.timers[props.id].durationMs);
 }
 
-function applyCustom() {
+/** 沒有「套用」按鈕：焦點離開這一區（點別的地方、按 Enter）就收下並收起 */
+function commitCustom() {
   const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
-  if (raw <= 0) return;
-  // 對齊 15 分鐘是 store 的規則（存檔讀回來時也要對齊），這裡只把結果寫回欄位
-  store.setDuration(props.id, raw);
-  const ms = store.timers[props.id].durationMs;
-  customH.value = Math.floor(ms / 3_600_000);
-  customM.value = (ms % 3_600_000) / 60_000;
+  if (raw > 0) {
+    // 對齊 15 分鐘是 store 的規則（存檔讀回來時也要對齊），這裡只把結果寫回欄位
+    store.setDuration(props.id, raw);
+    const ms = store.timers[props.id].durationMs;
+    customH.value = Math.floor(ms / 3_600_000);
+    customM.value = (ms % 3_600_000) / 60_000;
+  }
   customOpen.value = false;
+}
+
+/** 焦點還在這一區裡面（小時→分鐘）就不算離開 */
+function onCustomFocusOut(e: FocusEvent) {
+  const next = e.relatedTarget as Node | null;
+  if (next && customEl.value?.contains(next)) return;
+  commitCustom();
 }
 </script>
 
@@ -130,12 +140,26 @@ function applyCustom() {
         </button>
       </div>
 
-      <div v-if="customOpen" class="custom">
-        <input v-model.number="customH" type="number" min="0" max="24" aria-label="小時" />
+      <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
+        <input
+          v-model.number="customH"
+          type="number"
+          min="0"
+          max="24"
+          aria-label="小時"
+          @keydown.enter="commitCustom()"
+        />
         <span class="unit">小時</span>
-        <input v-model.number="customM" type="number" min="0" max="45" step="15" aria-label="分鐘" />
+        <input
+          v-model.number="customM"
+          type="number"
+          min="0"
+          max="45"
+          step="15"
+          aria-label="分鐘"
+          @keydown.enter="commitCustom()"
+        />
         <span class="unit">分</span>
-        <button class="primary" @click="applyCustom()">套用</button>
       </div>
       <span v-else-if="isCustom()" class="custom-now">
         目前：{{ span(store.timers[id].durationMs) }}
