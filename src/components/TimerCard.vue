@@ -98,14 +98,15 @@ function applyCustom() {
                   stroke-linecap="round" />
           </svg>
         </button>
-        <input
+        <button
           class="switch"
-          type="checkbox"
+          role="switch"
+          :class="{ on: store.timers[id].hotkeyOn }"
+          :aria-checked="store.timers[id].hotkeyOn"
           :disabled="!store.timers[id].hotkey"
-          :checked="store.timers[id].hotkeyOn"
           :title="store.timers[id].hotkeyOn ? '監聽中：按這顆鍵就會起算' : '開啟後按這顆鍵就會起算'"
-          @change="store.setHotkeyEnabled(id, ($event.target as HTMLInputElement).checked)"
-        />
+          @click="store.setHotkeyEnabled(id, !store.timers[id].hotkeyOn)"
+        ></button>
       </div>
     </div>
 
@@ -188,8 +189,12 @@ function applyCustom() {
 .hk {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: 6px;
   flex: none;
+}
+/* 開關是「另一件事」（設哪顆鍵 vs 要不要聽），所以和鍵帽那組之間多留一段 */
+.hk .switch {
+  margin-left: var(--sp-3);
 }
 /* 鍵帽：看得出來是「一顆鍵」，錄製中換成強調色好認 */
 .keycap {

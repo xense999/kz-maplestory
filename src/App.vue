@@ -63,16 +63,19 @@ function onTab(id: string) {
 }
 
 /* 外緣線畫在最上面一層而不是 .app 自己身上：標題列與內容區有自己的底色，
-   會把 .app 的 inset 陰影蓋掉。pointer-events 關掉，不然它會吃掉整頁的點擊。 */
+   會把 .app 的 inset 陰影蓋掉。pointer-events 關掉，不然它會吃掉整頁的點擊。
+   邊線用 border 不用 inset box-shadow——超橢圓角上 0.5px 的 inset 陰影會被
+   抗鋸齒稀釋掉，四個轉角處看起來就是斷的。高光留在 border 內側再疊一層。 */
 .app::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 100;
   pointer-events: none;
+  border: 1px solid var(--window-edge);
   border-radius: inherit;
   corner-shape: inherit;
-  box-shadow: inset 0 0 0 0.5px var(--window-edge), inset 0 1px 0 var(--window-highlight);
+  box-shadow: inset 0 1px 0 var(--window-highlight);
 }
 /* 最大化時四邊貼著螢幕，再描邊只會多一條沒有意義的線 */
 .app.maxed::after {
