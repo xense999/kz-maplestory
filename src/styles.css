@@ -87,9 +87,11 @@
   --shadow-pop: 0 12px 34px hsl(var(--hue) 30% 12% / 0.2), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.13);
   --ring: 0 0 0 3px hsl(var(--hue) 30% 30% / 0.24);
 
-  /* 拉丁字走 Segoe UI（最接近 SF 的中性無襯線），中文自然落回微軟正黑體 */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei",
-    "微軟正黑體", system-ui, sans-serif;
+  /* mac 的字：拉丁 SF Pro、中文蘋方。兩者都是 Apple 隨系統附的，Windows 上要另外裝
+     （SF Pro 可從 Apple 開發者網站免費下載）；沒裝就整串往下掉到微軟正黑體。
+     Segoe UI 刻意不留在鏈上——它是 Windows 的臉，混進來就不是這個風格了。 */
+  font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "PingFang TC", "Microsoft JhengHei UI", "Microsoft JhengHei", "微軟正黑體", sans-serif;
   font-size: 17px;
   font-weight: 400;
   line-height: 1.5;

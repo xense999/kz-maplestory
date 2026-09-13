@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import AppTitlebar from "./components/AppTitlebar.vue";
-import AppSidebar from "./components/AppSidebar.vue";
+import AppNavbar from "./components/AppNavbar.vue";
 import { NAV } from "./nav";
 
 const TAB_KEY = "kz-maplestory:tab";
@@ -31,16 +31,14 @@ function onTab(id: string) {
   <div class="app" :class="{ maxed: maximized }">
     <AppTitlebar title="久世管理器" v-model:maximized="maximized" />
 
-    <div class="shell">
-      <AppSidebar :model-value="active" @update:model-value="onTab" />
+    <AppNavbar :model-value="active" @update:model-value="onTab" />
 
-      <!-- 分頁切走時把元件留著（計時器不能因為換頁就停），所以用 keep-alive -->
-      <main class="content">
-        <KeepAlive>
-          <component :is="activeView" />
-        </KeepAlive>
-      </main>
-    </div>
+    <!-- 分頁切走時把元件留著（計時器不能因為換頁就停），所以用 keep-alive -->
+    <main class="content">
+      <KeepAlive>
+        <component :is="activeView" />
+      </KeepAlive>
+    </main>
   </div>
 </template>
 
@@ -63,14 +61,9 @@ function onTab(id: string) {
   border-radius: 0;
 }
 
-.shell {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-}
 .content {
   flex: 1;
-  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }

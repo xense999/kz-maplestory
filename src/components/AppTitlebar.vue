@@ -119,7 +119,7 @@ onUnmounted(() => {
 }
 .tb-brand {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text);
 }
