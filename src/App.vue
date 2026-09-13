@@ -2,11 +2,13 @@
 import { computed, ref } from "vue";
 import AppTitlebar from "./components/AppTitlebar.vue";
 import AppNavbar from "./components/AppNavbar.vue";
+import SettingsPage from "./views/SettingsPage.vue";
 import { NAV } from "./nav";
 
 const TAB_KEY = "kz-maplestory:tab";
 
 const maximized = ref(false);
+const showSettings = ref(false);
 const active = ref(NAV[0].id);
 try {
   const saved = localStorage.getItem(TAB_KEY);
@@ -15,9 +17,14 @@ try {
   /* 讀不到就開第一頁 */
 }
 
-const activeView = computed(() => NAV.find((n) => n.id === active.value)?.view ?? NAV[0].view);
+/* 設定是「另一個畫面」不是浮層，所以跟功能頁走同一個位置；
+   KeepAlive 一起包住兩邊，切去設定再切回來時功能頁不必重建。 */
+const activeView = computed(() =>
+  showSettings.value ? SettingsPage : (NAV.find((n) => n.id === active.value)?.view ?? NAV[0].view),
+);
 
 function onTab(id: string) {
+  showSettings.value = false;
   active.value = id;
   try {
     localStorage.setItem(TAB_KEY, id);
@@ -29,9 +36,14 @@ function onTab(id: string) {
 
 <template>
   <div class="app" :class="{ maxed: maximized }">
-    <AppTitlebar title="久世管理器" v-model:maximized="maximized" />
+    <AppTitlebar
+      title="久世管理器"
+      v-model:maximized="maximized"
+      :settings-open="showSettings"
+      @toggle-settings="showSettings = !showSettings"
+    />
 
-    <AppNavbar :model-value="active" @update:model-value="onTab" />
+    <AppNavbar :model-value="showSettings ? '' : active" @update:model-value="onTab" />
 
     <!-- 分頁切走時把元件留著（計時器不能因為換頁就停），所以用 keep-alive -->
     <main class="content">
