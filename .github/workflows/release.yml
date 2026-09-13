@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: npm ci
+
+      # 只 build，release 交給下面的步驟——這樣才控制得了更新說明與要上傳哪些檔案
+      - name: Build
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Locate installer
+        id: installer
+        shell: pwsh
+        run: |
+          $found = @(Get-ChildItem "src-tauri/target/release/bundle/nsis/*_x64-setup.exe")
+          if ($found.Count -ne 1) { throw "expected exactly 1 installer, found $($found.Count)" }
+          "path=$($found[0].FullName)" >> $env:GITHUB_OUTPUT
+
+      # 更新說明放 release-notes/<tag>.md（跟著 tag 一起進 repo）。忘了寫就退回
+      # 一句下載指示——寧可 release 內容陽春，也不要卡住整個發版。
+      - name: Resolve release notes
+        id: notes
+        shell: pwsh
+        run: |
+          $path = "release-notes/${{ github.ref_name }}.md"
+          if (-not (Test-Path $path)) {
+            Write-Host "::warning::$path 不存在，改用預設內文"
+            $path = "release-notes/_default.md"
+          }
+          "path=$path" >> $env:GITHUB_OUTPUT
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 久世管理器 ${{ github.ref_name }}
+          body_path: ${{ steps.notes.outputs.path }}
+          draft: false
+          prerelease: false
+          files: ${{ steps.installer.outputs.path }}
