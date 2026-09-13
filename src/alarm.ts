@@ -68,8 +68,3 @@ export function stopAlarm() {
   stopAt = 0;
   ringing.value = false;
 }
-
-/** 讓使用者試聽一次（設定頁按鈕用），只響一組 */
-export function testBeep() {
-  pair();
-}

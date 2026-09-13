@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import TimerCard from "../components/TimerCard.vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
-import { ringing, stopAlarm, testBeep } from "../alarm";
+import { ringing, stopAlarm } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
 import { floatOpacity, floatOpen, setFloatOpacity, toggleFloatWindow } from "../float";
 
@@ -75,7 +75,6 @@ const opacityOpen = ref(false);
               </div>
             </div>
           </div>
-          <button title="試聽提醒音" @click="testBeep()">試聽</button>
         </template>
       </TimerCard>
 
