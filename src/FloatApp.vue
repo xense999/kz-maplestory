@@ -49,7 +49,9 @@ function onDown(e: MouseEvent) {
 }
 
 function clock(s: TimerSnap) {
-  const ms = s.endAt === null ? s.durationMs : s.endAt - now.value;
+  // 還沒起算就給一橫：顯示預設時長會讓人以為它正在倒數
+  if (s.endAt === null) return "-";
+  const ms = s.endAt - now.value;
   // 到期停在 00:00，不往上加
   const t = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(t / 3600);
