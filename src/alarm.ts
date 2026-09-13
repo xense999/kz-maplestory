@@ -1,0 +1,75 @@
+/**
+ * 到期提醒音。
+ * 不放音檔：WebAudio 現場合成，省掉打包資源、也不會因為檔案路徑在 release 版走鐘。
+ * 玩家在遊戲裡背對著這個視窗，所以聲音是「兩短聲一組、每 1.2 秒一組」持續 10 秒，
+ * 不是單一長音——斷續的聲音在遊戲音效底下比較容易被辨認出來。
+ */
+
+import { ref } from "vue";
+
+const ALARM_MS = 10_000;
+const BEEP_GAP_MS = 1_200;
+
+/** 響鈴中（UI 要據此顯示「停止提醒」） */
+export const ringing = ref(false);
+
+let ctx: AudioContext | null = null;
+let timer: number | null = null;
+let stopAt = 0;
+
+function audio() {
+  if (!ctx) ctx = new AudioContext();
+  // 沒有使用者手勢時 WebView 會把 context 停在 suspended，播出來會是無聲
+  if (ctx.state === "suspended") void ctx.resume();
+  return ctx;
+}
+
+/** 一聲：880Hz 方波三角混一點，短促、收尾淡出避免爆音 */
+function beep(at: number, len = 0.14) {
+  const a = audio();
+  const osc = a.createOscillator();
+  const gain = a.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(880, at);
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(0.5, at + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + len);
+  osc.connect(gain).connect(a.destination);
+  osc.start(at);
+  osc.stop(at + len + 0.02);
+}
+
+function pair() {
+  const t = audio().currentTime;
+  beep(t + 0.02);
+  beep(t + 0.24);
+}
+
+/** 響 10 秒。已經在響的時候再呼叫＝把 10 秒重新計起，不會疊成兩層聲音 */
+export function startAlarm() {
+  stopAt = Date.now() + ALARM_MS;
+  if (timer !== null) return;
+  ringing.value = true;
+  pair();
+  timer = window.setInterval(() => {
+    if (Date.now() >= stopAt) {
+      stopAlarm();
+      return;
+    }
+    pair();
+  }, BEEP_GAP_MS);
+}
+
+export function stopAlarm() {
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+  stopAt = 0;
+  ringing.value = false;
+}
+
+/** 讓使用者試聽一次（設定頁按鈕用），只響一組 */
+export function testBeep() {
+  pair();
+}
