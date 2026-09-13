@@ -1,0 +1,723 @@
+/* ============================================================================
+   久世管理器 — 設計系統（macOS 風格 · 淺色/深色 · 中性灰白 · 沿用 kz-wz）
+   ---------------------------------------------------------------------------
+   這支檔案是全站唯一的樣式來源：token 在 §1，共用元件在 §3 之後。
+   各 component 只該用這裡的 token 與 class，不要自己寫死顏色與圓角。
+   ========================================================================= */
+
+/* ── §1 Tokens ───────────────────────────────────────────────────────────── */
+:root {
+  /* spacing */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+
+  /* radii — 同心圓角（concentric corners）
+     規則：貼在外層轉角處的子元素，圓角 = 外層圓角 − 該層內距。
+     本站的實例：面板 14 − 清單內距 6 = 列 8；選單 14 − 內距 4 = 項目 10。
+     不貼著轉角的元素（中段的區塊、圖示卡）用 --radius 就好，不套規則。
+     控制項一律膠囊，這是 Tahoe 最好認的一項。 */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-window: 16px;
+  --radius-pill: 999px;
+
+  /* 色相：全站唯一的彩度來源，深淺兩色共用。218 ＝ Apple 午夜色那條藍，
+     淺色是它的高明度版本。飽和度刻意壓在 8~36%，超過就會變成
+     「有主題色的 App」而不是中性工具。 */
+  --hue: 218;
+
+  --bg-0: hsl(var(--hue) 24% 93%);
+  --bg-1: hsl(var(--hue) 40% 99.5%);
+  --bg-2: hsl(var(--hue) 36% 96.8%);
+  --sidebar: hsl(var(--hue) 30% 97.5% / 0.76);
+  --toolbar: hsl(var(--hue) 34% 99% / 0.82);
+  --glass: hsl(var(--hue) 40% 99.5% / 0.94);
+  --glass-2: hsl(var(--hue) 30% 20% / 0.045);
+
+  /* hairlines — mac 的分隔線幾乎看不見，靠明度差不是靠線 */
+  --border: hsl(var(--hue) 24% 18% / 0.1);
+  --border-strong: hsl(var(--hue) 24% 18% / 0.17);
+
+  /* text */
+  --text: hsl(var(--hue) 18% 10% / 0.86);
+  --text-dim: hsl(var(--hue) 14% 12% / 0.52);
+  --text-faint: hsl(var(--hue) 12% 14% / 0.3);
+  --text-on-accent: #ffffff;
+
+  /* 強調色＝低彩度的紫灰（不是系統藍）：這個工具的畫面主體是遊戲素材，
+     UI 的選取／主要動作退成近中性色，彩度才留給內容本身。
+     狀態色（good/warn/danger）仍保留顏色，因為那是語意不是強調。 */
+  --accent: hsl(var(--hue) 16% 37%);
+  --accent-press: hsl(var(--hue) 18% 26%);
+  --accent-soft: hsl(var(--hue) 30% 20% / 0.075);
+  --good: #34c759;
+  --warn: #ff9500;
+  --danger: #ff3b30;
+  --worn: #e07a1f;
+  --purple: #8e57d1;
+
+  /* 選取：清單列用淺灰填色、文字維持原色（mac 白底介面的選取感）。
+     深色實心只留給「主要動作按鈕」，不用來標示選取。 */
+  --select: hsl(var(--hue) 30% 20% / 0.09);
+
+  /* 衍生別名（沿用舊名，避免各 component 一次全改） */
+  --hover: hsl(var(--hue) 30% 20% / 0.052);
+
+  /* 浮起在內容之上的兩種面：畫布上的控制鈕、以及選單／浮層 */
+  --overlay: hsl(var(--hue) 40% 100% / 0.86);
+  --overlay-hover: hsl(var(--hue) 40% 100%);
+  --popover: hsl(var(--hue) 34% 99% / 0.97);
+  --knob: #ffffff;
+  /* 疊在表面上的極淺一層（斑馬紋、chip hover 之類），深色時要翻成白色疊加 */
+  --wash: hsl(var(--hue) 30% 20% / 0.022);
+  --wash-strong: hsl(var(--hue) 30% 20% / 0.11);
+  --chip: hsl(var(--hue) 30% 20% / 0.065);
+  --input-bg: hsl(var(--hue) 40% 99.8%);
+  --scrollbar: hsl(var(--hue) 20% 18% / 0.26);
+
+  /* elevation */
+  --shadow-1: 0 1px 1.5px hsl(var(--hue) 30% 12% / 0.07), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.09);
+  --shadow-2: 0 4px 14px hsl(var(--hue) 30% 12% / 0.12), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.08);
+  --shadow-pop: 0 12px 34px hsl(var(--hue) 30% 12% / 0.2), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.13);
+  --ring: 0 0 0 3px hsl(var(--hue) 30% 30% / 0.24);
+
+  /* 拉丁字走 Segoe UI（最接近 SF 的中性無襯線），中文自然落回微軟正黑體 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei",
+    "微軟正黑體", system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text);
+
+  /* mac 觀感的關鍵：灰階抗鋸齒，關掉 Windows 的次像素渲染 */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── §2 Reset / base ─────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 視窗是 transparent 的，底色一律由 .app 畫；body 若上色會把圓角的四個角填成方的 */
+body {
+  background: transparent;
+  color: var(--text);
+}
+
+:where(h1, h2, h3, h4, p) {
+  margin: 0;
+}
+
+::selection {
+  background: hsl(var(--hue) 40% 40% / 0.2);
+}
+
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius-sm);
+}
+
+/* ── §3 Controls ─────────────────────────────────────────────────────────── */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+/* mac push button：白底、髮絲邊、極淺陰影 */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 15px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-1);
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+button:hover:not(:disabled) {
+  background: var(--bg-2);
+}
+button:active:not(:disabled) {
+  background: hsl(var(--hue) 24% 91%);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 主要動作：實心藍 */
+button.primary {
+  color: var(--text-on-accent);
+  background: var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+button.primary:hover:not(:disabled) {
+  background: hsl(var(--hue) 15% 45%);
+}
+button.primary:active:not(:disabled) {
+  background: var(--accent-press);
+}
+
+/* 無框：工具列 / 列內的次要動作 */
+button.plain {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-dim);
+}
+button.plain:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+button.danger:hover:not(:disabled) {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+}
+
+button.sm {
+  height: 28px;
+  padding: 0 11px;
+  font-size: 15px;
+}
+
+/* 浮在畫布上的控制鈕（預覽 / 紙娃娃） */
+.ovbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 13px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--overlay);
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  box-shadow: var(--shadow-2);
+  backdrop-filter: blur(20px) saturate(1.8);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.ovbtn:hover:not(:disabled) {
+  background: var(--overlay-hover);
+  color: var(--accent);
+}
+.ovbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pico {
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
+  display: block;
+  flex: none;
+}
+
+/* 文字輸入：mac 的 text field 是白底＋內縮髮絲邊，focus 才長藍框 */
+input[type="text"],
+input[type="search"],
+input[type="number"],
+textarea,
+select {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 0.5px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+textarea {
+  height: auto;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  line-height: 1.5;
+}
+input::placeholder {
+  color: var(--text-faint);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+input[type="search"]::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* 箭頭的顏色寫死在 data URI 裡（URI 吃不到 CSS 變數），所以深色模式
+   在 §8 另給一條同樣的規則、只換 stroke。 */
+select {
+  padding-right: 28px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'><path d='M2 5.6 5 2.6l3 3M2 8.4l3 3 3-3' fill='none' stroke='rgba(0,0,0,0.45)' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 10px 14px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex: none;
+  background: var(--bg-1);
+  border: 0.5px solid var(--border-strong);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+input[type="radio"] {
+  border-radius: 50%;
+}
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.6 6.3 5 8.6l4.4-5' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-size: 12px 12px;
+}
+input[type="radio"]:checked {
+  box-shadow: inset 0 0 0 3px var(--bg-1);
+}
+
+input[type="range"] {
+  appearance: none;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.12);
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+}
+
+/* mac segmented control */
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--chip);
+  border-radius: var(--radius-pill);
+}
+.seg > * {
+  height: 30px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  box-shadow: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg > *:hover:not(:disabled) {
+  color: var(--text);
+  background: transparent;
+}
+.seg > .on {
+  color: var(--text);
+  font-weight: 500;
+  background: var(--bg-1);
+  box-shadow: var(--shadow-1);
+}
+
+/* mac switch */
+.switch {
+  appearance: none;
+  width: 38px;
+  height: 22px;
+  flex: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.14);
+  box-shadow: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.18s ease;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--knob);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.18s ease;
+}
+.switch:checked {
+  background: var(--good);
+}
+.switch:checked::after {
+  transform: translateX(16px);
+}
+
+/* ── §4 Surfaces ─────────────────────────────────────────────────────────── */
+/* 舊名 .glass 保留，但語意改成「mac 內容面板」：白底髮絲邊，不再是毛玻璃 */
+.glass,
+.panel {
+  background: var(--bg-1);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  box-shadow: var(--shadow-1);
+}
+
+.card {
+  background: var(--bg-1);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+.card-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 0.5px solid var(--border);
+}
+
+/* 頁面骨架：每個分頁都是「數張卡片並排，卡片之間留 12px」。
+   間隙同時是拖曳把手——整條都抓得到，不像貼在一起時只有 1px 的線可以點。
+   五個分頁共用這一條，不要各自再寫一份 .divider。 */
+.vsplit {
+  width: var(--sp-3);
+  flex: none;
+  cursor: col-resize;
+  position: relative;
+}
+.vsplit::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  transition: background 0.12s ease;
+}
+.vsplit:hover::after {
+  background: var(--border-strong);
+}
+
+/* 區段標題（mac 的側欄／設定分組標題） */
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+  padding: 0 10px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+}
+
+/* 工具列：半透明＋模糊，底一條髮絲線 */
+.toolbar {
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-3);
+  background: var(--toolbar);
+  border-bottom: 0.5px solid var(--border);
+  backdrop-filter: blur(24px) saturate(1.8);
+}
+.toolbar-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── §5 側欄清單（紙娃娃「裝備位置」／裝備物品「分類」共用） ──────────────
+   每列固定 44px 兩行，分組標題 28px，標題與項目文字左緣同一垂直線。
+   不用 backdrop-filter：子元素背景一變就重新光柵化，文字會次像素位移。 */
+.sidecol {
+  flex: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: none;
+  background: var(--bg-1);
+}
+.sidehead {
+  height: 48px;
+  box-sizing: border-box;
+  padding: 0 var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 0.5px solid var(--border);
+}
+.sidecount {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+/* scrollbar-gutter 永久保留捲軸空間，捲軸出現/消失才不會橫推整排文字 */
+.sidelist {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sidegroup {
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+/* 清單裡的分區線：分組本身不需要名字時用它代替 .sidegroup */
+.sidesep {
+  height: 0.5px;
+  flex: none;
+  margin: 7px 10px;
+  background: var(--border);
+}
+.sideitem {
+  position: relative;
+  height: 52px;
+  flex: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sideitem:hover:not(.on) {
+  background: var(--hover);
+}
+.sideitem.on {
+  background: var(--select);
+}
+.sideitem-main,
+.sideitem-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sideitem-main {
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--text);
+}
+.sideitem.on .sideitem-main {
+  font-weight: 600;
+}
+/* 次要行即使沒有內容也保留行高，否則主文字會在「有值/無值」之間上下跳 */
+.sideitem-sub {
+  font-size: 14px;
+  line-height: 18px;
+  min-height: 18px;
+  color: var(--text-dim);
+}
+.sideitem-sub.worn {
+  color: var(--worn);
+}
+
+/* ── §6 小元件 ───────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--chip);
+  font-size: 15px;
+  color: var(--text-dim);
+  flex: none;
+}
+.badge.sm {
+  padding: 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.hairline {
+  height: 0.5px;
+  background: var(--border);
+  flex: none;
+}
+
+.empty {
+  color: var(--text-faint);
+  padding: var(--sp-6);
+  text-align: center;
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+/* ── §7 捲軸：macOS overlay scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: var(--radius-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.42);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── §8 深色模式 ─────────────────────────────────────────────────────────
+   App 一啟動就把解析後的結果（light / dark）寫進 <html data-theme>，
+   所以這裡只需要一份深色 token，不必再寫一份 prefers-color-scheme 的副本。
+   深色不是把淺色反相：疊加層從「黑色疊加」翻成「白色疊加」，
+   狀態色換成 macOS 深色版（同色相但更亮），否則在深底上會糊掉。 */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 午夜色：Apple 的 Midnight 是帶藍的深黑。色相與淺色共用 --hue: 218，
+     深淺之間只差明度與疊加方向。 */
+  --bg-0: hsl(var(--hue) 26% 9.5%);
+  --bg-1: hsl(var(--hue) 22% 14.5%);
+  --bg-2: hsl(var(--hue) 24% 11.5%);
+  --sidebar: hsl(var(--hue) 24% 11.5% / 0.8);
+  --toolbar: hsl(var(--hue) 22% 13.5% / 0.84);
+  --glass: hsl(var(--hue) 22% 16% / 0.94);
+  --glass-2: hsl(var(--hue) 30% 92% / 0.055);
+
+  --border: hsl(var(--hue) 24% 88% / 0.13);
+  --border-strong: hsl(var(--hue) 24% 88% / 0.24);
+
+  --text: hsl(var(--hue) 14% 97% / 0.92);
+  --text-dim: hsl(var(--hue) 12% 94% / 0.56);
+  --text-faint: hsl(var(--hue) 12% 92% / 0.34);
+
+  --accent: hsl(var(--hue) 26% 44%);
+  --accent-press: hsl(var(--hue) 28% 36%);
+  --accent-soft: hsl(var(--hue) 40% 92% / 0.1);
+  --good: #30d158;
+  --warn: #ff9f0a;
+  --danger: #ff453a;
+  --worn: #ff9f0a;
+  --purple: #bf5af2;
+
+  /* 疊加層在深底上要用白色，用黑色等於什麼都沒發生 */
+  --select: hsl(var(--hue) 40% 92% / 0.13);
+  --hover: hsl(var(--hue) 40% 92% / 0.07);
+  --chip: hsl(var(--hue) 40% 92% / 0.09);
+  --input-bg: hsl(var(--hue) 30% 7.5%);
+  --scrollbar: hsl(var(--hue) 30% 90% / 0.26);
+
+  --overlay: hsl(var(--hue) 22% 20% / 0.86);
+  --overlay-hover: hsl(var(--hue) 22% 24%);
+  --popover: hsl(var(--hue) 22% 17.5% / 0.97);
+
+  --wash: hsl(var(--hue) 40% 92% / 0.03);
+  --wash-strong: hsl(var(--hue) 40% 92% / 0.12);
+
+  --shadow-1: 0 1px 1.5px hsl(0 0% 0% / 0.4), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.08);
+  --shadow-2: 0 4px 14px hsl(0 0% 0% / 0.5), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.1);
+  --shadow-pop: 0 12px 34px hsl(0 0% 0% / 0.62), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.12);
+  --ring: 0 0 0 3px hsl(var(--hue) 40% 70% / 0.3);
+}
+
+/* 箭頭顏色寫死在 data URI 裡，深色要另給一份 */
+:root[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'><path d='M2 5.6 5 2.6l3 3M2 8.4l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.55)' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+:root[data-theme="dark"] button:active:not(:disabled) {
+  background: hsl(218 22% 21%);
+}
+:root[data-theme="dark"] ::selection {
+  background: hsl(var(--hue) 40% 70% / 0.3);
+}
