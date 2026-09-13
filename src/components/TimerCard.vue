@@ -64,9 +64,13 @@ function isCustom() {
 }
 
 function applyCustom() {
-  const ms = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
-  if (ms <= 0) return;
-  store.setDuration(props.id, ms);
+  const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
+  if (raw <= 0) return;
+  // 對齊 15 分鐘是 store 的規則（存檔讀回來時也要對齊），這裡只把結果寫回欄位
+  store.setDuration(props.id, raw);
+  const ms = store.timers[props.id].durationMs;
+  customH.value = Math.floor(ms / 3_600_000);
+  customM.value = (ms % 3_600_000) / 60_000;
   customOpen.value = false;
 }
 </script>
@@ -75,7 +79,7 @@ function applyCustom() {
   <article class="card timer" :class="[state(), { compact }]">
     <div class="head">
       <span class="name">{{ store.spec(id).label }}</span>
-      <span class="hint">{{ store.spec(id).hint }}</span>
+      <span v-if="store.spec(id).hint" class="hint">{{ store.spec(id).hint }}</span>
       <div class="spacer"></div>
 
       <!-- 按鍵：只監聽不攔截，所以可以直接掛在放技能的那顆鍵上 -->
@@ -109,22 +113,25 @@ function applyCustom() {
 
     <!-- 時長可選的卡片（出租輪迴）才有這一列 -->
     <div v-if="store.spec(id).presets" class="spans">
-      <div class="seg">
+      <div class="chips">
         <button
           v-for="p in store.spec(id).presets"
           :key="p"
+          class="chip"
           :class="{ on: !isCustom() && store.timers[id].durationMs === p }"
           @click="((customOpen = false), store.setDuration(id, p))"
         >
           {{ span(p) }}
         </button>
-        <button :class="{ on: isCustom() || customOpen }" @click="customOpen = true">自訂</button>
+        <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
+          自訂
+        </button>
       </div>
 
       <div v-if="customOpen" class="custom">
         <input v-model.number="customH" type="number" min="0" max="24" aria-label="小時" />
         <span class="unit">小時</span>
-        <input v-model.number="customM" type="number" min="0" max="59" aria-label="分鐘" />
+        <input v-model.number="customM" type="number" min="0" max="45" step="15" aria-label="分鐘" />
         <span class="unit">分</span>
         <button class="primary" @click="applyCustom()">套用</button>
       </div>
@@ -226,6 +233,38 @@ function applyCustom() {
   align-items: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
+}
+/* 時長是「幾個平行的選擇」而不是一個值的幾個檔位，所以不共用 segmented 軌道：
+   各自獨立的圓角矩形，選中的那顆才填強調色 */
+.chips {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.chip {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+.chip:hover:not(.on) {
+  color: var(--text);
+  background: var(--bg-2);
+}
+.chip.on {
+  color: var(--text-on-accent);
+  font-weight: 600;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.chip.on:hover {
+  background: var(--accent);
 }
 .custom {
   display: flex;

@@ -29,13 +29,19 @@ interface Spec {
 }
 
 const MIN = 60_000;
+/** 出租是按時段賣的，時長一律對齊 15 分鐘——存檔裡的舊值讀進來時也一起對齊 */
+const STEP = 15 * MIN;
+
+function snapDuration(ms: number) {
+  return Math.max(STEP, Math.round(ms / STEP) * STEP);
+}
 
 // 順序＝畫面上的順序（浮動視窗也吃這張表），出租在最上面
 export const SPECS: Spec[] = [
   {
     id: "rental",
     label: "出租",
-    hint: "下面任一張卡第一次觸發時起算，之後一路跑到結束",
+    hint: "",
     durationMs: 30 * MIN,
     hotkeyable: false,
     presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 150 * MIN, 180 * MIN],
@@ -95,7 +101,8 @@ export const useBurnStore = defineStore("burn", () => {
    * 技能卡的時長是寫死的規格——存了會變成「改了程式碼但舊使用者永遠停在舊秒數」。
    */
   function initialDuration(s: Spec) {
-    return (s.presets ? saved[s.id]?.durationMs : undefined) ?? s.durationMs;
+    const stored = s.presets ? saved[s.id]?.durationMs : undefined;
+    return stored === undefined ? s.durationMs : snapDuration(stored);
   }
 
   const timers = reactive(
@@ -194,7 +201,7 @@ export const useBurnStore = defineStore("burn", () => {
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */
   function setDuration(id: TimerId, ms: number) {
     const t = timers[id];
-    t.durationMs = Math.max(MIN, Math.round(ms));
+    t.durationMs = snapDuration(ms);
     if (t.endAt === null) t.runMs = t.durationMs;
     persist();
   }
