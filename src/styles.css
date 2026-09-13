@@ -419,9 +419,11 @@ input[type="range"]::-webkit-slider-thumb {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 0.18s ease;
 }
+/* 開啟＝強調色，不用 --good：綠色在這套 token 裡是「狀態正常」的語意，
+   而開關講的是「這項功能開著」，跟主要動作按鈕同一件事，所以共用 --accent。 */
 .switch.on,
 .switch.on:hover:not(:disabled) {
-  background: var(--good);
+  background: var(--accent);
 }
 .switch.on::after {
   transform: translateX(18px);
