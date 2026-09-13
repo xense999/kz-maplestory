@@ -30,10 +30,7 @@ function onKeyDown(e: KeyboardEvent) {
   recording.value = null;
 }
 
-onMounted(() => {
-  window.addEventListener("keydown", onKeyDown, true);
-  void store.init();
-});
+onMounted(() => window.addEventListener("keydown", onKeyDown, true));
 onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
 
 /** 透明度拉桿只在滑鼠停在「浮動視窗」那顆按鈕上時出現 */

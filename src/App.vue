@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import AppTitlebar from "./components/AppTitlebar.vue";
 import AppNavbar from "./components/AppNavbar.vue";
 import SettingsPage from "./views/SettingsPage.vue";
 import { NAV } from "./nav";
+import { useBurnStore } from "./stores/burn";
 
 const TAB_KEY = "kz-maplestory:tab";
+
+// 熱鍵監聽是整個程式的事，不是某一頁的事：從設定頁開始也要接得回上次的設定
+onMounted(() => void useBurnStore().init());
 
 const maximized = ref(false);
 const showSettings = ref(false);
