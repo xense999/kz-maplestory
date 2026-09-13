@@ -2,9 +2,6 @@
 import { NAV } from "../nav";
 
 const active = defineModel<string>({ required: true });
-
-defineProps<{ settingsOpen: boolean }>();
-const emit = defineEmits<{ toggleSettings: [] }>();
 </script>
 
 <template>
@@ -21,19 +18,7 @@ const emit = defineEmits<{ toggleSettings: [] }>();
         {{ n.label }}
       </button>
     </nav>
-
     <div class="spacer"></div>
-
-    <!-- 設定跟功能頁是同一層的東西（都是「現在看的是哪一頁」），所以放同一排，
-         只是靠右擺，跟左邊那組分開 -->
-    <button
-      class="navtab"
-      :class="{ on: settingsOpen }"
-      title="設定"
-      @click="emit('toggleSettings')"
-    >
-      設定
-    </button>
   </div>
 </template>
 

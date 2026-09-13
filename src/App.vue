@@ -36,14 +36,14 @@ function onTab(id: string) {
 
 <template>
   <div class="app" :class="{ maxed: maximized }">
-    <AppTitlebar title="久世管理器" v-model:maximized="maximized" />
-
-    <AppNavbar
-      :model-value="showSettings ? '' : active"
+    <AppTitlebar
+      title="久世管理器"
+      v-model:maximized="maximized"
       :settings-open="showSettings"
-      @update:model-value="onTab"
       @toggle-settings="showSettings = !showSettings"
     />
+
+    <AppNavbar :model-value="showSettings ? '' : active" @update:model-value="onTab" />
 
     <!-- 分頁切走時把元件留著（計時器不能因為換頁就停），所以用 keep-alive -->
     <main class="content">
