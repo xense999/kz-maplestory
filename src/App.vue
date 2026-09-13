@@ -62,6 +62,9 @@ function onTab(id: string) {
    最大化時要收掉，不然螢幕四角會透出桌面。 */
 .app {
   position: relative;
+  /* 視窗圓角半徑對外公開：蓋滿整個視窗的遮罩要照這個收角，
+     不然圓角外的透明區會被填成方的 */
+  --win-radius: var(--radius-window);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -71,6 +74,7 @@ function onTab(id: string) {
   overflow: hidden;
 }
 .app.maxed {
+  --win-radius: 0px;
   border-radius: 0;
 }
 
