@@ -46,9 +46,10 @@ const active = defineModel<string>({ required: true });
 .navtabs::-webkit-scrollbar {
   display: none;
 }
-/* 沒選到的分頁也要有自己的框：只有選中那顆有框的話，其他分頁看起來像純文字 */
+/* 沒選到的分頁也要有自己的框：只有選中那顆有框的話，其他分頁看起來像純文字。
+   線用得比控制項淡一級——分頁不是要人去按的按鈕，是「你在哪一頁」的指示。 */
 .navtab {
-  border: 1px solid var(--control-border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   height: 38px;
   gap: 8px;
