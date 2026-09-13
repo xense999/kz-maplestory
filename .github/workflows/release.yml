@@ -60,3 +60,11 @@ jobs:
           draft: false
           prerelease: false
           files: ${{ steps.installer.outputs.path }}
+
+      # 裸執行檔給「程式內更新」就地置換用。單獨上傳、排在安裝檔之後，
+      # 讓 Assets 第一顆一直是給人下載的安裝檔。
+      - name: Attach bare exe for in-place update
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} src-tauri/target/release/kz-maplestory.exe

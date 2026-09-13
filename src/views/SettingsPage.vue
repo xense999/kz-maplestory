@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { getVersion } from "@tauri-apps/api/app";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { setTheme, themePref, type ThemePref } from "../theme";
 
@@ -18,9 +20,84 @@ const version = ref("");
 const showAbout = ref(false);
 const discordCopied = ref(false);
 
+// ── 更新 ──
+// 一顆按鈕兩段：先「檢查更新」；查到新版後變成「更新到 vX」，再點一次才下載安裝。
+interface AppUpdate {
+  current: string;
+  latest: string;
+  has_update: boolean;
+  url: string;
+  exe_url: string;
+  notes: string;
+}
+
+type UpdateState = "idle" | "checking" | "available" | "latest" | "downloading" | "failed";
+
+const updateState = ref<UpdateState>("idle");
+const updateInfo = ref<AppUpdate | null>(null);
+const updatePct = ref(0);
+const updateError = ref("");
+
+const updateLabel = computed(() => {
+  switch (updateState.value) {
+    case "checking":
+      return "檢查中…";
+    case "available":
+      return `更新到 v${updateInfo.value?.latest}`;
+    case "downloading":
+      return updatePct.value > 0 ? `更新中 ${updatePct.value}%` : "更新中…";
+    case "latest":
+      return "已是最新版";
+    case "failed":
+      return "重試";
+    default:
+      return "檢查更新";
+  }
+});
+
+async function onUpdateClick() {
+  if (updateState.value === "checking" || updateState.value === "downloading") return;
+  updateError.value = "";
+
+  if (updateState.value === "available" && updateInfo.value) {
+    const info = updateInfo.value;
+    // 沒有裸 exe 的版本（或非 Windows）就退回下載頁，讓使用者自己裝
+    if (!info.exe_url) {
+      await openUrl(info.url || `https://github.com/xense999/kz-maplestory/releases/latest`);
+      return;
+    }
+    updateState.value = "downloading";
+    updatePct.value = 0;
+    try {
+      await invoke("update_app_inplace", { url: info.exe_url });
+    } catch (e) {
+      updateState.value = "failed";
+      updateError.value = String(e);
+    }
+    return;
+  }
+
+  updateState.value = "checking";
+  try {
+    const info = await invoke<AppUpdate>("check_app_update");
+    updateInfo.value = info;
+    updateState.value = info.has_update ? "available" : "latest";
+  } catch (e) {
+    updateState.value = "failed";
+    updateError.value = String(e);
+  }
+}
+
+let stopProgress: (() => void) | null = null;
+
 onMounted(async () => {
   version.value = await getVersion();
+  stopProgress = await listen<[number, number]>("update-progress", (e) => {
+    const [done, total] = e.payload;
+    updatePct.value = total > 0 ? Math.floor((done * 100) / total) : 0;
+  });
 });
+onUnmounted(() => stopProgress?.());
 
 async function copyDiscord() {
   try {
@@ -58,7 +135,7 @@ async function copyDiscord() {
       </section>
     </div>
 
-    <!-- 底部固定列：贊助與關於，跟久世登入器同一組 -->
+    <!-- 底部固定列：贊助與關於 -->
     <div class="bottom-bar">
       <div class="spacer"></div>
       <button class="icon heart" title="請作者喝杯咖啡" @click="openUrl(SUPPORT_URL)">
@@ -92,7 +169,16 @@ async function copyDiscord() {
           <span class="rname">久世管理器</span>
           <div class="spacer"></div>
           <span class="ver">{{ version ? `v${version}` : "—" }}</span>
+          <button
+            class="upd"
+            :class="{ ready: updateState === 'available' }"
+            :disabled="updateState === 'checking' || updateState === 'downloading'"
+            @click="onUpdateClick"
+          >
+            {{ updateLabel }}
+          </button>
         </div>
+        <p v-if="updateError" class="uerr">{{ updateError }}</p>
 
         <button class="contact" @click="copyDiscord()">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -240,6 +326,23 @@ async function copyDiscord() {
   font-size: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+  margin-right: var(--sp-2);
+}
+.upd {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+/* 有新版時才把按鈕升成主要動作，其餘狀態都只是資訊 */
+.upd.ready {
+  color: var(--text-on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.uerr {
+  font-size: 13px;
+  color: var(--danger);
+  line-height: 1.5;
 }
 
 .contact {
