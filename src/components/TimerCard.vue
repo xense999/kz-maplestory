@@ -18,8 +18,9 @@ const customOpen = ref(false);
 const customH = ref(1);
 const customM = ref(0);
 
+/** 到期就停在 00:00：往上加的秒數只會讓人分不清「還剩」跟「超過」 */
 function clock(ms: number) {
-  const t = Math.max(0, Math.round(Math.abs(ms) / 1000));
+  const t = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(t / 3600);
   const m = Math.floor((t % 3600) / 60);
   const s = t % 60;

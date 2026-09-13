@@ -28,7 +28,8 @@ function onDown(e: MouseEvent) {
 
 function clock(s: TimerSnap) {
   const ms = s.endAt === null ? s.durationMs : s.endAt - now.value;
-  const t = Math.max(0, Math.round(Math.abs(ms) / 1000));
+  // 到期停在 00:00，不往上加
+  const t = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(t / 3600);
   const m = Math.floor((t % 3600) / 60);
   const sec = t % 60;
