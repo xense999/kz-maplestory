@@ -120,7 +120,7 @@ function applyCustom() {
           v-for="p in store.spec(id).presets"
           :key="p"
           class="chip"
-          :class="{ on: !isCustom() && store.timers[id].durationMs === p }"
+          :class="{ on: !customOpen && !isCustom() && store.timers[id].durationMs === p }"
           @click="((customOpen = false), store.setDuration(id, p))"
         >
           {{ span(p) }}
@@ -212,7 +212,7 @@ function applyCustom() {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   background: var(--bg-1);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-sm);
   box-shadow: none;
 }
@@ -251,7 +251,7 @@ function applyCustom() {
   font-weight: 500;
   color: var(--text-dim);
   background: var(--bg-1);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius);
   box-shadow: none;
 }

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { computed, reactive, ref, watch } from "vue";
 import { startAlarm, stopAlarm } from "../alarm";
 import { onHotkey, unwatchKey, watchKey, type Hotkey } from "../hotkey";
-import { broadcastTimers, onFloatHello } from "../float";
+import { broadcastTimers, onFloatHello, pushFloatOpacity } from "../float";
 
 /**
  * 輪燒計時器：輪迴、燃燒、出租輪迴各一組。
@@ -268,7 +268,10 @@ export const useBurnStore = defineStore("burn", () => {
       if (SPECS.some((s) => s.id === id)) pressKey(id as TimerId);
     });
     // 浮動視窗開起來時會喊一聲，補一份現況給它
-    await onFloatHello(() => broadcastTimers(snapshot()));
+    await onFloatHello(() => {
+      broadcastTimers(snapshot());
+      pushFloatOpacity();
+    });
     for (const s of SPECS) {
       if (!s.hotkeyable) {
         // 這張卡以前可能綁過鍵，把後端的登記與存檔一起清乾淨

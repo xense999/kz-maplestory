@@ -43,6 +43,9 @@
   /* hairlines — mac 的分隔線幾乎看不見，靠明度差不是靠線 */
   --border: hsl(var(--hue) 24% 18% / 0.1);
   --border-strong: hsl(var(--hue) 24% 18% / 0.17);
+  /* 控制項的框：按鈕與卡片同是 --bg-1，沒有陰影之後就只剩這條線在分界，
+     所以它比分隔線濃一級——分隔線是「不該被看見」，這條是「必須看得見」。 */
+  --control-border: hsl(var(--hue) 24% 16% / 0.34);
 
   /* text */
   --text: hsl(var(--hue) 18% 10% / 0.86);
@@ -168,7 +171,7 @@ button {
   color: var(--text);
   background: var(--bg-1);
   /* 按鈕跟卡片都是 --bg-1，只靠陰影分不出邊界，所以描一圈實線 */
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-1);
   cursor: pointer;
@@ -267,7 +270,7 @@ select {
   font-size: 16px;
   color: var(--text);
   background: var(--input-bg);
-  border: 0.5px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-pill);
   outline: none;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
@@ -384,7 +387,7 @@ input[type="range"]::-webkit-slider-thumb {
   color: var(--text);
   font-weight: 500;
   background: var(--bg-1);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
 }
 
 /* 膠囊開關。
@@ -698,6 +701,7 @@ input[type="range"]::-webkit-slider-thumb {
 
   --border: hsl(var(--hue) 24% 88% / 0.13);
   --border-strong: hsl(var(--hue) 24% 88% / 0.24);
+  --control-border: hsl(var(--hue) 24% 90% / 0.36);
 
   --text: hsl(var(--hue) 14% 97% / 0.92);
   --text-dim: hsl(var(--hue) 12% 94% / 0.56);

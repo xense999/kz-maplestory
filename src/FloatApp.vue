@@ -1,22 +1,26 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { onTimersSync, sayHello, type TimerSnap } from "./float";
+import { onFloatOpacity, onTimersSync, sayHello, type TimerSnap } from "./float";
 
 const appWin = getCurrentWindow();
 const snaps = ref<TimerSnap[]>([]);
 const now = ref(Date.now());
+const opacity = ref(1);
 
 let tick: number | null = null;
 let stopSync: (() => void) | null = null;
+let stopOpacity: (() => void) | null = null;
 
 onMounted(async () => {
   stopSync = await onTimersSync((s) => (snaps.value = s));
+  stopOpacity = await onFloatOpacity((v) => (opacity.value = v));
   sayHello();
   tick = window.setInterval(() => (now.value = Date.now()), 250);
 });
 onUnmounted(() => {
   stopSync?.();
+  stopOpacity?.();
   if (tick !== null) clearInterval(tick);
 });
 
@@ -48,18 +52,14 @@ function state(s: TimerSnap) {
 </script>
 
 <template>
-  <div class="float" @mousedown="onDown">
-    <div class="bar">
-      <span class="title">久世管理器</span>
-      <div class="spacer"></div>
-      <button class="close" title="收起浮動視窗" @click="appWin.hide()">
-        <svg viewBox="0 0 10 10" width="9" height="9">
-          <path d="M2.4 2.4 7.6 7.6M7.6 2.4 2.4 7.6" fill="none" stroke="currentColor"
-                stroke-width="1.2" stroke-linecap="round" />
-        </svg>
-      </button>
-    </div>
-
+  <!-- 沒有標題列也沒有關閉鈕：開關一律在主視窗那顆「浮動視窗」按鈕上，
+       所以整塊都是拖曳區 -->
+  <div
+    class="float"
+    :style="{ opacity }"
+    @mousedown="onDown"
+    title="拖曳可移動；開關與透明度在主視窗的「浮動視窗」按鈕"
+  >
     <div class="rows">
       <div v-for="s in snaps" :key="s.id" class="row" :class="state(s)">
         <span class="label">{{ s.label.replace("計時器", "") }}</span>
@@ -82,47 +82,13 @@ function state(s: TimerSnap) {
   user-select: none;
   overflow: hidden;
 }
-/* 標題自成一條，跟下面的讀數區分開：底色與文字色都換掉，
-   不然縮到這個尺寸時整塊看起來只是一團字 */
-.bar {
-  flex: none;
-  display: flex;
-  align-items: center;
-  height: 24px;
-  padding: 0 6px 0 10px;
-  background: var(--bg-2);
-  border-bottom: 0.5px solid var(--border);
-}
-.title {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--accent);
-}
 /* 三行平均吃掉剩下的高度，行距就不必手調 */
 .rows {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 10px;
-}
-.spacer {
-  flex: 1;
-}
-.close {
-  border: none;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-dim);
-  border-radius: var(--radius-pill);
-}
-.close:hover {
-  background: var(--danger);
-  color: #fff;
+  padding: 4px 12px;
 }
 
 .row {
@@ -132,8 +98,9 @@ function state(s: TimerSnap) {
   gap: 8px;
 }
 .label {
-  font-size: 13px;
-  color: var(--text-dim);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
   white-space: nowrap;
 }
 .time {

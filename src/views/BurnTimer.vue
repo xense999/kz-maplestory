@@ -4,7 +4,7 @@ import TimerCard from "../components/TimerCard.vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
 import { ringing, stopAlarm, testBeep } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
-import { openFloatWindow } from "../float";
+import { floatOpacity, floatOpen, setFloatOpacity, toggleFloatWindow } from "../float";
 
 const store = useBurnStore();
 
@@ -35,6 +35,9 @@ onMounted(() => {
   void store.init();
 });
 onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
+
+/** 透明度拉桿只在滑鼠停在「浮動視窗」那顆按鈕上時出現 */
+const opacityOpen = ref(false);
 </script>
 
 <template>
@@ -44,9 +47,32 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
       <TimerCard id="rental" :recording="recording === 'rental'" @record="onRecord">
         <template #head>
           <button v-if="ringing" class="primary" @click="stopAlarm()">停止提醒</button>
-          <button title="開一個永遠置頂的小視窗，遊戲中也看得到倒數" @click="openFloatWindow()">
-            浮動視窗
-          </button>
+          <div
+            class="floatctl"
+            @mouseenter="opacityOpen = true"
+            @mouseleave="opacityOpen = false"
+          >
+            <button
+              :class="{ primary: floatOpen }"
+              :title="floatOpen ? '關閉浮動視窗' : '開一個永遠置頂的小視窗，遊戲中也看得到倒數'"
+              @click="toggleFloatWindow()"
+            >
+              浮動視窗
+            </button>
+
+            <div v-if="opacityOpen" class="opacity">
+              <span class="olabel">透明度</span>
+              <input
+                type="range"
+                min="25"
+                max="100"
+                step="5"
+                :value="Math.round(floatOpacity * 100)"
+                @input="setFloatOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
+              />
+              <span class="oval">{{ Math.round(floatOpacity * 100) }}%</span>
+            </div>
+          </div>
           <button title="試聽提醒音" @click="testBeep()">試聽</button>
         </template>
       </TimerCard>
@@ -80,6 +106,40 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
   flex-direction: column;
   gap: var(--sp-3);
 }
+/* 透明度拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */
+.floatctl {
+  position: relative;
+}
+.opacity {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: var(--popover);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(28px) saturate(1.8);
+}
+.opacity input[type="range"] {
+  width: 116px;
+}
+.olabel {
+  font-size: 14px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.oval {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  width: 40px;
+  text-align: right;
+}
+
 .pair {
   display: grid;
   grid-template-columns: 1fr 1fr;

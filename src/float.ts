@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import { emit, listen } from "@tauri-apps/api/event";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
@@ -20,6 +21,41 @@ export interface TimerSnap {
 
 const SYNC = "timers:sync";
 const HELLO = "timers:hello";
+const OPACITY = "float:opacity";
+
+const OPACITY_KEY = "kz-maplestory:float-opacity";
+
+/** 浮動視窗透明度（1＝不透明）。壓在 0.25 以上，再淡就看不到數字了 */
+export const floatOpacity = ref(loadOpacity());
+
+function loadOpacity() {
+  try {
+    const v = Number(localStorage.getItem(OPACITY_KEY));
+    return v >= 0.25 && v <= 1 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function setFloatOpacity(v: number) {
+  floatOpacity.value = Math.min(1, Math.max(0.25, v));
+  try {
+    localStorage.setItem(OPACITY_KEY, String(floatOpacity.value));
+  } catch {
+    /* 存不了就只在這次執行有效 */
+  }
+  pushFloatOpacity();
+}
+
+/** 主視窗：把目前透明度送過去（改動時、以及浮動視窗剛開起來時） */
+export function pushFloatOpacity() {
+  void emit(OPACITY, floatOpacity.value);
+}
+
+/** 浮動視窗：收透明度 */
+export function onFloatOpacity(cb: (v: number) => void) {
+  return listen<number>(OPACITY, (e) => cb(e.payload));
+}
 
 /** 主視窗：廣播目前狀態 */
 export function broadcastTimers(snap: TimerSnap[]) {
@@ -41,14 +77,23 @@ export function sayHello() {
   void emit(HELLO);
 }
 
+/** 浮動視窗現在開著沒有（給主視窗的按鈕標狀態用） */
+export const floatOpen = ref(false);
+
 /**
- * 浮動視窗在 tauri.conf.json 就宣告好、開機建起來但 visible:false，這裡只負責顯示。
- * ★不在執行期 new WebviewWindow：那樣建出來的子視窗有過空白不 render 的前例，
- * 宣告式的視窗沒有這個問題。關閉鈕也是 hide 不是 close，關掉才還能再開。
+ * 浮動視窗在 tauri.conf.json 就宣告好、開機建起來但 visible:false，這裡只切換顯示。
+ * ★不在執行期 new WebviewWindow：那樣建出來的子視窗有過空白不 render 的前例。
+ * 而且一律 hide 不 close——close 掉的視窗叫不回來，就沒得再開了。
  */
-export async function openFloatWindow() {
+export async function toggleFloatWindow() {
   const win = await WebviewWindow.getByLabel(FLOAT_LABEL);
   if (!win) return;
-  await win.show();
-  await win.setFocus();
+  if (await win.isVisible()) {
+    await win.hide();
+    floatOpen.value = false;
+  } else {
+    await win.show();
+    await win.setFocus();
+    floatOpen.value = true;
+  }
 }
