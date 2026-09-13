@@ -49,6 +49,7 @@ function onTab(id: string) {
    16px 半徑下幾乎看不出圓角。不支援 corner-shape 的環境會忽略它，退回正圓弧。
    最大化時要收掉，不然螢幕四角會透出桌面。 */
 .app {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -59,6 +60,23 @@ function onTab(id: string) {
 }
 .app.maxed {
   border-radius: 0;
+}
+
+/* 外緣線畫在最上面一層而不是 .app 自己身上：標題列與內容區有自己的底色，
+   會把 .app 的 inset 陰影蓋掉。pointer-events 關掉，不然它會吃掉整頁的點擊。 */
+.app::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  border-radius: inherit;
+  corner-shape: inherit;
+  box-shadow: inset 0 0 0 0.5px var(--window-edge), inset 0 1px 0 var(--window-highlight);
+}
+/* 最大化時四邊貼著螢幕，再描邊只會多一條沒有意義的線 */
+.app.maxed::after {
+  display: none;
 }
 
 .content {

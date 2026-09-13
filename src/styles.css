@@ -81,6 +81,12 @@
   --input-bg: hsl(var(--hue) 40% 99.8%);
   --scrollbar: hsl(var(--hue) 20% 18% / 0.26);
 
+  /* 視窗外緣：無邊框透明視窗貼在桌面上時，只有這一條線在界定「App 到哪裡為止」。
+     mac 的做法是兩層——外圈一條壓暗的細線，內側頂端一道白色高光，
+     合起來才有「玻璃面板疊在桌面上」的厚度感，單畫一條線會像貼紙。 */
+  --window-edge: hsl(var(--hue) 24% 14% / 0.3);
+  --window-highlight: hsl(0 0% 100% / 0.55);
+
   /* elevation */
   --shadow-1: 0 1px 1.5px hsl(var(--hue) 30% 12% / 0.07), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.09);
   --shadow-2: 0 4px 14px hsl(var(--hue) 30% 12% / 0.12), 0 0 0 0.5px hsl(var(--hue) 30% 12% / 0.08);
@@ -706,6 +712,10 @@ input[type="range"]::-webkit-slider-thumb {
 
   --wash: hsl(var(--hue) 40% 92% / 0.03);
   --wash-strong: hsl(var(--hue) 40% 92% / 0.12);
+
+  /* 深底的視窗要靠亮邊才浮得起來，壓暗的線在深桌面上等於看不見 */
+  --window-edge: hsl(var(--hue) 24% 88% / 0.2);
+  --window-highlight: hsl(0 0% 100% / 0.1);
 
   --shadow-1: 0 1px 1.5px hsl(0 0% 0% / 0.4), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.08);
   --shadow-2: 0 4px 14px hsl(0 0% 0% / 0.5), 0 0 0 0.5px hsl(var(--hue) 24% 88% / 0.1);
