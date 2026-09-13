@@ -61,15 +61,21 @@ unsafe extern "system" fn hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -
             let shift = modifier_down(VK_SHIFT);
             let alt = modifier_down(VK_MENU);
 
-            let hit = watched().lock().ok().and_then(|w| {
-                w.iter()
-                    .find(|(_, s)| {
-                        s.vk == kb.vkCode && s.ctrl == ctrl && s.shift == shift && s.alt == alt
-                    })
-                    .map(|(id, _)| id.clone())
-            });
+            // 同一顆鍵可以登記在好幾張卡上（例如放輪迴那顆鍵同時餵「出租」與「輪迴」），
+            // 所以要收齊全部命中，不能只取第一個
+            let hits: Vec<String> = watched()
+                .lock()
+                .map(|w| {
+                    w.iter()
+                        .filter(|(_, s)| {
+                            s.vk == kb.vkCode && s.ctrl == ctrl && s.shift == shift && s.alt == alt
+                        })
+                        .map(|(id, _)| id.clone())
+                        .collect()
+                })
+                .unwrap_or_default();
 
-            if let Some(id) = hit {
+            for id in hits {
                 let now = Instant::now();
                 let fresh = last_fire()
                     .lock()

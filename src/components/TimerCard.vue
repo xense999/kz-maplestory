@@ -186,17 +186,23 @@ function applyCustom() {
   display: none;
 }
 
+/* 按鍵設定是一整組（哪顆鍵＋要不要聽），用一圈框把它跟卡片其他東西分開，
+   不然三顆控制項散在標題列右邊看起來像各自獨立的按鈕 */
 .hk {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: none;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--wash);
 }
 /* 開關是「另一件事」（設哪顆鍵 vs 要不要聽），所以和鍵帽那組之間多留一段 */
 .hk .switch {
-  margin-left: var(--sp-3);
+  margin-left: var(--sp-2);
 }
-/* 鍵帽：看得出來是「一顆鍵」，錄製中換成強調色好認 */
+/* 鍵帽：看得出來是「一顆鍵」——實心邊框＋等寬字，錄製中換成強調色好認 */
 .keycap {
   height: 30px;
   min-width: 92px;
@@ -204,15 +210,20 @@ function applyCustom() {
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 var(--border-strong);
 }
 .keycap.unset {
-  color: var(--text-faint);
+  color: var(--text-dim);
   font-weight: 500;
+  border-style: dashed;
+  box-shadow: none;
 }
 .keycap.rec {
   color: var(--text-on-accent);
   background: var(--accent);
+  border-color: var(--accent);
   box-shadow: var(--ring);
 }
 .x {

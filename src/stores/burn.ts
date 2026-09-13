@@ -20,6 +20,13 @@ interface Spec {
   durationMs: number;
   /** 有值＝時長可選，這幾檔會出現在卡片上 */
   presets?: number[];
+  /**
+   * 按鍵在計時途中再按下時的行為。
+   * true（技能）＝每按一次就從頭重算，因為那真的是又放了一次技能。
+   * false（出租）＝這一輪是客戶買的一整段時間，第一次按下就開始跑到底，
+   * 中途放技能的按鍵不該把客戶的時間洗掉。
+   */
+  restartOnKey: boolean;
 }
 
 const MIN = 60_000;
@@ -28,20 +35,23 @@ export const SPECS: Spec[] = [
   {
     id: "reincarnation",
     label: "輪迴計時器",
-    hint: "起算後 9 分 50 秒提醒",
+    hint: "起算後 9 分 50 秒提醒，每按一次重算",
     durationMs: 9 * MIN + 50_000,
+    restartOnKey: true,
   },
   {
     id: "burning",
     label: "燃燒計時器",
-    hint: "起算後 15 分提醒",
+    hint: "起算後 15 分提醒，每按一次重算",
     durationMs: 15 * MIN,
+    restartOnKey: true,
   },
   {
     id: "rental",
     label: "出租輪迴",
-    hint: "客戶買的時長，到期提醒收工",
+    hint: "第一次按鍵起算，中途再按不會重來",
     durationMs: 30 * MIN,
+    restartOnKey: false,
     presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 150 * MIN, 180 * MIN],
   },
 ];
@@ -141,13 +151,26 @@ export const useBurnStore = defineStore("burn", () => {
     return t.endAt === null ? null : t.endAt - now.value;
   }
 
-  /** 熱鍵與按鈕共用的入口：從現在重新起算，並收掉正在響的提醒 */
+  /** 從現在重新起算。滑鼠按鈕走這裡，所以隨時都能重設。 */
   function start(id: TimerId) {
     const t = timers[id];
+    const wasDue = t.fired;
     t.runMs = t.durationMs;
     t.endAt = Date.now() + t.durationMs;
     t.fired = false;
-    stopAlarm();
+    // 只收掉「自己這一輪」的鈴聲：出租到期正在響時去按技能鍵，
+    // 不該把還沒處理的出租提醒一起掐掉
+    if (wasDue) stopAlarm();
+  }
+
+  /**
+   * 按鍵按下時走這裡，不是直接 start。
+   * 出租那張卡（restartOnKey=false）只在還沒起算時接受按鍵：已經在跑就讓它跑完，
+   * 已經到期也不自動開新的一輪——要開新客戶得自己按「開始」。
+   */
+  function pressKey(id: TimerId) {
+    if (!spec(id).restartOnKey && timers[id].endAt !== null) return;
+    start(id);
   }
 
   function reset(id: TimerId) {
@@ -208,7 +231,7 @@ export const useBurnStore = defineStore("burn", () => {
     if (wired) return;
     wired = true;
     await onHotkey((id) => {
-      if (SPECS.some((s) => s.id === id)) start(id as TimerId);
+      if (SPECS.some((s) => s.id === id)) pressKey(id as TimerId);
     });
     for (const s of SPECS) {
       if (saved[s.id]?.hotkeyOn && timers[s.id].hotkey) await setHotkeyEnabled(s.id, true);
@@ -224,6 +247,7 @@ export const useBurnStore = defineStore("burn", () => {
     spec,
     remaining,
     start,
+    pressKey,
     reset,
     setDuration,
     setHotkey,
