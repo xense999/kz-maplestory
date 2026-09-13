@@ -2,31 +2,30 @@ import { ref } from "vue";
 import { emit, listen } from "@tauri-apps/api/event";
 
 /**
- * 外觀：淺色 / 深色 / 跟隨系統。
- * CSS 只認 <html data-theme="light|dark">，"system" 在這裡解析掉，
- * 這樣深色 token 只要寫一份，不必再複製一份給 prefers-color-scheme。
+ * 外觀：淺色 / 深色。
+ * CSS 只認 <html data-theme="light|dark">，所以深色 token 只要寫一份。
+ * 沒有「跟隨系統」這個檔位——第一次啟動時拿系統偏好當預設值，之後就聽使用者的。
  */
-export type ThemePref = "system" | "light" | "dark";
+export type ThemePref = "light" | "dark";
 
 const THEME_KEY = "kz-maplestory:theme";
-const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const THEME_EVENT = "theme:changed";
 
-export const themePref = ref<ThemePref>("system");
-
-try {
-  const saved = localStorage.getItem(THEME_KEY);
-  if (saved === "light" || saved === "dark" || saved === "system") themePref.value = saved;
-} catch {
-  /* 私密模式等情境讀不到就用預設 */
+function initial(): ThemePref {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    /* 私密模式等情境讀不到就用系統偏好 */
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
+
+export const themePref = ref<ThemePref>(initial());
 
 function applyTheme() {
-  const resolved =
-    themePref.value === "system" ? (darkQuery.matches ? "dark" : "light") : themePref.value;
-  document.documentElement.dataset.theme = resolved;
+  document.documentElement.dataset.theme = themePref.value;
 }
-
-const THEME_EVENT = "theme:changed";
 
 export function setTheme(t: ThemePref) {
   themePref.value = t;
@@ -42,7 +41,6 @@ export function setTheme(t: ThemePref) {
 
 export function initTheme() {
   applyTheme();
-  darkQuery.addEventListener("change", applyTheme);
   void listen<ThemePref>(THEME_EVENT, (e) => {
     themePref.value = e.payload;
     applyTheme();

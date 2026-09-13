@@ -11,10 +11,9 @@ const GITHUB_URL = "https://github.com/xense999";
 const SUPPORT_URL = "https://portaly.cc/xense999/support";
 const RELEASES_URL = "https://github.com/xense999/kz-maplestory/releases/latest";
 
-const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: "light", label: "淺色", hint: "固定淺色" },
-  { id: "dark", label: "深色", hint: "固定深色" },
-  { id: "system", label: "自動", hint: "跟隨 Windows 的設定" },
+const THEMES: { id: ThemePref; label: string }[] = [
+  { id: "light", label: "淺色" },
+  { id: "dark", label: "深色" },
 ];
 
 const version = ref("");
@@ -123,7 +122,6 @@ async function copyDiscord() {
               v-for="t in THEMES"
               :key="t.id"
               :class="{ on: themePref === t.id }"
-              :title="t.hint"
               @click="setTheme(t.id)"
             >
               {{ t.label }}
@@ -225,7 +223,26 @@ async function copyDiscord() {
   gap: var(--sp-3);
 }
 
-/* 設定列：整列固定高、左標題右控制項，同一張卡內用細線分隔 */
+/* 這一頁的分段控制器是方角的（不是全站那種膠囊）：軌道一塊淺底，
+   選中的那格是浮在上面的一塊面，兩格之間不留縫。 */
+.seg {
+  padding: 3px;
+  gap: 1px;
+  background: var(--chip);
+  border-radius: var(--radius-sm);
+}
+.seg > * {
+  height: 30px;
+  padding: 0 18px;
+  font-size: 15px;
+  border-radius: var(--radius-xs);
+}
+.seg > .on {
+  background: var(--bg-1);
+  border: none;
+}
+
+/* 設定列：整列固定高、左標題右控制項 */
 .row {
   display: flex;
   align-items: center;
