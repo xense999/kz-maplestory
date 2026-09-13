@@ -130,11 +130,6 @@ async function copyDiscord() {
             </button>
           </div>
         </div>
-        <div class="row-sep"></div>
-        <div class="row">
-          <span class="row-title">浮動視窗</span>
-          <span class="row-note">固定深色，不跟這裡的主題連動</span>
-        </div>
       </section>
     </div>
 
@@ -239,17 +234,9 @@ async function copyDiscord() {
   min-height: 56px;
   padding: 10px var(--sp-4);
 }
-.row-sep {
-  height: 1px;
-  background: var(--border);
-}
 .row-title {
   font-size: 16px;
   color: var(--text);
-}
-.row-note {
-  font-size: 14px;
-  color: var(--text-faint);
 }
 
 .bottom-bar {
