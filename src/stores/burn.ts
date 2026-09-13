@@ -42,7 +42,7 @@ export const SPECS: Spec[] = [
     label: "出租輪迴",
     hint: "客戶買的時長，到期提醒收工",
     durationMs: 30 * MIN,
-    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN],
+    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 150 * MIN, 180 * MIN],
   },
 ];
 

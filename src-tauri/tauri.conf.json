@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "久世管理器",
-        "width": 1180,
-        "height": 600,
+        "width": 1000,
+        "height": 540,
         "minWidth": 900,
         "minHeight": 480,
         "decorations": false,
