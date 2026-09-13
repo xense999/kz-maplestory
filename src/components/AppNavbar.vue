@@ -15,10 +15,6 @@ const active = defineModel<string>({ required: true });
         :title="n.hint"
         @click="active = n.id"
       >
-        <svg class="navico" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-             stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-          <path v-for="(d, i) in n.icon" :key="i" :d="d" />
-        </svg>
         {{ n.label }}
       </button>
     </nav>
@@ -68,17 +64,5 @@ const active = defineModel<string>({ required: true });
   color: var(--text);
   background: var(--bg-1);
   box-shadow: var(--shadow-1);
-}
-.navico {
-  width: 17px;
-  height: 17px;
-  flex: none;
-  opacity: 0.66;
-}
-.navtab:hover .navico {
-  opacity: 0.9;
-}
-.navtab.on .navico {
-  opacity: 1;
 }
 </style>

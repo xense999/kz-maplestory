@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "久世管理器",
         "width": 1000,
         "height": 540,
@@ -21,6 +22,20 @@
         "transparent": true,
         "shadow": false,
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
+      },
+      {
+        "label": "float",
+        "url": "index.html?view=float",
+        "title": "久世管理器 — 浮動計時",
+        "width": 232,
+        "height": 148,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false
       }
     ],
     "security": {

@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { startAlarm, stopAlarm } from "../alarm";
 import { onHotkey, unwatchKey, watchKey, type Hotkey } from "../hotkey";
+import { broadcastTimers, onFloatHello } from "../float";
 
 /**
  * 輪燒計時器：輪迴、燃燒、出租輪迴各一組。
@@ -21,38 +22,37 @@ interface Spec {
   /** 有值＝時長可選，這幾檔會出現在卡片上 */
   presets?: number[];
   /**
-   * 按鍵在計時途中再按下時的行為。
-   * true（技能）＝每按一次就從頭重算，因為那真的是又放了一次技能。
-   * false（出租）＝這一輪是客戶買的一整段時間，第一次按下就開始跑到底，
-   * 中途放技能的按鍵不該把客戶的時間洗掉。
+   * 這張卡有沒有自己的按鍵。
+   * 出租沒有：它跟著下面兩張技能卡的第一次觸發起算，不必另外綁一顆鍵。
    */
-  restartOnKey: boolean;
+  hotkeyable: boolean;
 }
 
 const MIN = 60_000;
 
+// 順序＝畫面上的順序（浮動視窗也吃這張表），出租在最上面
 export const SPECS: Spec[] = [
+  {
+    id: "rental",
+    label: "出租",
+    hint: "下面任一張卡第一次觸發時起算，之後一路跑到結束",
+    durationMs: 30 * MIN,
+    hotkeyable: false,
+    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 150 * MIN, 180 * MIN],
+  },
   {
     id: "reincarnation",
     label: "輪迴計時器",
     hint: "起算後 9 分 50 秒提醒，每按一次重算",
     durationMs: 9 * MIN + 50_000,
-    restartOnKey: true,
+    hotkeyable: true,
   },
   {
     id: "burning",
     label: "燃燒計時器",
-    hint: "起算後 15 分提醒，每按一次重算",
-    durationMs: 15 * MIN,
-    restartOnKey: true,
-  },
-  {
-    id: "rental",
-    label: "出租輪迴",
-    hint: "第一次按鍵起算，中途再按不會重來",
-    durationMs: 30 * MIN,
-    restartOnKey: false,
-    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 150 * MIN, 180 * MIN],
+    hint: "起算後 14 分 50 秒提醒，每按一次重算",
+    durationMs: 14 * MIN + 50_000,
+    hotkeyable: true,
   },
 ];
 
@@ -90,14 +90,22 @@ function loadSaved(): Record<string, Saved> {
 export const useBurnStore = defineStore("burn", () => {
   const saved = loadSaved();
 
+  /**
+   * 只有時長可調的卡片（有 presets）才吃存檔的時長。
+   * 技能卡的時長是寫死的規格——存了會變成「改了程式碼但舊使用者永遠停在舊秒數」。
+   */
+  function initialDuration(s: Spec) {
+    return (s.presets ? saved[s.id]?.durationMs : undefined) ?? s.durationMs;
+  }
+
   const timers = reactive(
     Object.fromEntries(
       SPECS.map((s) => [
         s.id,
         {
           endAt: null,
-          runMs: saved[s.id]?.durationMs ?? s.durationMs,
-          durationMs: saved[s.id]?.durationMs ?? s.durationMs,
+          runMs: initialDuration(s),
+          durationMs: initialDuration(s),
           fired: false,
           hotkey: saved[s.id]?.hotkey ?? null,
           hotkeyOn: false,
@@ -130,7 +138,8 @@ export const useBurnStore = defineStore("burn", () => {
               {
                 hotkey: timers[s.id].hotkey,
                 hotkeyOn: timers[s.id].hotkeyOn,
-                durationMs: timers[s.id].durationMs,
+                // 固定時長的卡片不寫回去，免得下次改規格時被舊值蓋掉
+                durationMs: s.presets ? timers[s.id].durationMs : undefined,
               },
             ]),
           ),
@@ -164,13 +173,16 @@ export const useBurnStore = defineStore("burn", () => {
   }
 
   /**
-   * 按鍵按下時走這裡，不是直接 start。
-   * 出租那張卡（restartOnKey=false）只在還沒起算時接受按鍵：已經在跑就讓它跑完，
-   * 已經到期也不自動開新的一輪——要開新客戶得自己按「開始」。
+   * 技能卡的按鍵按下時走這裡。
+   * 技能本身每按一次就重算；出租則搭這班車——還沒起算就跟著開始，
+   * 已經在跑（或已到期還沒收）就不動它，客戶那段時間要一路跑到結束。
    */
   function pressKey(id: TimerId) {
-    if (!spec(id).restartOnKey && timers[id].endAt !== null) return;
+    // 出租沒有自己的鍵。舊設定檔可能還留著一組（UI 拿掉了、後端仍在監聽），
+    // 那種事件一律不理，否則每按一次技能鍵都會把客戶的時間打掉重算。
+    if (!spec(id).hotkeyable) return;
     start(id);
+    if (timers.rental.endAt === null) start("rental");
   }
 
   function reset(id: TimerId) {
@@ -225,6 +237,21 @@ export const useBurnStore = defineStore("burn", () => {
     persist();
   }
 
+  /** 浮動視窗只需要「叫什麼、什麼時候到期」，其他狀態不必過去 */
+  function snapshot() {
+    return SPECS.map((s) => ({
+      id: s.id,
+      label: s.label,
+      endAt: timers[s.id].endAt,
+      durationMs: timers[s.id].durationMs,
+    }));
+  }
+  // 每 250ms 的 tick 不會動 endAt，所以這裡只在真的起算／歸零／改時長時送
+  watch(
+    () => SPECS.map((s) => `${timers[s.id].endAt}:${timers[s.id].durationMs}`).join(","),
+    () => broadcastTimers(snapshot()),
+  );
+
   let wired = false;
   /** 接後端事件、把上次開著的監聽接回去。整個 app 只做一次 */
   async function init() {
@@ -233,7 +260,19 @@ export const useBurnStore = defineStore("burn", () => {
     await onHotkey((id) => {
       if (SPECS.some((s) => s.id === id)) pressKey(id as TimerId);
     });
+    // 浮動視窗開起來時會喊一聲，補一份現況給它
+    await onFloatHello(() => broadcastTimers(snapshot()));
     for (const s of SPECS) {
+      if (!s.hotkeyable) {
+        // 這張卡以前可能綁過鍵，把後端的登記與存檔一起清乾淨
+        await unwatchKey(s.id).catch(() => {});
+        if (timers[s.id].hotkey) {
+          timers[s.id].hotkey = null;
+          timers[s.id].hotkeyOn = false;
+          persist();
+        }
+        continue;
+      }
       if (saved[s.id]?.hotkeyOn && timers[s.id].hotkey) await setHotkeyEnabled(s.id, true);
     }
   }

@@ -4,6 +4,7 @@ import TimerCard from "../components/TimerCard.vue";
 import { SPECS, useBurnStore, type TimerId } from "../stores/burn";
 import { ringing, stopAlarm, testBeep } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
+import { openFloatWindow } from "../float";
 
 const store = useBurnStore();
 
@@ -47,6 +48,9 @@ const dueCount = computed(
       <span v-if="dueCount" class="badge over">{{ dueCount }} 個到期</span>
       <div class="spacer"></div>
       <button v-if="ringing" class="primary" @click="stopAlarm()">停止提醒</button>
+      <button class="plain" title="開一個永遠置頂的小視窗，遊戲中也看得到倒數" @click="openFloatWindow()">
+        浮動視窗
+      </button>
       <button class="plain" title="試聽提醒音" @click="testBeep()">試聽</button>
     </header>
 

@@ -78,25 +78,21 @@ function applyCustom() {
       <div class="spacer"></div>
 
       <!-- 按鍵：只監聽不攔截，所以可以直接掛在放技能的那顆鍵上 -->
-      <div class="hk">
+      <div v-if="store.spec(id).hotkeyable" class="hk">
         <button
           class="keycap"
           :class="{ rec: recording, unset: !store.timers[id].hotkey }"
-          :title="recording ? '按下要監聽的鍵（Esc 取消）' : '點一下設定按鍵'"
+          :title="
+            recording
+              ? '按下要監聽的鍵（Esc 取消）'
+              : store.timers[id].hotkey
+                ? '點一下改按鍵，按右鍵清除'
+                : '點一下設定按鍵'
+          "
           @click="emit('record', id)"
+          @contextmenu.prevent="store.clearHotkey(id)"
         >
           {{ recording ? "按下按鍵…" : (store.timers[id].hotkey?.label ?? "設定按鍵") }}
-        </button>
-        <button
-          v-if="store.timers[id].hotkey && !recording"
-          class="plain x"
-          title="清除按鍵"
-          @click="store.clearHotkey(id)"
-        >
-          <svg viewBox="0 0 12 12" width="11" height="11">
-            <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.4"
-                  stroke-linecap="round" />
-          </svg>
         </button>
         <button
           class="switch"
@@ -186,39 +182,37 @@ function applyCustom() {
   display: none;
 }
 
-/* 按鍵設定是一整組（哪顆鍵＋要不要聽），用一圈框把它跟卡片其他東西分開，
-   不然三顆控制項散在標題列右邊看起來像各自獨立的按鈕 */
 .hk {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: none;
-  padding: 5px 8px 5px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-pill);
-  background: var(--wash);
 }
 /* 開關是「另一件事」（設哪顆鍵 vs 要不要聽），所以和鍵帽那組之間多留一段 */
 .hk .switch {
   margin-left: var(--sp-2);
 }
-/* 鍵帽：看得出來是「一顆鍵」——實心邊框＋等寬字，錄製中換成強調色好認 */
+/* 鍵帽＝這張卡上唯一需要「一眼看到是可設定的欄位」的東西，所以給它一圈實線；
+   四邊等粗、不加陰影，框本身就夠說明它是個欄位了 */
 .keycap {
-  height: 30px;
-  min-width: 92px;
-  padding: 0 12px;
+  height: 32px;
+  min-width: 96px;
+  padding: 0 14px;
   font-size: 15px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  background: var(--bg-1);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  box-shadow: 0 1px 0 var(--border-strong);
+  box-shadow: none;
+}
+.keycap:hover:not(:disabled) {
+  border-color: var(--accent);
 }
 .keycap.unset {
   color: var(--text-dim);
   font-weight: 500;
   border-style: dashed;
-  box-shadow: none;
 }
 .keycap.rec {
   color: var(--text-on-accent);
@@ -226,13 +220,6 @@ function applyCustom() {
   border-color: var(--accent);
   box-shadow: var(--ring);
 }
-.x {
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  flex: none;
-}
-
 .spans {
   display: flex;
   align-items: center;
