@@ -9,19 +9,37 @@ const now = ref(Date.now());
 const opacity = ref(1);
 
 let tick: number | null = null;
+let hello: number | null = null;
 let stopSync: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
+
+/**
+ * 這個視窗可能比主視窗先準備好（開機時兩個 webview 同時載入），
+ * 那第一聲 hello 就沒人接、畫面會一直空著。所以要到收得到資料為止。
+ */
+function keepAskingUntilAnswered() {
+  sayHello();
+  hello = window.setInterval(() => {
+    if (snaps.value.length) {
+      if (hello !== null) clearInterval(hello);
+      hello = null;
+      return;
+    }
+    sayHello();
+  }, 1000);
+}
 
 onMounted(async () => {
   stopSync = await onTimersSync((s) => (snaps.value = s));
   stopOpacity = await onFloatOpacity((v) => (opacity.value = v));
-  sayHello();
+  keepAskingUntilAnswered();
   tick = window.setInterval(() => (now.value = Date.now()), 250);
 });
 onUnmounted(() => {
   stopSync?.();
   stopOpacity?.();
   if (tick !== null) clearInterval(tick);
+  if (hello !== null) clearInterval(hello);
 });
 
 function onDown(e: MouseEvent) {
@@ -106,7 +124,7 @@ function state(s: TimerSnap) {
   gap: 8px;
 }
 .label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;

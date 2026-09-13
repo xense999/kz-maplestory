@@ -272,6 +272,9 @@ export const useBurnStore = defineStore("burn", () => {
       broadcastTimers(snapshot());
       pushFloatOpacity();
     });
+    // 也主動送一次：浮動視窗可能在監聽器掛好之前就喊過了
+    broadcastTimers(snapshot());
+    pushFloatOpacity();
     for (const s of SPECS) {
       if (!s.hotkeyable) {
         // 這張卡以前可能綁過鍵，把後端的登記與存檔一起清乾淨
