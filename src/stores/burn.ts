@@ -131,7 +131,6 @@ export const useBurnStore = defineStore("burn", () => {
    */
   const ringingFor = new Set<TimerId>();
 
-  // 鈴聲自己響完 10 秒（或使用者按了停止提醒）之後，欠帳一併清掉
   watch(ringing, (on) => {
     if (!on) ringingFor.clear();
   });
@@ -215,6 +214,23 @@ export const useBurnStore = defineStore("burn", () => {
     t.endAt = null;
     t.fired = false;
     clearAlarmFor(id);
+  }
+
+  /**
+   * 「停止提醒」按下去＝這一輪處理完了，所以除了收鈴，也把已經到期的計時器歸零。
+   * 對出租來說這一步是必要的：不歸零的話它的 endAt 還在，下一次按技能鍵不會
+   * 跟著開新的一輪，等於下一位客戶要自己再按一次卡片上的按鈕。
+   */
+  function acknowledge() {
+    for (const s of SPECS) {
+      const t = timers[s.id];
+      if (t.endAt !== null && t.endAt <= Date.now()) {
+        t.endAt = null;
+        t.fired = false;
+      }
+    }
+    ringingFor.clear();
+    stopAlarm();
   }
 
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */
@@ -320,6 +336,7 @@ export const useBurnStore = defineStore("burn", () => {
     start,
     pressKey,
     reset,
+    acknowledge,
     setDuration,
     setHotkey,
     clearHotkey,

@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import TimerCard from "../components/TimerCard.vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
-import { ringing, stopAlarm } from "../alarm";
+import { ringing } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
 import { floatOpacity, floatOpen, setFloatOpacity, toggleFloatWindow } from "../float";
 
@@ -46,7 +46,7 @@ const opacityOpen = ref(false);
       <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列；兩顆技能是它底下的操作 -->
       <TimerCard id="rental" :recording="recording === 'rental'" @record="onRecord">
         <template #head>
-          <button v-if="ringing" class="primary" @click="stopAlarm()">停止提醒</button>
+          <button v-if="ringing" class="primary" @click="store.acknowledge()">停止提醒</button>
           <div
             class="floatctl"
             @mouseenter="opacityOpen = true"
