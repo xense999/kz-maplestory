@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { themePref, setTheme, type ThemePref } from "../theme";
 
 defineProps<{ title: string }>();
 
@@ -16,26 +17,71 @@ const syncMaximized = async () => {
 // 為什麼失效；明著呼叫的話行為看得見、也擋得掉視窗鈕。
 function onTitlebarDown(e: MouseEvent) {
   if (e.button !== 0) return;
-  if ((e.target as HTMLElement | null)?.closest("button")) return;
+  if ((e.target as HTMLElement | null)?.closest("button, .popover")) return;
   void appWin.startDragging();
 }
 function onTitlebarDblClick(e: MouseEvent) {
-  if ((e.target as HTMLElement | null)?.closest("button")) return;
+  if ((e.target as HTMLElement | null)?.closest("button, .popover")) return;
   void appWin.toggleMaximize();
 }
+
+// ── 設定（標題列最左那顆齒輪）──
+const settingsOpen = ref(false);
+const settingsEl = ref<HTMLElement | null>(null);
+function onDocPointerDown(e: PointerEvent) {
+  if (!settingsOpen.value) return;
+  if (!settingsEl.value?.contains(e.target as Node)) settingsOpen.value = false;
+}
+
+const THEMES: { id: ThemePref; label: string; title: string }[] = [
+  { id: "light", label: "淺色", title: "固定淺色" },
+  { id: "dark", label: "深色", title: "固定深色" },
+  { id: "system", label: "自動", title: "跟隨系統" },
+];
 
 let unlisten: (() => void) | null = null;
 onMounted(async () => {
   await syncMaximized();
   unlisten = await appWin.onResized(syncMaximized);
+  document.addEventListener("pointerdown", onDocPointerDown);
 });
-onUnmounted(() => unlisten?.());
+onUnmounted(() => {
+  unlisten?.();
+  document.removeEventListener("pointerdown", onDocPointerDown);
+});
 </script>
 
 <template>
   <div class="titlebar" @mousedown="onTitlebarDown" @dblclick="onTitlebarDblClick">
+    <div class="settings" ref="settingsEl">
+      <button class="gear" :class="{ on: settingsOpen }" title="設定" @click="settingsOpen = !settingsOpen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
+
+      <div v-if="settingsOpen" class="popover">
+        <div class="pop-arrow"></div>
+        <div class="pop-title">外觀</div>
+        <div class="seg themeseg">
+          <button
+            v-for="t in THEMES"
+            :key="t.id"
+            :class="{ on: themePref === t.id }"
+            :title="t.title"
+            @click="setTheme(t.id)"
+          >
+            {{ t.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <span class="tb-brand">{{ title }}</span>
     <div class="tb-spacer"></div>
+
     <div class="win-controls">
       <button class="wbtn" @click="appWin.minimize()" title="最小化">
         <svg class="wico" viewBox="0 0 10 10"><rect x="1.5" y="4.7" width="7" height="0.8" rx="0.4" /></svg>
@@ -60,8 +106,8 @@ onUnmounted(() => unlisten?.());
   flex: none;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 8px 0 var(--sp-4);
+  gap: 8px;
+  padding: 0 8px;
   background: var(--bg-1);
   border-bottom: 0.5px solid var(--border);
   backdrop-filter: blur(24px) saturate(1.8);
@@ -76,6 +122,81 @@ onUnmounted(() => unlisten?.());
 .tb-spacer {
   flex: 1;
   height: 100%;
+}
+
+/* 設定：標題列最左一顆齒輪，外觀等全域設定都收在它底下的浮層裡 */
+.settings {
+  position: relative;
+  flex: none;
+}
+.gear {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--radius-pill);
+  color: var(--text-dim);
+}
+.gear:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+.gear.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.gear svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  width: 240px;
+  padding: var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--popover);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: blur(28px) saturate(1.8);
+  animation: pop-in 0.14s ease-out;
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+.pop-arrow {
+  position: absolute;
+  top: -5px;
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.pop-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+.themeseg {
+  width: 100%;
+}
+.themeseg > button {
+  flex: 1;
+  padding: 0 6px;
 }
 
 .win-controls {

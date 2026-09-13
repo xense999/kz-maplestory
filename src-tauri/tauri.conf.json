@@ -14,9 +14,9 @@
       {
         "title": "久世管理器",
         "width": 1180,
-        "height": 820,
+        "height": 600,
         "minWidth": 900,
-        "minHeight": 600,
+        "minHeight": 480,
         "decorations": false,
         "transparent": true,
         "shadow": false
