@@ -46,8 +46,9 @@ const active = defineModel<string>({ required: true });
 .navtabs::-webkit-scrollbar {
   display: none;
 }
+/* 沒選到的分頁也要有自己的框：只有選中那顆有框的話，其他分頁看起來像純文字 */
 .navtab {
-  border: none;
+  border: 1px solid var(--control-border);
   height: 38px;
   gap: 8px;
   padding: 0 18px;
@@ -64,6 +65,6 @@ const active = defineModel<string>({ required: true });
 .navtab.on {
   color: var(--text);
   background: var(--bg-1);
-  border: 1px solid var(--border-strong);
+  border-color: var(--accent);
 }
 </style>
