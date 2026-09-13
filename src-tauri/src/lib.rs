@@ -1,12 +1,18 @@
+#[cfg(windows)]
+mod keyhook;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
+    let builder = tauri::Builder::default();
 
-    // 全域快捷鍵：使用者按鍵時遊戲在前景，網頁的 keydown 收不到，只能走系統層註冊
-    #[cfg(desktop)]
-    {
-        builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
-    }
+    #[cfg(windows)]
+    let builder = builder
+        .invoke_handler(tauri::generate_handler![keyhook::watch_key, keyhook::unwatch_key])
+        .setup(|app| {
+            // 監聽式熱鍵：不搶鍵，玩家按放技能的那顆鍵時我們順便起算
+            keyhook::start(app.handle().clone());
+            Ok(())
+        });
 
     builder
         .run(tauri::generate_context!())

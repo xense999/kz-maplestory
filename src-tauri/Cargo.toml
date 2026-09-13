@@ -20,8 +20,13 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-global-shortcut = "2"
+[target.'cfg(windows)'.dependencies]
+# 只看不攔的鍵盤 hook（見 src/keyhook.rs）；版本對齊 tauri 已經在用的 windows crate
+windows = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Input_KeyboardAndMouse",
+] }
 
 [profile.release]
 opt-level = 3
