@@ -101,7 +101,11 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* 齒輪浮層是掛在標題列裡往下開的，而側欄／內容區在 DOM 上排在後面：
+   同層級時後畫的會蓋掉先畫的，所以標題列整條要自己抬到上面來。 */
 .titlebar {
+  position: relative;
+  z-index: 20;
   height: 44px;
   flex: none;
   display: flex;
