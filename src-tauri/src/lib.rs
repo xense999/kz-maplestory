@@ -20,9 +20,7 @@ pub fn run() {
             update::check_app_update,
             update::update_app_inplace,
             maple::fetch_character,
-            progress::record_progress,
-            progress::progress_summary,
-            progress::clear_progress,
+            maple::fetch_history,
         ])
         .setup(|app| {
             // 監聽式熱鍵：不搶鍵，玩家按放技能的那顆鍵時我們順便起算

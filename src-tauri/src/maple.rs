@@ -79,6 +79,80 @@ async fn get(url: &str, api_key: &str) -> Result<String, String> {
     }
 }
 
+/// 某一天的角色狀態。官方的 `date` 參數查得到過去的快照，所以「這幾天練了多少」
+/// 可以直接跟官方要，不必靠程式當時有沒有開著。
+#[derive(Debug, Clone, Serialize)]
+pub struct DaySample {
+    pub date: String,
+    pub level: i64,
+    pub exp_percent: f64,
+}
+
+/// 角色名換 ocid。ocid 是穩定的，同一次批次查詢只需要換一次。
+async fn resolve_ocid(name: &str, api_key: &str) -> Result<String, String> {
+    let url = format!("{BASE}/id?character_name={}", urlencoding(name));
+    let resp: OcidResp =
+        serde_json::from_str(&get(&url, api_key).await?).map_err(|e| format!("查角色失敗：{e}"))?;
+    Ok(resp.ocid)
+}
+
+/// 查這幾天的狀態。日期字串由前端算好（本機時區的事），格式 YYYY-MM-DD。
+///
+/// 查不到的日期直接略過而不是整批失敗：角色那天可能還沒建立，或官方就是沒有那天的資料。
+/// 一批日期查回來的東西，外加算好的成長量。
+#[derive(Debug, Serialize)]
+pub struct History {
+    pub days: Vec<DaySample>,
+    pub growth: crate::progress::Growth,
+}
+
+#[tauri::command]
+pub async fn fetch_history(
+    name: String,
+    api_key: String,
+    dates: Vec<String>,
+    today: String,
+    latest_level: i64,
+    latest_exp: f64,
+) -> Result<History, String> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("角色名稱是空的".into());
+    }
+    if api_key.trim().is_empty() {
+        return Err("設定頁還沒填 API 金鑰".into());
+    }
+
+    let ocid = resolve_ocid(name, &api_key).await?;
+    let mut out = Vec::new();
+
+    for date in dates {
+        let url = format!(
+            "{BASE}/character/basic?ocid={}&date={}",
+            urlencoding(&ocid),
+            urlencoding(&date)
+        );
+        let Ok(body) = get(&url, &api_key).await else {
+            continue;
+        };
+        let Ok(basic) = serde_json::from_str::<BasicResp>(&body) else {
+            continue;
+        };
+        out.push(DaySample {
+            date,
+            level: basic.character_level,
+            exp_percent: basic
+                .character_exp_rate
+                .as_deref()
+                .and_then(|s| s.parse::<f64>().ok())
+                .unwrap_or(0.0),
+        });
+    }
+
+    let growth = crate::progress::growth(&out, &today, latest_level, latest_exp);
+    Ok(History { days: out, growth })
+}
+
 #[tauri::command]
 pub async fn fetch_character(name: String, api_key: String) -> Result<CharacterInfo, String> {
     let name = name.trim();
@@ -89,11 +163,9 @@ pub async fn fetch_character(name: String, api_key: String) -> Result<CharacterI
         return Err("設定頁還沒填 API 金鑰".into());
     }
 
-    let id_url = format!("{BASE}/id?character_name={}", urlencoding(name));
-    let ocid: OcidResp = serde_json::from_str(&get(&id_url, &api_key).await?)
-        .map_err(|e| format!("查角色失敗：{e}"))?;
+    let ocid = resolve_ocid(name, &api_key).await?;
 
-    let basic_url = format!("{BASE}/character/basic?ocid={}", urlencoding(&ocid.ocid));
+    let basic_url = format!("{BASE}/character/basic?ocid={}", urlencoding(&ocid));
     let basic: BasicResp = serde_json::from_str(&get(&basic_url, &api_key).await?)
         .map_err(|e| format!("讀角色資料失敗：{e}"))?;
 

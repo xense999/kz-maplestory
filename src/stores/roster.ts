@@ -3,13 +3,11 @@ import { computed, reactive } from "vue";
 import { apiKey } from "../apikey";
 import { progressPanel, type CharacterSnap } from "../float";
 import {
-  clearProgress,
   fetchCharacter,
-  readProgress,
-  recordProgress,
+  fetchHistory,
   REFRESH_MS,
   type CharacterInfo,
-  type Progress,
+  type Growth,
 } from "../character";
 
 /**
@@ -33,7 +31,7 @@ interface SlotState {
   /** 要不要出現在浮動視窗 */
   shown: boolean;
   info: CharacterInfo | null;
-  growth: Progress | null;
+  growth: Growth | null;
   loading: boolean;
   error: string;
 }
@@ -112,7 +110,8 @@ export const useRosterStore = defineStore("roster", () => {
     try {
       // 抓失敗時刻意不清掉舊的 info：暫時斷網不該讓畫面變空白
       t.info = await fetchCharacter(t.name, apiKey.value);
-      t.growth = await recordProgress(id, t.info.level, t.info.expPercent);
+      const hist = await fetchHistory(t.name, apiKey.value, t.info.level, t.info.expPercent);
+      t.growth = hist.growth;
       t.error = "";
     } catch (e) {
       t.error = String(e instanceof Error ? e.message : e);
@@ -133,8 +132,6 @@ export const useRosterStore = defineStore("roster", () => {
     slots[id].name = next;
     slots[id].info = null;
     slots[id].growth = null;
-    // 這一格的歷史是舊角色的，留著會讓成長量拿兩隻不同角色的數字相減
-    await clearProgress(id).catch(() => {});
     persist();
     publish();
     await refresh(id);
@@ -160,9 +157,6 @@ export const useRosterStore = defineStore("roster", () => {
       progressPanel.pushOpacity();
     });
 
-    for (const s of SLOTS) {
-      if (slots[s.id].name) slots[s.id].growth = await readProgress(s.id).catch(() => null);
-    }
     publish();
     progressPanel.pushOpacity();
 

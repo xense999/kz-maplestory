@@ -38,6 +38,8 @@ function delta(v?: number | null) {
   <div class="page">
     <div class="body">
       <div class="pagebar">
+        <!-- 資料會自己定時更新；這顆是給「剛練完想馬上看」用的 -->
+        <button :disabled="!roster.anyNamed" @click="roster.refreshAll()">更新</button>
         <div class="spacer"></div>
         <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
           <button
@@ -106,7 +108,7 @@ function delta(v?: number | null) {
                 {{ roster.slots[s.id].name }}
               </button>
 
-              <span v-if="roster.slots[s.id].info?.world" class="world">
+              <span v-if="roster.slots[s.id].info?.world" class="badge world" title="伺服器">
                 {{ roster.slots[s.id].info!.world }}
               </span>
               <div class="spacer"></div>
@@ -179,6 +181,7 @@ function delta(v?: number | null) {
 .pagebar {
   display: flex;
   align-items: center;
+  gap: var(--sp-2);
 }
 
 /* 拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */
@@ -288,9 +291,15 @@ function delta(v?: number | null) {
 .who-text:hover:not(:disabled) {
   background: var(--hover);
 }
+/* 伺服器是標籤不是句子：做成徽章。空心＋紫色——填色的話它會跟旁邊的
+   控制項搶注意力，而紫色在這一頁沒有別的用途，不會跟狀態色混淆。 */
 .world {
-  font-size: 14px;
-  color: var(--text-faint);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--purple);
+  background: transparent;
+  border: 1px solid var(--purple);
+  padding: 0 7px;
 }
 
 .stats {

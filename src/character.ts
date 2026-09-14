@@ -38,50 +38,56 @@ interface RawCharacter {
 /** 每 10 分鐘更新一次 */
 export const REFRESH_MS = 10 * 60_000;
 
-/** 今天練了多少（等值百分比：一級算 100） */
-export interface Progress {
+/** 練了多少（等值百分比：一級算 100） */
+export interface Growth {
   today: number;
+  span: number;
+  today_base: string | null;
 }
 
-interface RawProgress {
-  today: number;
-  today_base_at: number | null;
+export interface History {
+  days: { date: string; level: number; exp_percent: number }[];
+  growth: Growth;
 }
 
-/** 本機時區今天 00:00。日界是本機的事，後端不處理時區，由這裡算好給它 */
-function startOfToday() {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+/** 本機時區的 YYYY-MM-DD */
+function ymd(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** 記一筆並拿回成長量 */
-export async function recordProgress(
-  slot: string,
-  level: number,
-  expPercent: number,
-): Promise<Progress> {
-  const r = await invoke<RawProgress>("record_progress", {
-    slot,
-    level,
-    expPercent,
-    dayStart: startOfToday(),
+/** 今天往前數 n 天（含今天）的日期字串 */
+function recentDates(n: number) {
+  const out: string[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    out.push(ymd(d));
+  }
+  return out;
+}
+
+/**
+ * 跟官方要這隻角色近幾天的每日快照，順便拿回算好的成長量。
+ *
+ * ★歷史由官方提供而不是自己記帳：記帳只在程式開著時才有資料，而且換角色時
+ * 很容易把兩隻的數字混在一起減。
+ */
+export async function fetchHistory(
+  name: string,
+  apiKey: string,
+  latestLevel: number,
+  latestExp: number,
+  days = 7,
+): Promise<History> {
+  return invoke<History>("fetch_history", {
+    name,
+    apiKey,
+    dates: recentDates(days),
+    today: ymd(new Date()),
+    latestLevel,
+    latestExp,
   });
-  return { today: r.today };
-}
-
-/** 不寫入，只讀出目前的成長量（畫面重建時用） */
-export async function readProgress(slot: string): Promise<Progress> {
-  const r = await invoke<RawProgress>("progress_summary", {
-    slot,
-    dayStart: startOfToday(),
-  });
-  return { today: r.today };
-}
-
-/** 換角色時整段作廢：新角色的數字不能拿舊角色的當基準 */
-export function clearProgress(slot: string) {
-  return invoke("clear_progress", { slot });
 }
 
 export async function fetchCharacter(name: string, apiKey: string): Promise<CharacterInfo> {

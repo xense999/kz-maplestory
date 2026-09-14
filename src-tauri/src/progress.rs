@@ -1,280 +1,112 @@
-//! 角色數值的歷史與成長量。
+//! 從官方的每日快照算「練了多少」。
 //!
-//! 官方 API 只給「現在幾級、這一級跑了幾 %」，沒有「今天賺了多少」。要回答那個問題
-//! 就得自己記帳：每抓到一次就存一筆，跟基準點相減。
+//! 官方 API 的 `date` 參數查得到過去的狀態，所以歷史由官方提供，程式不必自己記帳——
+//! 記帳版本只在程式開著時才有資料，換角色又會把兩隻的數字混在一起算。
 //!
-//! 檔案讀寫與計算刻意分開：[`summarize`] 是純函式，跨日、升級、第一筆這些邊界
-//! 全部在它身上，測試不必碰檔案也不必連網。
-//!
-//! ★「今天從幾點開始」由前端算好傳進來。日界是本機時區的事，而 std 沒有時區——
-//! 與其為了這件事拉一個時間函式庫進來，不如讓知道答案的那一層直接給答案。
+//! 這裡只有算術，沒有網路與檔案，所以升級、缺資料這些邊界可以直接測。
 
-use std::collections::HashMap;
-use std::path::PathBuf;
+use serde::Serialize;
 
-use serde::{Deserialize, Serialize};
-use tauri::Manager;
-
-/// 只留最近七天。再舊的對「誰練得快」沒有用，檔案也不該無限長大。
-const KEEP_MS: i64 = 7 * 24 * 60 * 60 * 1000;
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-pub struct Sample {
-    /// epoch 毫秒
-    pub at: i64,
-    pub level: i64,
-    /// 這一級已經跑掉的百分比，0~100
-    pub exp_percent: f64,
-}
-
-impl Sample {
-    /// 把「幾級又幾 %」壓成一個可以相減的數字。
-    ///
-    /// 一級當 100 來算。這不是真實經驗值——每一級需要的經驗不同，而 API 也沒給那張表——
-    /// 但要回答的是「誰練得比較快」，等值百分比就夠了，而且升級時不會變成負數。
-    fn equivalent(&self) -> f64 {
-        self.level as f64 * 100.0 + self.exp_percent
-    }
-}
+use crate::maple::DaySample;
 
 #[derive(Debug, Default, Serialize, PartialEq)]
-pub struct Progress {
-    /// 今天漲了多少（等值百分比）
+pub struct Growth {
+    /// 今天練了多少（等值百分比：一級算 100）
     pub today: f64,
-    /// 今天的基準點是哪一筆（沒有基準就是 None）
-    pub today_base_at: Option<i64>,
+    /// 這批日期涵蓋的範圍內總共練了多少
+    pub span: f64,
+    /// 今天的基準是哪一天（沒有可比的前一天就是 None）
+    pub today_base: Option<String>,
 }
 
-/// 從一串樣本算出今天的成長量。
+/// 幾級又幾 % 壓成一個可以相減的數字。一級當 100 算——不是真實經驗值
+/// （每級所需經驗不同，API 也沒給那張表），但要比的是「誰練得快」，這樣就夠，
+/// 而且升級時不會變成負數。
+fn equivalent(level: i64, exp_percent: f64) -> f64 {
+    level as f64 * 100.0 + exp_percent
+}
+
+/// `days` 是官方回的每日快照（日期字串可排序，YYYY-MM-DD），`latest_*` 是現在的值。
 ///
-/// `day_start` 是本機時區今天 00:00 的 epoch 毫秒。樣本不必先排序。
-pub fn summarize(samples: &[Sample], day_start: i64) -> Progress {
-    let Some(latest) = samples.iter().max_by_key(|s| s.at) else {
-        return Progress::default();
-    };
+/// 「今天練了」＝現在減掉最近一筆**早於今天**的快照。用昨天當基準而不是「今天那筆」，
+/// 是因為今天那筆本身就是今天某個時間點的狀態，拿它當基準會把今天已經練的那段吃掉。
+pub fn growth(days: &[DaySample], today: &str, latest_level: i64, latest_exp: f64) -> Growth {
+    let now = equivalent(latest_level, latest_exp);
 
-    // 基準＝今天最早的一筆。只有一筆樣本時基準就是它自己，所以成長量是 0——
-    // 這是對的：我們知道現在的值，但不知道它從哪裡來。
-    let base = samples
-        .iter()
-        .filter(|s| s.at >= day_start)
-        .min_by_key(|s| s.at);
+    let mut sorted: Vec<&DaySample> = days.iter().collect();
+    sorted.sort_by(|a, b| a.date.cmp(&b.date));
 
-    Progress {
-        today: base.map_or(0.0, |b| latest.equivalent() - b.equivalent()),
-        today_base_at: base.map(|b| b.at),
+    let before_today = sorted.iter().rev().find(|d| d.date.as_str() < today);
+    let oldest = sorted.first();
+
+    Growth {
+        today: before_today.map_or(0.0, |d| now - equivalent(d.level, d.exp_percent)),
+        span: oldest.map_or(0.0, |d| now - equivalent(d.level, d.exp_percent)),
+        today_base: before_today.map(|d| d.date.clone()),
     }
-}
-
-/// 丟掉七天前的樣本。寫入時做，讀取端就不必每次過濾。
-pub fn prune(samples: &mut Vec<Sample>, now: i64) {
-    samples.retain(|s| now - s.at <= KEEP_MS);
-}
-
-/// 數值沒變就不記。
-///
-/// 兩個理由：畫面重載會在同一秒抓兩次；而如果官方給的是每日快照，一天下來會堆出
-/// 上百筆一模一樣的數字。基準點取的是「區間內最早的一筆」，所以丟掉後面的重複值
-/// 不影響任何計算——最新值本來就跟它們相等。
-pub fn push_sample(samples: &mut Vec<Sample>, next: Sample) {
-    let unchanged = samples
-        .iter()
-        .max_by_key(|s| s.at)
-        .is_some_and(|last| last.level == next.level && last.exp_percent == next.exp_percent);
-    if unchanged {
-        return;
-    }
-    samples.push(next);
-}
-
-// ─── 檔案 ─────────────────────────────────────────────────────────────────────
-
-type Store = HashMap<String, Vec<Sample>>;
-
-fn now_ms() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or(0)
-}
-
-fn store_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("找不到資料夾：{e}"))?;
-    std::fs::create_dir_all(&dir).map_err(|e| format!("建立資料夾失敗：{e}"))?;
-    Ok(dir.join("progress.json"))
-}
-
-/// 讀不出來就當成空的：歷史壞掉不該讓整個功能停擺，最多是今天的成長量從頭算起。
-fn load(app: &tauri::AppHandle) -> Store {
-    store_path(app)
-        .ok()
-        .and_then(|p| std::fs::read_to_string(p).ok())
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
-}
-
-fn save(app: &tauri::AppHandle, store: &Store) -> Result<(), String> {
-    let path = store_path(app)?;
-    let text = serde_json::to_string(store).map_err(|e| format!("序列化失敗：{e}"))?;
-    std::fs::write(path, text).map_err(|e| format!("寫入歷史失敗：{e}"))
-}
-
-#[tauri::command]
-pub fn record_progress(
-    app: tauri::AppHandle,
-    slot: String,
-    level: i64,
-    exp_percent: f64,
-    day_start: i64,
-) -> Result<Progress, String> {
-    let now = now_ms();
-
-    let mut store = load(&app);
-    let samples = store.entry(slot).or_default();
-    push_sample(
-        samples,
-        Sample {
-            at: now,
-            level,
-            exp_percent,
-        },
-    );
-    prune(samples, now);
-
-    let progress = summarize(samples, day_start);
-    save(&app, &store)?;
-    Ok(progress)
-}
-
-#[tauri::command]
-pub fn progress_summary(
-    app: tauri::AppHandle,
-    slot: String,
-    day_start: i64,
-) -> Result<Progress, String> {
-    let store = load(&app);
-    let samples = store.get(&slot).map(Vec::as_slice).unwrap_or(&[]);
-    Ok(summarize(samples, day_start))
-}
-
-/// 換角色＝這一格的歷史整段作廢。
-///
-/// ★沒有這一步的話，成長量會拿新角色的數字去減舊角色的數字，算出一個荒謬的漲幅。
-#[tauri::command]
-pub fn clear_progress(app: tauri::AppHandle, slot: String) -> Result<(), String> {
-    let mut store = load(&app);
-    store.remove(&slot);
-    save(&app, &store)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const DAY: i64 = 24 * 60 * 60 * 1000;
-    /// 今天 00:00
-    const T0: i64 = 1_700_000_000_000;
-
-    fn s(at: i64, level: i64, exp_percent: f64) -> Sample {
-        Sample {
-            at,
+    fn d(date: &str, level: i64, exp_percent: f64) -> DaySample {
+        DaySample {
+            date: date.to_string(),
             level,
             exp_percent,
         }
     }
 
     #[test]
-    fn no_samples_is_zero_not_missing() {
-        let p = summarize(&[], T0);
-        assert_eq!(p, Progress::default());
+    fn no_history_means_no_number_yet() {
+        assert_eq!(growth(&[], "2026-09-14", 290, 50.0), Growth::default());
     }
 
     #[test]
-    fn a_single_sample_has_no_growth_yet() {
-        assert_eq!(summarize(&[s(T0 + 60_000, 200, 40.0)], T0).today, 0.0);
+    fn today_is_measured_against_yesterday() {
+        let days = [d("2026-09-13", 290, 20.0), d("2026-09-14", 290, 30.0)];
+        assert_eq!(growth(&days, "2026-09-14", 290, 45.0).today, 25.0);
     }
 
     #[test]
-    fn growth_is_measured_from_the_first_sample_of_the_day() {
-        let samples = [
-            s(T0 + 1_000, 200, 10.0),
-            s(T0 + 2_000, 200, 25.0),
-            s(T0 + 3_000, 200, 31.5),
-        ];
-        assert_eq!(summarize(&samples, T0).today, 21.5);
+    fn todays_own_snapshot_is_not_the_baseline() {
+        // 今天那筆是今天某個時間點的狀態；拿它當基準會少算今天已經練的部分
+        let days = [d("2026-09-14", 290, 40.0)];
+        assert_eq!(growth(&days, "2026-09-14", 290, 60.0).today, 0.0);
     }
 
     #[test]
-    fn yesterday_does_not_count_towards_today() {
-        let samples = [
-            s(T0 - DAY + 1_000, 200, 5.0), // 昨天
-            s(T0 + 1_000, 200, 60.0),      // 今天第一筆
-            s(T0 + 2_000, 200, 70.0),
-        ];
-        assert_eq!(summarize(&samples, T0).today, 10.0);
+    fn a_gap_falls_back_to_the_most_recent_earlier_day() {
+        // 前天有資料、昨天沒有
+        let days = [d("2026-09-12", 290, 10.0)];
+        let g = growth(&days, "2026-09-14", 290, 35.0);
+        assert_eq!(g.today, 25.0);
+        assert_eq!(g.today_base.as_deref(), Some("2026-09-12"));
     }
 
     #[test]
     fn levelling_up_does_not_read_as_a_loss() {
-        // 98% → 升級 → 3%：實際是漲了 5，不是掉了 95
-        let samples = [s(T0 + 1_000, 200, 98.0), s(T0 + 2_000, 201, 3.0)];
-        assert_eq!(summarize(&samples, T0).today, 5.0);
+        let days = [d("2026-09-13", 290, 98.0)];
+        assert_eq!(growth(&days, "2026-09-14", 291, 3.0).today, 5.0);
     }
 
     #[test]
-    fn two_levels_in_one_day_add_up() {
-        let samples = [s(T0 + 1_000, 200, 50.0), s(T0 + 2_000, 202, 50.0)];
-        assert_eq!(summarize(&samples, T0).today, 200.0);
-    }
-
-    #[test]
-    fn samples_need_not_be_in_order() {
-        let samples = [s(T0 + 3_000, 200, 30.0), s(T0 + 1_000, 200, 10.0)];
-        assert_eq!(summarize(&samples, T0).today, 20.0);
-    }
-
-    #[test]
-    fn an_unchanged_reading_is_not_recorded_again() {
-        let mut samples = vec![s(T0 + 1_000, 200, 40.0)];
-        push_sample(&mut samples, s(T0 + 2_000, 200, 40.0));
-        assert_eq!(samples.len(), 1);
-
-        push_sample(&mut samples, s(T0 + 3_000, 200, 40.5));
-        assert_eq!(samples.len(), 2);
-    }
-
-    #[test]
-    fn skipping_duplicates_keeps_the_growth_correct() {
-        let mut samples = vec![];
-        for (at, pct) in [(1_000, 10.0), (2_000, 10.0), (3_000, 10.0), (4_000, 25.0)] {
-            push_sample(&mut samples, s(T0 + at, 200, pct));
-        }
-        assert_eq!(samples.len(), 2);
-        assert_eq!(summarize(&samples, T0).today, 15.0);
-    }
-
-    #[test]
-    fn prune_drops_anything_older_than_a_week() {
-        let now = T0 + 7 * DAY;
-        let mut samples = vec![
-            s(T0 - 1, 200, 1.0),     // 剛好超過七天
-            s(T0, 200, 2.0),         // 剛好七天，留著
-            s(now, 200, 3.0),
+    fn span_covers_the_whole_batch() {
+        let days = [
+            d("2026-09-08", 288, 0.0),
+            d("2026-09-13", 290, 50.0),
         ];
-        prune(&mut samples, now);
-        assert_eq!(samples.len(), 2);
-        assert_eq!(samples[0].exp_percent, 2.0);
+        let g = growth(&days, "2026-09-14", 290, 70.0);
+        assert_eq!(g.span, 270.0);
+        assert_eq!(g.today, 20.0);
     }
 
     #[test]
-    fn pruning_does_not_change_the_numbers() {
-        let now = T0 + 7 * DAY;
-        let mut samples = vec![s(T0 - DAY, 199, 0.0), s(now - 1_000, 200, 10.0), s(now, 200, 30.0)];
-        let before = summarize(&samples, now - 2_000);
-        prune(&mut samples, now);
-        assert_eq!(summarize(&samples, now - 2_000), before);
+    fn days_need_not_arrive_in_order() {
+        let days = [d("2026-09-13", 290, 20.0), d("2026-09-11", 289, 0.0)];
+        let g = growth(&days, "2026-09-14", 290, 25.0);
+        assert_eq!(g.today, 5.0);
+        assert_eq!(g.span, 125.0);
     }
 }
