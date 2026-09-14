@@ -55,7 +55,7 @@ const roundUp = computed(() =>
         <section class="card outer">
           <div class="split">
             <div class="inner">
-              <div class="rows">
+              <div class="rows fields">
                 <label class="row">
                   <span class="rlabel">幣值</span>
                   <input
@@ -233,15 +233,17 @@ const roundUp = computed(() =>
   gap: var(--sp-2);
   min-height: 34px;
 }
-/* 標籤靠右：左卡的標籤是兩個字、右卡是四個字，等寬又靠左的話短標籤跟欄位之間
-   會空一大段。靠右讓每個標籤都貼著自己的數字，欄位本身還是對齊的。 */
 .rlabel {
   width: 64px;
   flex: none;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-dim);
-  text-align: right;
+}
+/* 左卡的標籤只有兩三個字，跟右卡共用一個寬度的話欄位前面會空一大段。
+   兩張卡的列高與字級仍然一致，只有這一欄各自貼合自己的標籤。 */
+.fields .rlabel {
+  width: 36px;
 }
 .rval {
   width: 190px;
