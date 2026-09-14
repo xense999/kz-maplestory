@@ -17,7 +17,7 @@ export interface NavItem {
 export const NAV: NavItem[] = [
   {
     id: "home",
-    label: "主頁",
+    label: "經驗追蹤",
     hint: "角色的等級與經驗進度",
     view: HomePage,
   },
