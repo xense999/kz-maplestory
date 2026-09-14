@@ -21,6 +21,10 @@ const THEMES: { id: ThemePref; label: string }[] = [
 
 /** 金鑰預設遮起來：這東西會被截圖、也會被旁邊的人看到 */
 const revealKey = ref(false);
+/** 「怎麼拿到金鑰」的說明，點問號才展開 */
+const keyHelp = ref(false);
+
+const NEXON_OPENAPI = "https://openapi.nexon.com/";
 
 /** 開機自動啟動。狀態的真實來源是系統本身，所以開頁時去問它，不自己記一份 */
 const autostart = ref(false);
@@ -172,7 +176,16 @@ async function copyDiscord() {
 
       <section class="card">
         <div class="row">
-          <span class="row-title">API 金鑰</span>
+          <span class="row-title">
+            API 金鑰
+            <button class="info" title="怎麼取得金鑰" @click="keyHelp = !keyHelp">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                <circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                <circle cx="12" cy="7.75" r="1.05" fill="currentColor" />
+              </svg>
+            </button>
+          </span>
           <div class="keyfield">
             <input
               type="text"
@@ -196,6 +209,16 @@ async function copyDiscord() {
               </svg>
             </button>
           </div>
+        </div>
+
+        <div v-if="keyHelp" class="help">
+          <p>金鑰要自己去 NEXON 的開發者網站申請，一組可以一直用：</p>
+          <ol>
+            <li>用你的遊戲帳號登入 NEXON Open API。</li>
+            <li>建立一個應用程式（Application），遊戲選「MapleStory Taiwan / 新楓之谷」。</li>
+            <li>建好之後頁面上會給一串 API Key，複製它貼到上面的欄位。</li>
+          </ol>
+          <button class="link" @click="openUrl(NEXON_OPENAPI)">開啟 NEXON Open API 網站</button>
         </div>
       </section>
 
@@ -321,9 +344,50 @@ async function copyDiscord() {
   padding: 10px var(--sp-4);
 }
 .row-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-strong);
+}
+.info {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  border-radius: var(--radius-pill);
+}
+.info:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* 說明只在問號按下去時展開，平常這一列就只是一個欄位 */
+.help {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0 var(--sp-4) var(--sp-4);
+  padding: var(--sp-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+.help ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+.help .link {
+  height: 30px;
+  font-size: 14px;
 }
 /* 這一頁的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
 .row button {
