@@ -275,12 +275,13 @@ async function copyDiscord() {
               <li>創立後從左方 Application List 進入，點選剛剛命名的 Service name。</li>
               <li>上方的 API key details 就是你的 API 金鑰。</li>
             </ol>
-            <p class="note">一組金鑰可以一直用，不必每次重新申請。</p>
           </div>
 
-          <div class="about-card">
+          <!-- 標籤與入口同一行：只有一顆按鈕，沒必要佔掉兩行 -->
+          <div class="about-card row-card">
             <span class="about-card-label">申請頁面</span>
-            <button class="btn-update" @click="openUrl(NEXON_OPENAPI)">在瀏覽器開啟</button>
+            <div class="spacer"></div>
+            <button class="btn-update" @click="openUrl(NEXON_OPENAPI)">申請入口</button>
           </div>
         </div>
       </div>
@@ -548,17 +549,18 @@ async function copyDiscord() {
 .steps {
   margin: 0;
   padding-left: 1.3em;
-  font-size: 14px;
-  line-height: 1.8;
+  font-size: 15px;
+  line-height: 1.9;
   color: var(--text-dim);
 }
-.note {
-  font-size: 13px;
-  color: var(--text-faint);
+/* 只有一行內容的卡片：標籤在左、動作在右 */
+.row-card {
+  flex-direction: row;
+  align-items: center;
 }
 .about-card-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text-faint);
 }
