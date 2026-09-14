@@ -391,6 +391,88 @@ async function copyDiscord() {
   background: var(--hover);
 }
 
+/* 這一列的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
+.row button {
+  font-weight: 600;
+}
+.ctrl {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.ctrl input[type="range"] {
+  width: 160px;
+}
+.ctrl-val {
+  width: 44px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* 眼睛長在輸入格裡面的右緣，不是旁邊另一顆按鈕 */
+.keyfield {
+  position: relative;
+  width: 340px;
+}
+.keyfield input {
+  width: 100%;
+  height: 32px;
+  padding-right: 40px;
+  font-size: 16px;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+/* ★遮罩不用 type=password：那種欄位瀏覽器會自己塞東西進去（顯示密碼鈕、
+   密碼管理員圖示、另一套畫圓點的字型），於是遮起來與看得到的樣子對不齊。
+   這裡永遠是一般文字欄位，只是把字換成圓點。 */
+.keyfield input.masked {
+  -webkit-text-security: disc;
+}
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  border-radius: var(--radius-xs);
+}
+.eye:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.bottom-bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--border);
+}
+.icon {
+  width: 44px;
+  height: 34px;
+  padding: 0;
+  flex: none;
+  color: var(--text-dim);
+}
+.icon:hover:not(:disabled) {
+  color: var(--text);
+}
+/* 贊助鍵是這一頁唯一帶感情的東西，hover 才露出紅色 */
+.heart:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
 .about-overlay {
   position: fixed;
   inset: 44px 0 0 0;
@@ -498,6 +580,7 @@ async function copyDiscord() {
   gap: 10px;
 }
 .btn-update {
+  align-self: flex-start;
   flex: none;
   height: 28px;
   padding: 0 12px;
