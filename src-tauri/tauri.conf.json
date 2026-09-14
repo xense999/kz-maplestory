@@ -45,7 +45,7 @@
         "url": "index.html?view=float-money",
         "title": "久世管理器 — 幣值換算",
         "width": 360,
-        "height": 182,
+        "height": 166,
         "minWidth": 240,
         "minHeight": 121,
         "resizable": true,

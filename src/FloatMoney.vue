@@ -14,9 +14,17 @@ const opacity = ref(0.5);
 const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", meso: "", rate: "" });
 const focused = ref<MoneyInput["field"] | null>(null);
 
-/** 目前是從哪一欄算的，還有算不算得出來——兩個都只給中間那支箭頭用 */
 const anchor = ref<MoneySnap["anchor"]>("ntd");
 const ok = ref(false);
+
+/**
+ * 這一欄是算出來的嗎——是的話字變琥珀色。
+ * 打楓幣時台幣是算出來的，反過來也一樣；算不出來（幣值還沒填）時兩欄都不變色，
+ * 不然空欄位會看起來像已經有結果了。
+ */
+function derived(field: "ntd" | "meso") {
+  return ok.value && anchor.value !== field;
+}
 
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
@@ -91,6 +99,7 @@ function onDown(e: MouseEvent) {
           inputmode="decimal"
           spellcheck="false"
           placeholder="0"
+          :class="{ derived: derived('meso') }"
           :value="text.meso"
           @focus="focused = 'meso'"
           @blur="focused = null"
@@ -99,15 +108,6 @@ function onDown(e: MouseEvent) {
         <span class="unit">元</span>
       </label>
 
-      <!-- 箭頭指向「被算出來的那一欄」：打楓幣就往下指台幣，打台幣就往上指楓幣。
-           算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。
-           ★不佔一列：佔了的話楓幣與台幣之間就會比其他列寬，三列的間距要一致。 -->
-      <span class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
-        <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
-          <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
-        </svg>
-      </span>
-
       <label class="row">
         <span class="label">台幣</span>
         <input
@@ -115,6 +115,7 @@ function onDown(e: MouseEvent) {
           inputmode="decimal"
           spellcheck="false"
           placeholder="0"
+          :class="{ derived: derived('ntd') }"
           :value="text.ntd"
           @focus="focused = 'ntd'"
           @blur="focused = null"
@@ -129,7 +130,7 @@ function onDown(e: MouseEvent) {
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
    ★整塊的尺寸都是 em，而字級同時綁在視窗的寬與高上、取比較小的那個
-   （360×182 是 19px 字的基準）。只綁寬度的話，單獨拉高會讓內容留一大片空白；
+   （360×166 是 19px 字的基準）。只綁寬度的話，單獨拉高會讓內容留一大片空白；
    取 min 之後不管怎麼拖都是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
@@ -137,7 +138,7 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(min(100vw / 360, 100vh / 182) * 19);
+  font-size: calc(min(100vw / 360, 100vh / 166) * 19);
 }
 .bg {
   position: absolute;
@@ -214,6 +215,10 @@ function onDown(e: MouseEvent) {
   border-radius: 0.35em;
   user-select: text;
 }
+/* 算出來的那一欄變琥珀色：不必看標籤就知道自己在打的是哪一邊 */
+.row input.derived {
+  color: var(--warn);
+}
 .row input:hover:not(:focus) {
   background: var(--wash-strong);
 }
@@ -231,31 +236,4 @@ function onDown(e: MouseEvent) {
   width: 2.4em;
 }
 
-/* 落在「楓幣」與「台幣」兩個標籤的正中間，橫向對齊標籤欄。
-   位置是算出來的：三列各 1.95em、列距 0.5em，所以兩列的中心相差 2.45em，
-   中點就是整疊的中心再往下 1.225em。全部是 em，縮放時位置跟著等比走。 */
-.flow {
-  position: absolute;
-  left: 1em;
-  top: calc(50% + 1.225em);
-  transform: translateY(-50%);
-  width: 2.5em;
-  display: flex;
-  justify-content: center;
-}
-.arrow {
-  width: 0.85em;
-  height: 0.95em;
-  flex: none;
-  color: var(--text-faint);
-  transition: color 0.15s ease, transform 0.15s ease;
-}
-.arrow.up {
-  transform: rotate(180deg);
-}
-/* 點亮＝這個方向正在算。綠色在這套 token 裡就是「正常運作中」 */
-.arrow.on {
-  color: var(--good);
-  filter: drop-shadow(0 0 0.2em rgba(0, 0, 0, 0.9));
-}
 </style>
