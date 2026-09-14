@@ -65,7 +65,7 @@ function gain(v: number | null) {
           <img v-if="r.imageUrl" :src="r.imageUrl" :alt="r.name" />
         </div>
         <div class="text">
-          <span class="name">{{ r.name || r.label }}</span>
+          <span class="name">{{ r.name || "未設定" }}</span>
           <span class="sub">Lv.{{ r.level ?? "—" }} · {{ pct(r.expPercent) }}</span>
         </div>
         <span class="today">{{ gain(r.today) }}</span>

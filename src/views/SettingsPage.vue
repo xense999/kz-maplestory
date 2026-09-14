@@ -306,14 +306,18 @@ async function copyDiscord() {
   position: relative;
   width: 340px;
 }
+/* 尺寸與線條跟主頁的角色名欄位同一套；差別只在金鑰填好之後仍然保持是欄位
+   （角色名會變成純文字，金鑰不會——它要讓人看得出「這裡是可以改的」） */
 .keyfield input {
   width: 100%;
+  height: 32px;
   padding-right: 40px;
+  font-size: 16px;
 }
 .eye {
   position: absolute;
   top: 50%;
-  right: 4px;
+  right: 3px;
   transform: translateY(-50%);
   width: 30px;
   height: 26px;

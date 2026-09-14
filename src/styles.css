@@ -270,8 +270,8 @@ select {
   font-size: 16px;
   color: var(--text);
   background: var(--input-bg);
-  /* 跟按鈕同一組框線與圓角，一整排控制項才像同一套東西 */
-  border: 1px solid var(--btn-border);
+  /* 圓角跟按鈕一致，但線淡一級：欄位是等著被填的凹面，按鈕是可以按的凸面 */
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-sm);
   outline: none;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;

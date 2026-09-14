@@ -91,9 +91,7 @@ function delta(v?: number | null) {
 
           <div class="detail">
             <div class="head">
-              <span class="slot-label">{{ s.label }}</span>
-
-              <!-- 名字設定好之後就是一段文字，點一下才變回可以改的欄位 -->
+              <!-- 直接就是角色名：這一列是誰，看名字就好，不必再標「主角色／對照角色」 -->
               <input
                 v-if="editing === s.id || !roster.slots[s.id].name"
                 class="who"
@@ -136,12 +134,12 @@ function delta(v?: number | null) {
                   }}
                 </span>
               </div>
-              <div class="stat">
-                <span class="slabel">今天</span>
+              <div class="stat" title="今天 00:00 到現在總共練了多少（一級算 100%）">
+                <span class="slabel">今天練了</span>
                 <span class="sval gain">{{ delta(roster.slots[s.id].growth?.today) }}</span>
               </div>
-              <div class="stat">
-                <span class="slabel">本次</span>
+              <div class="stat" title="這次打開程式到現在練了多少（關掉程式就重新算）">
+                <span class="slabel">本次開機</span>
                 <span class="sval gain small">
                   {{ delta(roster.slots[s.id].growth?.session) }}
                 </span>
@@ -272,22 +270,16 @@ function delta(v?: number | null) {
   gap: var(--sp-2);
   min-width: 0;
 }
-.slot-label {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-strong);
-  flex: none;
-}
 .who {
-  width: 160px;
-  height: 30px;
-  font-size: 15px;
+  width: 180px;
+  height: 32px;
+  font-size: 16px;
 }
 /* 已經設定好的名字：看起來是文字，不是欄位 */
 .who-text {
-  height: 30px;
+  height: 32px;
   padding: 0 8px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-strong);
   background: transparent;
