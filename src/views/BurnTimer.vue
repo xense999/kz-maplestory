@@ -106,16 +106,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
           :title="editMode ? '完成' : '設定基本時間'"
           @click="editMode = !editMode"
         >
-          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <template v-if="editMode">
-              <path d="M5 12.5 10 17.5 19 7" />
-            </template>
-            <template v-else>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </template>
-          </svg>
+          {{ editMode ? "完成" : "設定" }}
         </button>
       </div>
     </div>
@@ -146,8 +137,6 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
   padding: 0 var(--sp-4) var(--sp-4);
 }
 .gear {
-  width: 40px;
-  padding: 0;
   flex: none;
 }
 /* 透明度拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */

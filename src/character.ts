@@ -35,8 +35,8 @@ interface RawCharacter {
   fetched_at: number;
 }
 
-/** 每 10 分鐘更新一次 */
-export const REFRESH_MS = 10 * 60_000;
+/** 每 15 分鐘更新一次 */
+export const REFRESH_MS = 15 * 60_000;
 
 /** 練了多少（等值百分比：一級算 100） */
 export interface Growth {
