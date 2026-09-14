@@ -47,92 +47,97 @@ const roundUp = computed(() =>
   <div class="page">
     <div class="body">
       <div class="scroller">
-        <!-- 填的一張、算出來的一張：左右並排，兩邊的列一一對齊 -->
-        <div class="split">
-          <section class="card">
-            <div class="card-head">
-              交易條件
-              <div class="spacer"></div>
-              <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
-              <span class="viplabel">VIP</span>
-              <button
-                class="switch"
-                role="switch"
-                :class="{ on: money.vip }"
-                :aria-checked="money.vip"
-                :title="money.vip ? '手續費 3%' : '手續費 5%'"
-                @click="money.vip = !money.vip"
-              ></button>
-            </div>
+        <!-- 外面一張大卡片，裡面左右兩張小卡：它們是同一筆交易的兩面，所以收在同一張卡裡，
+             但「談好的條件」與「算出來的結果」各自要有邊界，不然會糊成一片 -->
+        <section class="card outer">
+          <div class="card-head">
+            幣值換算
+            <div class="spacer"></div>
+            <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
+            <span class="viplabel">VIP</span>
+            <button
+              class="switch"
+              role="switch"
+              :class="{ on: money.vip }"
+              :aria-checked="money.vip"
+              :title="money.vip ? '手續費 3%' : '手續費 5%'"
+              @click="money.vip = !money.vip"
+            ></button>
+          </div>
 
-            <div class="rows fields">
-              <label class="row">
-                <span class="rlabel">幣值</span>
-                <input
-                  class="rval"
-                  type="text"
-                  inputmode="decimal"
-                  spellcheck="false"
-                  placeholder="2800"
-                  :value="money.rateText"
-                  @input="money.setRate(value($event))"
-                />
-                <span class="rnote unit">萬</span>
-              </label>
+          <div class="split">
+            <div class="inner">
+              <p class="ititle">交易條件</p>
 
-              <label class="row">
-                <span class="rlabel">台幣</span>
-                <input
-                  class="rval"
-                  type="text"
-                  inputmode="decimal"
-                  spellcheck="false"
-                  placeholder="0"
-                  :value="money.ntdText"
-                  @input="money.setNtd(value($event))"
-                />
-                <span class="rnote unit">元</span>
-              </label>
+              <div class="rows">
+                <label class="row">
+                  <span class="rlabel">幣值</span>
+                  <input
+                    class="rval"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="2800"
+                    :value="money.rateText"
+                    @input="money.setRate(value($event))"
+                  />
+                  <span class="rnote unit">萬</span>
+                </label>
 
-              <label class="row">
-                <span class="rlabel">實收</span>
-                <input
-                  class="rval"
-                  type="text"
-                  inputmode="decimal"
-                  spellcheck="false"
-                  placeholder="0"
-                  :value="money.mesoText"
-                  @input="money.setMeso(value($event))"
-                />
-                <span class="rnote unit">楓幣</span>
-                <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
-                <span class="rnote">{{ mesoInWords }}</span>
-              </label>
-            </div>
-          </section>
+                <label class="row">
+                  <span class="rlabel">台幣</span>
+                  <input
+                    class="rval"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="0"
+                    :value="money.ntdText"
+                    @input="money.setNtd(value($event))"
+                  />
+                  <span class="rnote unit">元</span>
+                </label>
 
-          <section class="card">
-            <div class="card-head">換算結果</div>
-
-            <div class="rows">
-              <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
-                <span class="rlabel">{{ r.label }}</span>
-                <span class="rval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
-                <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
-                <span class="rnote">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
-              </div>
-
-              <div class="row">
-                <span class="rlabel">實際花費</span>
-                <span class="rval">{{ ntd }}</span>
-                <span v-if="roundUp" class="rnote">
-                  付 {{ roundUp.ntd }} 元 → 多拿 {{ formatMeso(roundUp.extra) }}
-                </span>
+                <label class="row">
+                  <span class="rlabel">實收</span>
+                  <input
+                    class="rval"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="0"
+                    :value="money.mesoText"
+                    @input="money.setMeso(value($event))"
+                  />
+                  <span class="rnote unit">楓幣</span>
+                  <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
+                  <span class="rnote">{{ mesoInWords }}</span>
+                </label>
               </div>
             </div>
-          </section>
-        </div>
+
+            <div class="inner">
+              <p class="ititle">換算結果</p>
+
+              <div class="rows">
+                <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
+                  <span class="rlabel">{{ r.label }}</span>
+                  <span class="rval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
+                  <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
+                  <span class="rnote">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
+                </div>
+
+                <div class="row">
+                  <span class="rlabel">實際花費</span>
+                  <span class="rval">{{ ntd }}</span>
+                  <span v-if="roundUp" class="rnote">
+                    付 {{ roundUp.ntd }} 元 → 多拿 {{ formatMeso(roundUp.extra) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div class="pagebar">
@@ -173,7 +178,11 @@ const roundUp = computed(() =>
   gap: var(--sp-2);
 }
 
-/* 兩張卡等寬，且 stretch 成一樣高——一邊比另一邊矮會看起來像沒寫完 */
+/* 外卡只負責標題與外框，內容全在兩張小卡裡 */
+.outer {
+  padding: var(--sp-3);
+}
+/* 兩張小卡等寬，且 stretch 成一樣高——一邊比另一邊矮會看起來像沒寫完 */
 .split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -186,6 +195,20 @@ const roundUp = computed(() =>
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.ititle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
 .viplabel {
   font-size: 14px;
   font-weight: 600;
@@ -194,11 +217,11 @@ const roundUp = computed(() =>
 
 /* 兩張卡的內容用同一組規則：列高、欄寬、字級都一致，左右才對得起來 */
 .rows {
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--sp-3);
-  padding: var(--sp-4);
 }
 .row {
   display: flex;
