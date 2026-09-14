@@ -126,12 +126,24 @@ export const useRosterStore = defineStore("roster", () => {
       }));
   }
 
-  /** 送資料，順便讓面板高度跟著「顯示中」的張數走 */
+  /**
+   * 送資料給面板，順便讓它的高度跟著顯示中的張數走。
+   *
+   * ★下面另外掛一個 deep watch：只要有任何一條路徑改了狀態卻忘了呼叫這裡，
+   * 面板就會停在舊畫面（關掉開關那一列不會消失，就是這樣來的）。
+   * 內容沒變就不送，所以重複呼叫是安全的。
+   */
+  let lastSent = "";
   function publish() {
     const rows = snapshot();
+    const json = JSON.stringify(rows);
+    if (json === lastSent) return;
+    lastSent = json;
     progressPanel.push(rows);
     void progressPanel.fitRows(rows.length).catch(() => {});
   }
+
+  watch(slots, () => publish(), { deep: true });
 
   async function refresh(id: string) {
     const t = find(id);

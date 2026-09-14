@@ -4,7 +4,7 @@ import { progressPanel } from "../float";
 import { useRosterStore } from "../stores/roster";
 
 /**
- * 主頁：一張大卡片裝著上下兩張小卡——上面是自己、下面是拿來比較的那隻。
+ * 主頁：一張大卡片裝著一排角色小卡，用來比誰練得快。
  * 資料與更新排程都在 roster store，這一頁只負責顯示與輸入。
  */
 const roster = useRosterStore();
@@ -161,7 +161,7 @@ function delta(v?: number | null) {
           </div>
         </div>
 
-        <!-- 設定模式：進去才能增刪角色、改名字、選要不要上浮動視窗 -->
+        <!-- 設定模式只管刪除：其餘（改名字、新增、顯示開關）平常就能做 -->
         <button
           class="gear"
           :class="{ primary: editMode }"

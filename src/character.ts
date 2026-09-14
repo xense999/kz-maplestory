@@ -75,7 +75,7 @@ function recentDates(n: number) {
  */
 /**
  * ★天數壓在 2（今天與昨天）：算「今天練了多少」只需要昨天那一筆，而官方對請求數
- * 有限制——一次抓七天、兩隻角色就是十幾個請求，會被回 "Please try again later"。
+ * 有限制——一次抓七天、幾隻角色就是十幾個請求，會被回 "Please try again later"。
  * 之後要做趨勢圖再把天數加回來，並且改成一天只抓一次。
  */
 export async function fetchHistory(

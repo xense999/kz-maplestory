@@ -8,6 +8,8 @@ const props = defineProps<{
   recording: boolean;
   /** 併排時字級收一級，不然兩欄放不下 */
   compact?: boolean;
+  /** 設定模式：技能卡的基本時間才會露出來 */
+  editing?: boolean;
 }>();
 
 const emit = defineEmits<{ record: [TimerId] }>();
@@ -65,6 +67,53 @@ function isCustom() {
 }
 
 /** 把欄位裡的數字收下來（對齊 15 分鐘是 store 的規則，這裡只把結果寫回欄位） */
+/** 技能卡的基本時間：分與秒兩格，跟自訂時長同一種操作（可左右拖） */
+const skillM = ref(0);
+const skillS = ref(0);
+
+watch(
+  () => [props.editing, store.timers[props.id].durationMs] as const,
+  ([on, ms]) => {
+    if (!on) return;
+    skillM.value = Math.floor(ms / 60_000);
+    skillS.value = Math.round((ms % 60_000) / 1000);
+  },
+  { immediate: true },
+);
+
+function commitSkillDuration() {
+  const ms = (Number(skillM.value) || 0) * 60_000 + (Number(skillS.value) || 0) * 1000;
+  if (ms <= 0) return;
+  store.setDuration(props.id, ms);
+}
+
+function startSkillDrag(e: PointerEvent, which: "m" | "s") {
+  const input = e.currentTarget as HTMLInputElement;
+  const startX = e.clientX;
+  const startV = which === "m" ? Number(skillM.value) || 0 : Number(skillS.value) || 0;
+  const max = which === "m" ? 120 : 59;
+  let live = false;
+
+  const move = (ev: PointerEvent) => {
+    const dx = ev.clientX - startX;
+    if (!live) {
+      if (Math.abs(dx) < 4) return;
+      live = true;
+      input.blur();
+    }
+    const next = Math.min(max, Math.max(0, startV + Math.round(dx / 10)));
+    if (which === "m") skillM.value = next;
+    else skillS.value = next;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    if (live) commitSkillDuration();
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+}
+
 function applyCustom() {
   const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
   if (raw <= 0) return;
@@ -169,6 +218,37 @@ function onCustomFocusOut(e: FocusEvent) {
           :title="store.timers[id].hotkeyOn ? '監聽中：按這顆鍵就會起算' : '開啟後按這顆鍵就會起算'"
           @click="store.setHotkeyEnabled(id, !store.timers[id].hotkeyOn)"
         ></button>
+      </div>
+    </div>
+
+    <!-- 技能卡的基本時間：只有設定模式看得到，平常沒有人要動它 -->
+    <div v-if="editing && !store.spec(id).presets" class="spans">
+      <span class="unit">基本時間</span>
+      <div class="custom">
+        <input
+          v-model.number="skillM"
+          type="number"
+          min="0"
+          max="120"
+          aria-label="分"
+          title="可以左右拖曳調整"
+          @pointerdown="startSkillDrag($event, 'm')"
+          @change="commitSkillDuration()"
+          @keydown.enter="commitSkillDuration()"
+        />
+        <span class="unit">分</span>
+        <input
+          v-model.number="skillS"
+          type="number"
+          min="0"
+          max="59"
+          aria-label="秒"
+          title="可以左右拖曳調整"
+          @pointerdown="startSkillDrag($event, 's')"
+          @change="commitSkillDuration()"
+          @keydown.enter="commitSkillDuration()"
+        />
+        <span class="unit">秒</span>
       </div>
     </div>
 

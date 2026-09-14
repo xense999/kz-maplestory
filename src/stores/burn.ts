@@ -97,12 +97,13 @@ export const useBurnStore = defineStore("burn", () => {
   const saved = loadSaved();
 
   /**
-   * 只有時長可調的卡片（有 presets）才吃存檔的時長。
-   * 技能卡的時長是寫死的規格——存了會變成「改了程式碼但舊使用者永遠停在舊秒數」。
+   * 存檔裡有就用存檔的。出租的時長對齊 15 分鐘（它是按時段賣的）；
+   * 技能的時長是使用者自己量出來的秒數，不做任何對齊。
    */
   function initialDuration(s: Spec) {
-    const stored = s.presets ? saved[s.id]?.durationMs : undefined;
-    return stored === undefined ? s.durationMs : snapDuration(stored);
+    const stored = saved[s.id]?.durationMs;
+    if (stored === undefined) return s.durationMs;
+    return s.presets ? snapDuration(stored) : Math.max(1000, Math.round(stored));
   }
 
   const timers = reactive(
@@ -165,8 +166,7 @@ export const useBurnStore = defineStore("burn", () => {
               {
                 hotkey: timers[s.id].hotkey,
                 hotkeyOn: timers[s.id].hotkeyOn,
-                // 固定時長的卡片不寫回去，免得下次改規格時被舊值蓋掉
-                durationMs: s.presets ? timers[s.id].durationMs : undefined,
+                durationMs: timers[s.id].durationMs,
               },
             ]),
           ),
@@ -236,7 +236,8 @@ export const useBurnStore = defineStore("burn", () => {
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */
   function setDuration(id: TimerId, ms: number) {
     const t = timers[id];
-    t.durationMs = snapDuration(ms);
+    // 出租是按時段賣的所以對齊 15 分鐘；技能是量出來的秒數，照原值收下
+    t.durationMs = spec(id).presets ? snapDuration(ms) : Math.max(1000, Math.round(ms));
     if (t.endAt === null) t.runMs = t.durationMs;
     persist();
   }
