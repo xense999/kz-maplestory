@@ -313,6 +313,10 @@ async function copyDiscord() {
   height: 32px;
   padding-right: 40px;
   font-size: 16px;
+  /* 密碼欄位預設會換一套字型畫圓點，於是「遮起來」跟「看得到」兩種狀態
+     連字寬都不一樣。指定同一套字型與字距，兩種狀態才長得一樣。 */
+  font-family: inherit;
+  letter-spacing: 0.02em;
 }
 .eye {
   position: absolute;

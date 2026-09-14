@@ -65,7 +65,7 @@ const opacityOpen = ref(false);
                 <input
                   type="range"
                   min="0"
-                  max="50"
+                  max="100"
                   step="5"
                   :value="Math.round(burnPanel.opacity.value * 100)"
                   aria-label="透明度"

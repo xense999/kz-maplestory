@@ -1,5 +1,6 @@
 import { ref, type Ref } from "vue";
 import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { LogicalSize } from "@tauri-apps/api/dpi";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 /**
@@ -13,11 +14,8 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
  * 關閉一律用 hide 不用 close——close 掉的視窗叫不回來，就沒得再開了。
  */
 
-/**
- * 底色濃度的上限。這塊東西疊在遊戲畫面上，底再濃就開始擋畫面。
- * 透明度只吃底色那一層，文字永遠實心。
- */
-const MAX_OPACITY = 0.5;
+/** 預設半透明——疊在遊戲上，一開始就實心會擋掉太多畫面 */
+const DEFAULT_OPACITY = 0.5;
 
 export interface FloatPanel<T> {
   label: string;
@@ -27,6 +25,8 @@ export interface FloatPanel<T> {
   opacity: Ref<number>;
   toggle(): Promise<void>;
   setOpacity(v: number): void;
+  /** 依列數調整視窗高度（寬度不動，內容是等比縮放的） */
+  fitRows(rows: number, rowEm?: number): Promise<void>;
   /** 主視窗：廣播目前狀態 */
   push(data: T): void;
   /** 主視窗：把目前透明度送過去（改動時、以及面板剛開起來時） */
@@ -50,9 +50,9 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
   function loadOpacity() {
     try {
       const v = Number(localStorage.getItem(OPACITY_KEY));
-      return v >= 0 && v <= MAX_OPACITY ? v : MAX_OPACITY;
+      return v >= 0 && v <= 1 ? v : DEFAULT_OPACITY;
     } catch {
-      return MAX_OPACITY;
+      return DEFAULT_OPACITY;
     }
   }
 
@@ -80,7 +80,7 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
       }
     },
     setOpacity(v: number) {
-      opacity.value = Math.min(MAX_OPACITY, Math.max(0, v));
+      opacity.value = Math.min(1, Math.max(0, v));
       try {
         localStorage.setItem(OPACITY_KEY, String(opacity.value));
       } catch {
@@ -90,6 +90,20 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
     },
     push(data: T) {
       void emit(DATA, data);
+    },
+    /**
+     * 高度跟著列數走。列高按目前的視窗寬度換算——面板的內容是等比縮放的，
+     * 所以拉寬之後每一列也會變高。
+     */
+    async fitRows(rows: number, rowEm = 3.25) {
+      const win = await WebviewWindow.getByLabel(label);
+      if (!win) return;
+      const scale = await win.scaleFactor();
+      const size = await win.innerSize();
+      const w = size.width / scale;
+      const rowPx = (w / 360) * 16 * rowEm;
+      const height = Math.round(Math.max(1, rows) * rowPx + 14);
+      await win.setSize(new LogicalSize(Math.round(w), height));
     },
     pushOpacity,
     onHello: (cb) => listen(HELLO, cb),

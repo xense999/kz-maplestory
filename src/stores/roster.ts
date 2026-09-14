@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, reactive } from "vue";
+import { computed, ref } from "vue";
 import { apiKey } from "../apikey";
 import { progressPanel, type CharacterSnap } from "../float";
 import {
@@ -11,22 +11,13 @@ import {
 } from "../character";
 
 /**
- * 兩隻要互相比較的角色。
+ * 要互相比較的角色清單。
  *
  * ★這裡是 store 而不是主頁裡的區域狀態：浮動視窗跟主頁要資料，如果供給端綁在
  * 「主頁被顯示過」這件事上，使用者停在別頁時面板就永遠是空的。
  */
-export const SLOTS = [
-  { id: "main", label: "主角色" },
-  { id: "rival", label: "對照角色" },
-] as const;
-
-export type SlotId = (typeof SLOTS)[number]["id"];
-
-const NAMES_KEY = "kz-maplestory:character-names";
-const SHOWN_KEY = "kz-maplestory:character-shown";
-
-interface SlotState {
+export interface Slot {
+  id: string;
   name: string;
   /** 要不要出現在浮動視窗 */
   shown: boolean;
@@ -36,68 +27,111 @@ interface SlotState {
   error: string;
 }
 
-function loadJson<T>(key: string, fallback: T): T {
+/** 存檔只留使用者設定的部分，抓回來的資料每次重來 */
+interface SavedSlot {
+  id: string;
+  name: string;
+  shown: boolean;
+}
+
+const SLOTS_KEY = "kz-maplestory:roster";
+/** 舊版是固定兩格、分開存名字與顯示開關；改成清單之後要把舊設定接過來 */
+const LEGACY_NAMES_KEY = "kz-maplestory:character-names";
+const LEGACY_SHOWN_KEY = "kz-maplestory:character-shown";
+
+function newId() {
+  return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function blank(saved?: SavedSlot): Slot {
+  return {
+    id: saved?.id ?? newId(),
+    name: saved?.name ?? "",
+    shown: saved?.shown ?? false,
+    info: null,
+    growth: null,
+    loading: false,
+    error: "",
+  };
+}
+
+function load(): Slot[] {
   try {
-    return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback;
+    const raw = JSON.parse(localStorage.getItem(SLOTS_KEY) ?? "null");
+    if (Array.isArray(raw) && raw.length) return raw.map((r: SavedSlot) => blank(r));
   } catch {
-    return fallback;
+    /* 壞掉就往下走，看看有沒有舊格式可以接 */
+  }
+  const migrated = migrateLegacy();
+  return migrated.length ? migrated : [blank()];
+}
+
+/** 把舊版的「主角色／對照角色」兩格接成清單。接完就把舊鍵刪掉，只做一次。 */
+function migrateLegacy(): Slot[] {
+  try {
+    const names = JSON.parse(localStorage.getItem(LEGACY_NAMES_KEY) ?? "null") as Record<
+      string,
+      string
+    > | null;
+    if (!names) return [];
+    const shown = (JSON.parse(localStorage.getItem(LEGACY_SHOWN_KEY) ?? "null") ??
+      {}) as Record<string, boolean>;
+    const out = ["main", "rival"]
+      .filter((k) => (names[k] ?? "").trim() !== "")
+      .map((k) => blank({ id: newId(), name: names[k], shown: shown[k] ?? false }));
+    localStorage.removeItem(LEGACY_NAMES_KEY);
+    localStorage.removeItem(LEGACY_SHOWN_KEY);
+    return out;
+  } catch {
+    return [];
   }
 }
 
 export const useRosterStore = defineStore("roster", () => {
-  const savedNames = loadJson<Record<string, string>>(NAMES_KEY, {});
-  const savedShown = loadJson<Record<string, boolean>>(SHOWN_KEY, {});
-
-  const slots = reactive(
-    Object.fromEntries(
-      SLOTS.map((s) => [
-        s.id,
-        {
-          name: savedNames[s.id] ?? "",
-          shown: savedShown[s.id] ?? false,
-          info: null,
-          growth: null,
-          loading: false,
-          error: "",
-        } as SlotState,
-      ]),
-    ),
-  ) as Record<SlotId, SlotState>;
+  const slots = ref<Slot[]>(load());
 
   function persist() {
     try {
-      localStorage.setItem(
-        NAMES_KEY,
-        JSON.stringify(Object.fromEntries(SLOTS.map((s) => [s.id, slots[s.id].name]))),
-      );
-      localStorage.setItem(
-        SHOWN_KEY,
-        JSON.stringify(Object.fromEntries(SLOTS.map((s) => [s.id, slots[s.id].shown]))),
-      );
+      const data: SavedSlot[] = slots.value.map((s) => ({
+        id: s.id,
+        name: s.name,
+        shown: s.shown,
+      }));
+      localStorage.setItem(SLOTS_KEY, JSON.stringify(data));
     } catch {
       /* 存不了就只在這次執行有效 */
     }
   }
 
-  /** 面板要的東西：只有被打開的那幾格。整份重送，資料量小，不必算差異 */
+  function find(id: string) {
+    return slots.value.find((s) => s.id === id);
+  }
+
+  /** 面板要的東西：只有被打開、而且有名字的那幾張 */
   function snapshot(): CharacterSnap[] {
-    return SLOTS.filter((s) => slots[s.id].shown).map((s) => ({
-      slot: s.id,
-      label: s.label,
-      name: slots[s.id].name,
-      level: slots[s.id].info?.level ?? null,
-      expPercent: slots[s.id].info?.expPercent ?? null,
-      today: slots[s.id].growth?.today ?? null,
-      imageUrl: slots[s.id].info?.imageUrl,
-    }));
+    return slots.value
+      .filter((s) => s.shown && s.name)
+      .map((s) => ({
+        slot: s.id,
+        label: s.name,
+        name: s.name,
+        level: s.info?.level ?? null,
+        expPercent: s.info?.expPercent ?? null,
+        today: s.growth?.today ?? null,
+        imageUrl: s.info?.imageUrl,
+      }));
   }
 
+  /** 送資料，順便讓面板高度跟著顯示的張數走 */
   function publish() {
-    progressPanel.push(snapshot());
+    const rows = snapshot();
+    progressPanel.push(rows);
+    void progressPanel.fitRows(rows.length).catch(() => {});
   }
 
-  async function refresh(id: SlotId) {
-    const t = slots[id];
+  async function refresh(id: string) {
+    const t = find(id);
+    if (!t) return;
     if (!t.name) {
       t.error = "";
       return;
@@ -122,32 +156,48 @@ export const useRosterStore = defineStore("roster", () => {
   }
 
   function refreshAll() {
-    for (const s of SLOTS) void refresh(s.id);
+    for (const s of slots.value) void refresh(s.id);
   }
 
-  /** 改名字＝換一隻角色：舊的數字與成長量都不再屬於它 */
-  async function setName(id: SlotId, value: string) {
+  /** 改名字＝換一隻角色：舊的數字不再屬於它 */
+  async function setName(id: string, value: string) {
+    const t = find(id);
+    if (!t) return;
     const next = value.trim();
-    if (next === slots[id].name) return;
-    slots[id].name = next;
-    slots[id].info = null;
-    slots[id].growth = null;
+    if (next === t.name) return;
+    t.name = next;
+    t.info = null;
+    t.growth = null;
     persist();
     publish();
     await refresh(id);
   }
 
-  /** 要不要在浮動視窗上顯示這一格 */
-  function setShown(id: SlotId, on: boolean) {
-    slots[id].shown = on;
+  function setShown(id: string, on: boolean) {
+    const t = find(id);
+    if (!t) return;
+    t.shown = on;
     persist();
     publish();
   }
 
-  const anyNamed = computed(() => SLOTS.some((s) => slots[s.id].name !== ""));
+  function addSlot() {
+    slots.value = [...slots.value, blank()];
+    persist();
+  }
+
+  function removeSlot(id: string) {
+    slots.value = slots.value.filter((s) => s.id !== id);
+    // 一張都不留的話這一頁就沒有東西可以操作了
+    if (!slots.value.length) slots.value = [blank()];
+    persist();
+    publish();
+  }
+
+  const anyNamed = computed(() => slots.value.some((s) => s.name !== ""));
 
   let wired = false;
-  /** 由 App 啟動時呼叫一次：接面板、把上次的成長量讀回來、開始定時更新 */
+  /** 由 App 啟動時呼叫一次：接面板、開始定時更新 */
   async function init() {
     if (wired) return;
     wired = true;
@@ -156,7 +206,6 @@ export const useRosterStore = defineStore("roster", () => {
       publish();
       progressPanel.pushOpacity();
     });
-
     publish();
     progressPanel.pushOpacity();
 
@@ -164,8 +213,15 @@ export const useRosterStore = defineStore("roster", () => {
     setInterval(refreshAll, REFRESH_MS);
   }
 
-  return { slots, anyNamed, refresh, refreshAll, setName, setShown, init };
+  return {
+    slots,
+    anyNamed,
+    refresh,
+    refreshAll,
+    setName,
+    setShown,
+    addSlot,
+    removeSlot,
+    init,
+  };
 });
-
-/** 給 HomePage 用的常數，不必再 import 一次 SLOTS */
-export const slotList = SLOTS;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from "vue";
 import { progressPanel } from "../float";
-import { slotList, useRosterStore, type SlotId } from "../stores/roster";
+import { useRosterStore } from "../stores/roster";
 
 /**
  * 主頁：一張大卡片裝著上下兩張小卡——上面是自己、下面是拿來比較的那隻。
@@ -10,11 +10,11 @@ import { slotList, useRosterStore, type SlotId } from "../stores/roster";
 const roster = useRosterStore();
 
 /** 正在改名字的那一格；其他時候名字是純文字，不是一個輸入框 */
-const editing = ref<SlotId | null>(null);
+const editing = ref<string | null>(null);
 /** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
 const opacityOpen = ref(false);
 
-async function beginEdit(id: SlotId) {
+async function beginEdit(id: string) {
   editing.value = id;
   await nextTick();
   const el = document.querySelector<HTMLInputElement>(`[data-slot="${id}"] input.who`);
@@ -22,7 +22,7 @@ async function beginEdit(id: SlotId) {
   el?.select();
 }
 
-function commitName(id: SlotId, value: string) {
+function commitName(id: string, value: string) {
   editing.value = null;
   void roster.setName(id, value);
 }
@@ -38,8 +38,6 @@ function delta(v?: number | null) {
   <div class="page">
     <div class="body">
       <div class="pagebar">
-        <!-- 資料會自己定時更新；這顆是給「剛練完想馬上看」用的 -->
-        <button :disabled="!roster.anyNamed" @click="roster.refreshAll()">更新</button>
         <div class="spacer"></div>
         <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
           <button
@@ -60,7 +58,7 @@ function delta(v?: number | null) {
               <input
                 type="range"
                 min="0"
-                max="50"
+                max="100"
                 step="5"
                 :value="Math.round(progressPanel.opacity.value * 100)"
                 aria-label="透明度"
@@ -77,14 +75,10 @@ function delta(v?: number | null) {
       <!-- 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
            但各自要有自己的邊界，不然兩段資料會糊成一片 -->
       <section class="card outer">
-        <div v-for="s in slotList" :key="s.id" class="inner" :data-slot="s.id">
+        <div v-for="s in roster.slots" :key="s.id" class="inner" :data-slot="s.id">
           <!-- 角色圖是去背 PNG，框裡不上底色 -->
           <div class="portrait">
-            <img
-              v-if="roster.slots[s.id].info?.imageUrl"
-              :src="roster.slots[s.id].info!.imageUrl"
-              :alt="s.label"
-            />
+            <img v-if="s.info?.imageUrl" :src="s.info.imageUrl" :alt="s.name" />
             <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
               <circle cx="12" cy="8.5" r="3.6" />
               <path d="M4.8 20c0-3.4 3.2-5.4 7.2-5.4s7.2 2 7.2 5.4" stroke-linecap="round" />
@@ -95,68 +89,68 @@ function delta(v?: number | null) {
             <div class="head">
               <!-- 直接就是角色名：這一列是誰，看名字就好，不必再標「主角色／對照角色」 -->
               <input
-                v-if="editing === s.id || !roster.slots[s.id].name"
+                v-if="editing === s.id || !s.name"
                 class="who"
                 type="text"
-                :value="roster.slots[s.id].name"
+                :value="s.name"
                 placeholder="角色名稱"
                 spellcheck="false"
                 @keydown.enter="commitName(s.id, ($event.target as HTMLInputElement).value)"
                 @blur="commitName(s.id, ($event.target as HTMLInputElement).value)"
               />
               <button v-else class="who-text" title="點一下改角色" @click="beginEdit(s.id)">
-                {{ roster.slots[s.id].name }}
+                {{ s.name }}
               </button>
 
-              <span v-if="roster.slots[s.id].info?.world" class="badge world" title="伺服器">
-                {{ roster.slots[s.id].info!.world }}
+              <span v-if="s.info?.world" class="badge world" title="伺服器">
+                {{ s.info.world }}
               </span>
               <div class="spacer"></div>
               <!-- 打開才會出現在浮動視窗上。資料本來就會自己更新，所以這裡不放更新鈕 -->
               <button
                 class="switch"
                 role="switch"
-                :class="{ on: roster.slots[s.id].shown }"
-                :aria-checked="roster.slots[s.id].shown"
-                :disabled="!roster.slots[s.id].name"
-                :title="
-                  roster.slots[s.id].shown ? '會顯示在浮動視窗上' : '打開後才會顯示在浮動視窗上'
-                "
-                @click="roster.setShown(s.id, !roster.slots[s.id].shown)"
+                :class="{ on: s.shown }"
+                :aria-checked="s.shown"
+                :disabled="!s.name"
+                :title="s.shown ? '會顯示在浮動視窗上' : '打開後才會顯示在浮動視窗上'"
+                @click="roster.setShown(s.id, !s.shown)"
               ></button>
+              <button class="plain x" title="移除這張卡片" @click="roster.removeSlot(s.id)">
+                <svg viewBox="0 0 12 12" width="11" height="11">
+                  <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.4"
+                        stroke-linecap="round" />
+                </svg>
+              </button>
             </div>
 
             <div class="stats">
               <div class="stat">
                 <span class="slabel">等級</span>
-                <span class="sval">{{ roster.slots[s.id].info?.level ?? "—" }}</span>
+                <span class="sval">{{ s.info?.level ?? "—" }}</span>
               </div>
               <div class="stat">
                 <span class="slabel">經驗</span>
                 <span class="sval">
-                  {{
-                    roster.slots[s.id].info
-                      ? `${roster.slots[s.id].info!.expPercent.toFixed(2)}%`
-                      : "—"
-                  }}
+                  {{ s.info ? `${s.info.expPercent.toFixed(2)}%` : "—" }}
                 </span>
               </div>
               <div class="stat" title="今天 00:00 到現在總共練了多少（一級算 100%）">
                 <span class="slabel">今天練了</span>
-                <span class="sval gain">{{ delta(roster.slots[s.id].growth?.today) }}</span>
+                <span class="sval gain">{{ delta(s.growth?.today) }}</span>
               </div>
             </div>
 
             <div class="bar">
-              <i :style="{ width: (roster.slots[s.id].info?.expPercent ?? 0) + '%' }"></i>
+              <i :style="{ width: (s.info?.expPercent ?? 0) + '%' }"></i>
             </div>
 
-            <p v-if="roster.slots[s.id].error" class="note err">{{ roster.slots[s.id].error }}</p>
-            <p v-else-if="!roster.slots[s.id].name" class="note">
-              填入角色名稱後每 10 分鐘自動更新
-            </p>
+            <p v-if="s.error" class="note err">{{ s.error }}</p>
+            <p v-else-if="!s.name" class="note">填入角色名稱後每 10 分鐘自動更新</p>
           </div>
         </div>
+
+        <button class="add" @click="roster.addSlot()">＋ 新增角色</button>
       </section>
     </div>
   </div>
@@ -280,7 +274,8 @@ function delta(v?: number | null) {
 /* 已經設定好的名字：看起來是文字，不是欄位 */
 .who-text {
   height: 32px;
-  padding: 0 8px;
+  /* 左緣跟下面的「等級／經驗」對齊，不要因為它是按鈕就多一段內距 */
+  padding: 0 8px 0 0;
   font-size: 18px;
   font-weight: 600;
   color: var(--text-strong);
@@ -293,6 +288,16 @@ function delta(v?: number | null) {
 }
 /* 伺服器是標籤不是句子：做成徽章。空心＋紫色——填色的話它會跟旁邊的
    控制項搶注意力，而紫色在這一頁沒有別的用途，不會跟狀態色混淆。 */
+.x {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  flex: none;
+}
+.add {
+  align-self: flex-start;
+  height: 34px;
+}
 .world {
   font-size: 13px;
   font-weight: 600;

@@ -83,6 +83,7 @@
   --chip: rgba(20, 40, 80, 0.06);
   --input-bg: rgba(20, 40, 80, 0.04);
   --scrollbar: rgba(20, 40, 80, 0.16);
+  --scrollbar-hover: rgba(20, 40, 80, 0.34);
   --marked: rgba(51, 65, 85, 0.2);
 
   /* 視窗外緣：無邊框透明視窗貼在桌面上時，只有這條線在界定「App 到哪裡為止」。
@@ -692,7 +693,8 @@ input[type="range"]::-webkit-slider-thumb {
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.42);
+  /* 寫死的黑在深色模式上是隱形的，跟著 token 走 */
+  background: var(--scrollbar-hover);
   background-clip: content-box;
 }
 ::-webkit-scrollbar-corner {
@@ -747,6 +749,7 @@ input[type="range"]::-webkit-slider-thumb {
   --chip: rgba(160, 190, 230, 0.09);
   --input-bg: rgba(160, 190, 230, 0.07);
   --scrollbar: rgba(170, 195, 235, 0.18);
+  --scrollbar-hover: rgba(170, 195, 235, 0.38);
   --marked: rgba(61, 214, 195, 0.24);
 
   --overlay: rgba(26, 34, 47, 0.86);
