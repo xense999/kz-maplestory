@@ -77,7 +77,7 @@ const roundUp = computed(() =>
                   :value="money.rateText"
                   @input="money.setRate(value($event))"
                 />
-                <span class="unit">W</span>
+                <span class="unit">萬</span>
               </label>
 
               <label class="field">

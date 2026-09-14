@@ -81,7 +81,7 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('rate', $event)"
         />
-        <span class="unit">W</span>
+        <span class="unit">萬</span>
       </label>
 
       <label class="row">
