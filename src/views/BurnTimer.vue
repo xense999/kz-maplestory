@@ -15,9 +15,9 @@ const opacityOpen = ref(false);
 /** 設定模式：只用來改兩顆技能的基本時間 */
 const editMode = ref(false);
 
-/** 進設定＝要動時長，正在跑的那些就不算數了，先全部歸零再讓人改 */
+/** 進設定＝要動技能的基本時間，那兩個先歸零再讓人改（出租不動，見 store 的說明） */
 function toggleEdit() {
-  if (!editMode.value) store.resetAll();
+  if (!editMode.value) store.resetEditable();
   editMode.value = !editMode.value;
 }
 

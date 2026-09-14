@@ -57,10 +57,15 @@ function ymd(d: Date) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** 今天往前數 n 天（含今天）的日期字串 */
+/**
+ * 昨天起往前數 n 天的日期字串。
+ *
+ * ★不含今天：基準取的是「早於今天」的最後一筆，今天那筆抓了也用不到，
+ * 白花一個請求——而請求數正是這裡的瓶頸。
+ */
 function recentDates(n: number) {
   const out: string[] = [];
-  for (let i = 0; i < n; i += 1) {
+  for (let i = 1; i <= n; i += 1) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     out.push(ymd(d));
@@ -75,8 +80,8 @@ function recentDates(n: number) {
  * 很容易把兩隻的數字混在一起減。
  */
 /**
- * ★天數壓在 2（今天與昨天）：算「今天練了多少」只需要昨天那一筆，而官方對請求數
- * 有限制——一次抓七天、幾隻角色就是十幾個請求，會被回 "Please try again later"。
+ * ★只抓昨天一天：算「今天練了多少」只需要那一筆，而官方對請求數有限制——
+ * 一次抓七天、幾隻角色就是十幾個請求，會被回 "Please try again later"。
  * 之後要做趨勢圖再把天數加回來，並且改成一天只抓一次。
  */
 export async function fetchHistory(
@@ -84,7 +89,7 @@ export async function fetchHistory(
   apiKey: string,
   latestLevel: number,
   latestExp: number,
-  days = 2,
+  days = 1,
 ): Promise<History> {
   return invoke<History>("fetch_history", {
     name,

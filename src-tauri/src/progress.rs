@@ -7,6 +7,7 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
@@ -90,8 +91,18 @@ pub fn cached_days(app: &tauri::AppHandle, name: &str) -> HashMap<String, Cached
     load_cache(app).remove(name).unwrap_or_default()
 }
 
+/// 讀改寫整段的鎖。
+///
+/// ★重新整理會同時對每隻角色發請求，兩邊幾乎同時寫這個檔：沒有鎖的話後寫的那份
+/// 是以「它讀檔當下的內容」為基礎，會把另一隻剛存進去的日期整段蓋掉——結果就是
+/// 快取要避免的那件事（基準日再次被重新查詢，然後撞上限流）。
+static CACHE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
 /// 記下剛查到的日期。只留最近 `keep` 個日期字串（日期是可排序的，直接比字串）。
 pub fn remember_days(app: &tauri::AppHandle, name: &str, days: &[DaySample], keep: usize) {
+    let lock = CACHE_LOCK.get_or_init(|| Mutex::new(()));
+    let _guard = lock.lock();
+
     let mut cache = load_cache(app);
     let entry = cache.entry(name.to_string()).or_default();
     for d in days {

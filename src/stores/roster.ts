@@ -134,10 +134,10 @@ export const useRosterStore = defineStore("roster", () => {
    * 內容沒變就不送，所以重複呼叫是安全的。
    */
   let lastSent = "";
-  function publish() {
+  function publish(force = false) {
     const rows = snapshot();
     const json = JSON.stringify(rows);
-    if (json === lastSent) return;
+    if (!force && json === lastSent) return;
     lastSent = json;
     progressPanel.push(rows);
     void progressPanel.fitRows(rows.length).catch(() => {});
@@ -210,7 +210,8 @@ export const useRosterStore = defineStore("roster", () => {
     const to = list.findIndex((s) => s.id === beforeId);
     if (from < 0 || to < 0) return;
     const [moved] = list.splice(from, 1);
-    list.splice(to, 0, moved);
+    // 往下拖時，上面那一步已經把後面的索引整個往前推了一格
+    list.splice(from < to ? to - 1 : to, 0, moved);
     slots.value = list;
     persist();
   }
@@ -231,11 +232,13 @@ export const useRosterStore = defineStore("roster", () => {
     if (wired) return;
     wired = true;
 
+    // ★面板問「有人在嗎」時一定要回，即使內容跟上次送的一樣：
+    // 它就是因為可能沒收到第一筆才在問，被去重擋掉的話會永遠問下去。
     await progressPanel.onHello(() => {
-      publish();
+      publish(true);
       progressPanel.pushOpacity();
     });
-    publish();
+    publish(true);
     progressPanel.pushOpacity();
 
     refreshAll();

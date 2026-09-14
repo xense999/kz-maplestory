@@ -390,12 +390,13 @@ function delta(v?: number | null) {
   padding: 0;
   flex: none;
 }
+/* 伺服器是標籤不是句子：空心徽章。填色的話會跟旁邊的控制項搶注意力。 */
 .world {
   font-size: 13px;
   font-weight: 600;
-  color: var(--purple);
+  color: var(--good);
   background: transparent;
-  border: 1px solid var(--purple);
+  border: 1px solid var(--good);
   padding: 0 7px;
 }
 

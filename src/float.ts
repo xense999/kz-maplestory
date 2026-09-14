@@ -49,8 +49,12 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
 
   function loadOpacity() {
     try {
-      const v = Number(localStorage.getItem(OPACITY_KEY));
-      return v >= 0 && v <= 1 ? v : DEFAULT_OPACITY;
+      // ★先看有沒有存過再轉數字：Number(null) 是 0，而 0 在合法範圍內，
+      // 於是「沒設定過」會被當成「設定為全透明」，預設值永遠用不到。
+      const raw = localStorage.getItem(OPACITY_KEY);
+      if (raw === null) return DEFAULT_OPACITY;
+      const v = Number(raw);
+      return Number.isFinite(v) && v >= 0 && v <= 1 ? v : DEFAULT_OPACITY;
     } catch {
       return DEFAULT_OPACITY;
     }

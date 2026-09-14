@@ -21,7 +21,12 @@ if (view) {
 }
 
 // 桌面程式不該跳出瀏覽器的右鍵選單（重新整理、檢視原始碼那一套）。
-// 元件自己的 contextmenu handler 照常運作——這裡只擋預設選單。
-document.addEventListener("contextmenu", (e) => e.preventDefault());
+// 但輸入框要留著——右鍵貼上是那裡唯一的貼上方式（金鑰欄位的提示就是叫人貼上）。
+// 元件自己的 contextmenu handler 照常運作，這裡只擋預設選單。
+document.addEventListener("contextmenu", (e) => {
+  const el = e.target as HTMLElement | null;
+  if (el?.closest("input, textarea")) return;
+  e.preventDefault();
+});
 
 createApp(root).use(createPinia()).mount("#app");

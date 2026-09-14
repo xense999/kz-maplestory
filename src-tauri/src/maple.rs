@@ -190,6 +190,11 @@ pub async fn fetch_history(
                 .and_then(|s| s.parse::<f64>().ok())
                 .unwrap_or(0.0),
         };
+        // ★等級 0 代表回應缺了欄位（容錯的 default 值），不是真實資料。
+        // 讓它進快取的話，過去的日期永遠不會再查一次，這隻角色的基準就永久壞掉。
+        if sample.level <= 0 {
+            continue;
+        }
         // 今天的還會變，不進快取
         if sample.date != today {
             fresh.push(sample.clone());

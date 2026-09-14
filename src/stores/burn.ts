@@ -166,7 +166,9 @@ export const useBurnStore = defineStore("burn", () => {
               {
                 hotkey: timers[s.id].hotkey,
                 hotkeyOn: timers[s.id].hotkeyOn,
-                durationMs: timers[s.id].durationMs,
+                // 跟規格一樣就不寫回去：沒改過的人日後才吃得到新的預設值
+                durationMs:
+                  timers[s.id].durationMs === s.durationMs ? undefined : timers[s.id].durationMs,
               },
             ]),
           ),
@@ -216,9 +218,16 @@ export const useBurnStore = defineStore("burn", () => {
     clearAlarmFor(id);
   }
 
-  /** 全部歸零。改基本時間之前會先做這件事——時長換了，正在跑的那一輪就不算數了 */
-  function resetAll() {
-    for (const s of SPECS) reset(s.id);
+  /**
+   * 把「基本時間可以在設定裡改」的那些計時器歸零：時長換了，正在跑的那一輪就不算數了。
+   *
+   * ★出租不在內：它的時長是用膠囊選的、設定模式根本沒有它的欄位，而那一格是客戶
+   * 付過錢的時間——為了調技能秒數就把它清掉，是這個程式最不該犯的錯。
+   */
+  function resetEditable() {
+    for (const s of SPECS) {
+      if (!s.presets) reset(s.id);
+    }
   }
 
   /**
@@ -342,7 +351,7 @@ export const useBurnStore = defineStore("burn", () => {
     start,
     pressKey,
     reset,
-    resetAll,
+    resetEditable,
     acknowledge,
     setDuration,
     setHotkey,
