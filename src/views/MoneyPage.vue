@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { formatMeso, formatRaw, roundUpSuggestion } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -10,6 +12,25 @@ const money = useMoneyStore();
 function value(e: Event) {
   return (e.target as HTMLInputElement).value;
 }
+
+/** 算不出來的時候整塊顯示破折號，而不是 0 —— 0 會被當成「這筆交易真的是零」 */
+const DASH = "—";
+
+const rows = computed(() => {
+  const d = money.deal;
+  return [
+    { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
+    { key: "face", label: "帳面楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
+    { key: "fee", label: "手續費", hint: "帳面與實收的差", meso: d?.fee },
+  ];
+});
+
+const ntd = computed(() => (money.deal ? `${money.deal.ntd.toFixed(2)} 元` : DASH));
+
+/** 付整數台幣的話。精確值本來就是整數時沒有建議，那一行就不出現 */
+const roundUp = computed(() =>
+  money.deal ? roundUpSuggestion(money.deal.ntd, money.rate, money.vip) : null,
+);
 </script>
 
 <template>
@@ -74,6 +95,23 @@ function value(e: Event) {
             <span class="unit">W（實際入手）</span>
           </label>
         </div>
+
+        <div class="out">
+          <div v-for="r in rows" :key="r.key" class="orow" :title="r.hint">
+            <span class="olabel">{{ r.label }}</span>
+            <span class="oval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
+            <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
+            <span class="oraw">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
+          </div>
+
+          <div class="orow">
+            <span class="olabel">台幣</span>
+            <span class="oval">{{ ntd }}</span>
+            <span v-if="roundUp" class="oraw">
+              付 {{ roundUp.ntd }} 台幣 → 多拿 {{ formatMeso(roundUp.extra) }}
+            </span>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -126,5 +164,39 @@ function value(e: Event) {
 .unit {
   font-size: 14px;
   color: var(--text-dim);
+}
+
+/* 結果區：跟輸入區同一張卡，中間一條髮絲線分開——它們是同一筆交易的兩面 */
+.out {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-top: 0.5px solid var(--border);
+}
+.orow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+}
+.olabel {
+  width: 76px;
+  flex: none;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.oval {
+  width: 180px;
+  flex: none;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.oraw {
+  font-size: 13px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
 </style>
