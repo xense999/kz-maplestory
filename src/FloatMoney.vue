@@ -121,9 +121,9 @@ function onDown(e: MouseEvent) {
         <span class="unit">元</span>
       </label>
 
-      <!-- 帳面是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
+      <!-- 交易楓幣是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
       <div class="row muted">
-        <span class="label">帳面</span>
+        <span class="label">交易</span>
         <span class="derived">{{ face === null ? "—" : formatMeso(face) }}</span>
         <span class="unit"></span>
       </div>
@@ -237,7 +237,7 @@ function onDown(e: MouseEvent) {
   font-size: 0.82em;
   color: var(--text-dim);
 }
-/* 帳面那一行：位置跟上面三行一樣，只是整行退到背景 */
+/* 交易楓幣那一行：位置跟上面三行一樣，只是整行退到背景 */
 .row.muted {
   height: 1.5em;
 }

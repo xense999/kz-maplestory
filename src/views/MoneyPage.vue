@@ -24,7 +24,7 @@ const DASH = "—";
 const rows = computed(() => {
   const d = money.deal;
   return [
-    { key: "face", label: "帳面楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
+    { key: "face", label: "交易楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
     { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
   ];
 });

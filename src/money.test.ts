@@ -29,7 +29,7 @@ describe("台幣 → 楓幣", () => {
     expect(d.fee).toBe(84 * W);
   });
 
-  it("手續費就是帳面與實收的差", () => {
+  it("手續費就是交易金額與實收的差", () => {
     const d = fromNtd(137.5, RATE, false)!;
     expect(d.fee).toBeCloseTo(d.face - d.net, 6);
   });
@@ -82,7 +82,7 @@ describe("我要入手這麼多楓幣", () => {
     const d = fromWanted(5000 * W, RATE, false)!;
     // 精確要 1.88 台幣，付不出小數所以付 2
     expect(d.ntd).toBe(2);
-    // ★三個數字是同一筆交易：帳面就是台幣 × 幣值
+    // ★三個數字是同一筆交易：交易楓幣就是台幣 × 幣值
     expect(d.face).toBe(2 * RATE * W);
     expect(d.net).toBe(d.face * 0.95);
   });
