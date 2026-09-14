@@ -25,49 +25,64 @@ export const SLOTS = [
 export type SlotId = (typeof SLOTS)[number]["id"];
 
 const NAMES_KEY = "kz-maplestory:character-names";
+const SHOWN_KEY = "kz-maplestory:character-shown";
 
 interface SlotState {
   name: string;
+  /** 要不要出現在浮動視窗 */
+  shown: boolean;
   info: CharacterInfo | null;
   growth: Progress | null;
   loading: boolean;
   error: string;
 }
 
-function loadNames(): Record<string, string> {
+function loadJson<T>(key: string, fallback: T): T {
   try {
-    return JSON.parse(localStorage.getItem(NAMES_KEY) ?? "{}");
+    return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback;
   } catch {
-    return {};
+    return fallback;
   }
 }
 
 export const useRosterStore = defineStore("roster", () => {
-  const saved = loadNames();
+  const savedNames = loadJson<Record<string, string>>(NAMES_KEY, {});
+  const savedShown = loadJson<Record<string, boolean>>(SHOWN_KEY, {});
 
   const slots = reactive(
     Object.fromEntries(
       SLOTS.map((s) => [
         s.id,
-        { name: saved[s.id] ?? "", info: null, growth: null, loading: false, error: "" } as SlotState,
+        {
+          name: savedNames[s.id] ?? "",
+          shown: savedShown[s.id] ?? false,
+          info: null,
+          growth: null,
+          loading: false,
+          error: "",
+        } as SlotState,
       ]),
     ),
   ) as Record<SlotId, SlotState>;
 
-  function persistNames() {
+  function persist() {
     try {
       localStorage.setItem(
         NAMES_KEY,
         JSON.stringify(Object.fromEntries(SLOTS.map((s) => [s.id, slots[s.id].name]))),
+      );
+      localStorage.setItem(
+        SHOWN_KEY,
+        JSON.stringify(Object.fromEntries(SLOTS.map((s) => [s.id, slots[s.id].shown]))),
       );
     } catch {
       /* 存不了就只在這次執行有效 */
     }
   }
 
-  /** 面板要的東西。整份重送，兩隻角色的資料量小，不必算差異 */
+  /** 面板要的東西：只有被打開的那幾格。整份重送，資料量小，不必算差異 */
   function snapshot(): CharacterSnap[] {
-    return SLOTS.map((s) => ({
+    return SLOTS.filter((s) => slots[s.id].shown).map((s) => ({
       slot: s.id,
       label: s.label,
       name: slots[s.id].name,
@@ -117,9 +132,16 @@ export const useRosterStore = defineStore("roster", () => {
     slots[id].name = next;
     slots[id].info = null;
     slots[id].growth = null;
-    persistNames();
+    persist();
     publish();
     await refresh(id);
+  }
+
+  /** 要不要在浮動視窗上顯示這一格 */
+  function setShown(id: SlotId, on: boolean) {
+    slots[id].shown = on;
+    persist();
+    publish();
   }
 
   const anyNamed = computed(() => SLOTS.some((s) => slots[s.id].name !== ""));
@@ -145,7 +167,7 @@ export const useRosterStore = defineStore("roster", () => {
     setInterval(refreshAll, REFRESH_MS);
   }
 
-  return { slots, anyNamed, refresh, refreshAll, setName, init };
+  return { slots, anyNamed, refresh, refreshAll, setName, setShown, init };
 });
 
 /** 給 HomePage 用的常數，不必再 import 一次 SLOTS */

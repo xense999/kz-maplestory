@@ -100,13 +100,15 @@ function state(s: TimerSnap) {
   display: flex;
   flex-direction: column;
   user-select: none;
+  /* 尺寸全用 em，字級綁視窗寬度（300px 寬＝16px 字）＝拖大拖小是等比縮放 */
+  font-size: calc(100vw / 300 * 16);
 }
 .bg {
   position: absolute;
   inset: 0;
   background: var(--bg-1);
   border: 1px solid var(--window-edge);
-  border-radius: var(--radius-lg);
+  border-radius: 0.9em;
   corner-shape: superellipse(1.5);
 }
 /* 三行平均吃掉剩下的高度，行距就不必手調 */
@@ -116,24 +118,24 @@ function state(s: TimerSnap) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 4px 12px;
+  padding: 0.25em 0.75em;
 }
 
 .row {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5em;
 }
 .label {
-  font-size: 16px;
+  font-size: 1em;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
 }
 .time {
   margin-left: auto;
-  font-size: 21px;
+  font-size: 1.35em;
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;

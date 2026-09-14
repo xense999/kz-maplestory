@@ -20,4 +20,8 @@ if (view) {
   initTheme();
 }
 
+// 桌面程式不該跳出瀏覽器的右鍵選單（重新整理、檢視原始碼那一套）。
+// 元件自己的 contextmenu handler 照常運作——這裡只擋預設選單。
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+
 createApp(root).use(createPinia()).mount("#app");

@@ -110,13 +110,18 @@ function delta(v?: number | null) {
                 {{ roster.slots[s.id].info!.world }}
               </span>
               <div class="spacer"></div>
+              <!-- 打開才會出現在浮動視窗上。資料本來就會自己更新，所以這裡不放更新鈕 -->
               <button
-                class="sm"
-                :disabled="roster.slots[s.id].loading || !roster.slots[s.id].name"
-                @click="roster.refresh(s.id)"
-              >
-                更新
-              </button>
+                class="switch"
+                role="switch"
+                :class="{ on: roster.slots[s.id].shown }"
+                :aria-checked="roster.slots[s.id].shown"
+                :disabled="!roster.slots[s.id].name"
+                :title="
+                  roster.slots[s.id].shown ? '會顯示在浮動視窗上' : '打開後才會顯示在浮動視窗上'
+                "
+                @click="roster.setShown(s.id, !roster.slots[s.id].shown)"
+              ></button>
             </div>
 
             <div class="stats">

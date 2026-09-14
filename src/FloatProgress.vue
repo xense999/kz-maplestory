@@ -75,20 +75,23 @@ function gain(v: number | null) {
 </template>
 
 <style scoped>
-/* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層 */
+/* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
+   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（360px 寬＝16px 字），
+   所以拖大拖小是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
   user-select: none;
+  font-size: calc(100vw / 360 * 16);
 }
 .bg {
   position: absolute;
   inset: 0;
   background: var(--bg-1);
   border: 1px solid var(--window-edge);
-  border-radius: var(--radius-lg);
+  border-radius: 0.9em;
   corner-shape: superellipse(1.5);
 }
 .rows {
@@ -97,19 +100,19 @@ function gain(v: number | null) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 6px 10px;
+  padding: 0.4em 0.7em;
 }
 .row {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5em;
   min-width: 0;
 }
 /* 角色圖是去背 PNG，底下不鋪色 */
 .portrait {
-  width: 40px;
-  height: 40px;
+  width: 2.9em;
+  height: 2.9em;
   flex: none;
   display: flex;
   align-items: center;
@@ -127,10 +130,10 @@ function gain(v: number | null) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 0.06em;
 }
 .name {
-  font-size: 15px;
+  font-size: 0.95em;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
@@ -138,12 +141,12 @@ function gain(v: number | null) {
   white-space: nowrap;
 }
 .sub {
-  font-size: 12px;
+  font-size: 0.75em;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 .today {
-  font-size: 19px;
+  font-size: 1.2em;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
