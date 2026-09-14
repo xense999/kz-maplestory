@@ -47,29 +47,29 @@ const roundUp = computed(() =>
   <div class="page">
     <div class="body">
       <div class="scroller">
-        <section class="card">
-          <div class="card-head">
-            幣值換算
-            <div class="spacer"></div>
-            <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
-            <span class="viplabel">VIP</span>
-            <button
-              class="switch"
-              role="switch"
-              :class="{ on: money.vip }"
-              :aria-checked="money.vip"
-              :title="money.vip ? '手續費 3%' : '手續費 5%'"
-              @click="money.vip = !money.vip"
-            ></button>
-          </div>
+        <!-- 填的一張、算出來的一張：左右並排，兩邊的列一一對齊 -->
+        <div class="split">
+          <section class="card">
+            <div class="card-head">
+              交易條件
+              <div class="spacer"></div>
+              <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
+              <span class="viplabel">VIP</span>
+              <button
+                class="switch"
+                role="switch"
+                :class="{ on: money.vip }"
+                :aria-checked="money.vip"
+                :title="money.vip ? '手續費 3%' : '手續費 5%'"
+                @click="money.vip = !money.vip"
+              ></button>
+            </div>
 
-          <!-- 填的在左、算出來的在右 -->
-          <div class="split">
-            <div class="fields">
-              <label class="field">
-                <span class="flabel">幣值</span>
+            <div class="rows fields">
+              <label class="row">
+                <span class="rlabel">幣值</span>
                 <input
-                  class="num"
+                  class="rval"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
@@ -77,13 +77,13 @@ const roundUp = computed(() =>
                   :value="money.rateText"
                   @input="money.setRate(value($event))"
                 />
-                <span class="unit">萬</span>
+                <span class="rnote unit">萬</span>
               </label>
 
-              <label class="field">
-                <span class="flabel">台幣</span>
+              <label class="row">
+                <span class="rlabel">台幣</span>
                 <input
-                  class="num"
+                  class="rval"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
@@ -91,13 +91,13 @@ const roundUp = computed(() =>
                   :value="money.ntdText"
                   @input="money.setNtd(value($event))"
                 />
-                <span class="unit">元</span>
+                <span class="rnote unit">元</span>
               </label>
 
-              <label class="field">
-                <span class="flabel">實收</span>
+              <label class="row">
+                <span class="rlabel">實收</span>
                 <input
-                  class="num"
+                  class="rval"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
@@ -105,30 +105,34 @@ const roundUp = computed(() =>
                   :value="money.mesoText"
                   @input="money.setMeso(value($event))"
                 />
-                <span class="unit">楓幣</span>
+                <span class="rnote unit">楓幣</span>
                 <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
-                <span class="echo">{{ mesoInWords }}</span>
+                <span class="rnote">{{ mesoInWords }}</span>
               </label>
             </div>
+          </section>
 
-            <div class="out">
-              <div v-for="r in rows" :key="r.key" class="orow" :title="r.hint">
-                <span class="olabel">{{ r.label }}</span>
-                <span class="oval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
+          <section class="card">
+            <div class="card-head">換算結果</div>
+
+            <div class="rows">
+              <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
+                <span class="rlabel">{{ r.label }}</span>
+                <span class="rval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
                 <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
-                <span class="oraw">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
+                <span class="rnote">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
               </div>
 
-              <div class="orow">
-                <span class="olabel">實際花費</span>
-                <span class="oval">{{ ntd }}</span>
-                <span v-if="roundUp" class="oraw">
+              <div class="row">
+                <span class="rlabel">實際花費</span>
+                <span class="rval">{{ ntd }}</span>
+                <span v-if="roundUp" class="rnote">
                   付 {{ roundUp.ntd }} 元 → 多拿 {{ formatMeso(roundUp.extra) }}
                 </span>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
 
       <div class="pagebar">
@@ -169,96 +173,48 @@ const roundUp = computed(() =>
   gap: var(--sp-2);
 }
 
+/* 兩張卡等寬，且 stretch 成一樣高——一邊比另一邊矮會看起來像沒寫完 */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+/* 視窗窄到兩欄各自塞不下時就疊成上下 */
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .viplabel {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-dim);
 }
 
-/* 填的在左、算出來的在右：兩邊同時看得到，改一個數字不必上下找 */
-.split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-/* 視窗窄到兩欄各自塞不下時就疊回一欄 */
-@media (max-width: 900px) {
-  .split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .out {
-    border-left: none;
-    border-top: 0.5px solid var(--border);
-  }
-}
-
-.fields {
+/* 兩張卡的內容用同一組規則：列高、欄寬、字級都一致，左右才對得起來 */
+.rows {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: var(--sp-3);
   padding: var(--sp-4);
 }
-.field {
+.row {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
+  min-height: 34px;
 }
-/* 三個欄位的標籤等寬，輸入框才會對齊成一直行 */
-.flabel {
-  width: 56px;
-  flex: none;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-strong);
-}
-.num {
-  width: 180px;
-  flex: none;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  /* 框比全域的欄位淡一級：這三欄一直都在，深框會變成三條搶注意力的線 */
-  background: transparent;
-  border-color: var(--border);
-}
-.num:hover:not(:focus) {
-  background: var(--input-bg);
-}
-.unit {
-  font-size: 14px;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-/* 同一個數字換個級距講一次。是附註不是第二個數字，所以比欄位淡 */
-.echo {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* 結果區：跟輸入區同一張卡，中間一條髮絲線分開——它們是同一筆交易的兩面 */
-.out {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: var(--sp-4);
-  border-left: 0.5px solid var(--border);
-}
-.orow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-3);
-  padding: var(--sp-2) 0;
-}
-.olabel {
+.rlabel {
   width: 76px;
   flex: none;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-dim);
 }
-.oval {
-  width: 180px;
+.rval {
+  width: 190px;
   flex: none;
   font-size: 17px;
   font-weight: 700;
@@ -266,9 +222,31 @@ const roundUp = computed(() =>
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.oraw {
-  font-size: 13px;
+/* 單位、原始數字、級距換算都是附註：同一個字級、同一個淡度 */
+.rnote {
+  font-size: 14px;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 單位比其他附註重要一點：它說明左邊那個數字在講什麼 */
+.unit {
+  flex: none;
+  color: var(--text-dim);
+}
+
+/* 輸入欄要跟右邊的唯讀數字長得一樣高、一樣重，只是多一個可以點進去的框 */
+input.rval {
+  height: 34px;
+  padding: 0 12px;
+  /* 框比全域的欄位淡一級：這三欄一直都在，深框會變成三條搶注意力的線 */
+  background: transparent;
+  border-color: var(--border);
+}
+input.rval:hover:not(:focus) {
+  background: var(--input-bg);
 }
 </style>
