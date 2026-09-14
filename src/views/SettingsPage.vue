@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -20,20 +20,6 @@ const THEMES: { id: ThemePref; label: string }[] = [
 
 /** 金鑰預設遮起來：這東西會被截圖、也會被旁邊的人看到 */
 const revealKey = ref(false);
-/** 填過之後就當成一段（遮起來的）文字，點一下才變回欄位——跟主頁的角色名同一套 */
-const editingKey = ref(false);
-
-const maskedKey = computed(() =>
-  revealKey.value ? apiKey.value : "•".repeat(Math.min(apiKey.value.length, 28)),
-);
-
-async function beginEditKey() {
-  editingKey.value = true;
-  await nextTick();
-  const el = document.querySelector<HTMLInputElement>(".keyfield input");
-  el?.focus();
-  el?.select();
-}
 
 const version = ref("");
 const showAbout = ref(false);
@@ -154,19 +140,13 @@ async function copyDiscord() {
           <span class="row-title">API 金鑰</span>
           <div class="keyfield">
             <input
-              v-if="editingKey || !apiKey"
               :type="revealKey ? 'text' : 'password'"
               :value="apiKey"
               placeholder="貼上你自己的 API 金鑰"
               spellcheck="false"
               autocomplete="off"
               @input="setApiKey(($event.target as HTMLInputElement).value)"
-              @keydown.enter="editingKey = false"
-              @blur="editingKey = false"
             />
-            <button v-else class="key-text" title="點一下改金鑰" @click="beginEditKey">
-              {{ maskedKey }}
-            </button>
             <button
               class="eye"
               :title="revealKey ? '隱藏金鑰' : '顯示金鑰'"
@@ -326,26 +306,9 @@ async function copyDiscord() {
   position: relative;
   width: 340px;
 }
-.keyfield input,
-.key-text {
+.keyfield input {
   width: 100%;
   padding-right: 40px;
-}
-/* 已填好的金鑰：看起來是一段文字，不是等著被填的欄位 */
-.key-text {
-  height: 34px;
-  justify-content: flex-start;
-  padding-left: 12px;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-.key-text:hover:not(:disabled) {
-  background: var(--hover);
 }
 .eye {
   position: absolute;

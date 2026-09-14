@@ -202,7 +202,7 @@ function fmt(n?: number) {
   border-radius: var(--radius);
 }
 
-/* 圖框底色比內卡淺一階，不然兩層 --bg-2 疊在一起就看不出框 */
+/* 角色圖本身是去背的 PNG，所以框裡不上底色——鋪一塊白會讓角色像貼在紙上 */
 .portrait {
   width: 96px;
   height: 96px;
@@ -210,8 +210,7 @@ function fmt(n?: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: transparent;
   border-radius: var(--radius);
   overflow: hidden;
   color: var(--text-faint);
