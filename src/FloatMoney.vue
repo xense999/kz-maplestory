@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { mesoTextInWords } from "./money";
 import { moneyPanel, type MoneyInput, type MoneySnap } from "./float";
 
 const appWin = getCurrentWindow();
@@ -18,9 +17,6 @@ const focused = ref<MoneyInput["field"] | null>(null);
 /** 目前是從哪一欄算的，還有算不算得出來——兩個都只給中間那支箭頭用 */
 const anchor = ref<MoneySnap["anchor"]>("ntd");
 const ok = ref(false);
-
-/** 楓幣欄打的是一長串零，看不出是多少，換個講法接在右邊 */
-const mesoInWords = computed(() => mesoTextInWords(text.value.meso));
 
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
@@ -100,24 +96,14 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('meso', $event)"
         />
-        <span class="echo">{{ mesoInWords }}</span>
+        <span class="unit">楓幣</span>
       </label>
 
       <!-- 箭頭指向「被算出來的那一欄」：打楓幣就往下指台幣，打台幣就往上指楓幣。
            算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。 -->
       <div class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
-        <svg
-          class="arrow"
-          :class="{ on: ok, up: anchor === 'ntd' }"
-          viewBox="0 0 12 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M6 2 V14" />
-          <path d="M2 10 L6 14 L10 10" />
+        <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
+          <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
         </svg>
       </div>
 
@@ -198,7 +184,6 @@ function onDown(e: MouseEvent) {
 /* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
 .label,
 .unit,
-.echo,
 .row input {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
@@ -233,33 +218,24 @@ function onDown(e: MouseEvent) {
   border-color: var(--accent);
   box-shadow: none;
 }
-.unit,
-.echo {
+.unit {
   flex: none;
   font-size: 0.82em;
   color: var(--text-dim);
 }
 .unit {
-  width: 1.5em;
-}
-.echo {
-  width: 4.6em;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: 2.4em;
 }
 
-/* 箭頭夾在楓幣與台幣之間，對齊左邊的標籤欄——擺中間會把兩個數字切開 */
+/* 箭頭夾在楓幣與台幣中間，橫向置中：它講的是兩列之間的關係，不屬於任何一欄 */
 .flow {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 1.1em;
 }
 .arrow {
-  width: 2.5em;
+  width: 0.9em;
   height: 1em;
   flex: none;
   color: var(--text-faint);
