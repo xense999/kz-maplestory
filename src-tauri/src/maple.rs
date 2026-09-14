@@ -125,6 +125,7 @@ pub struct History {
 
 #[tauri::command]
 pub async fn fetch_history(
+    app: tauri::AppHandle,
     name: String,
     api_key: String,
     dates: Vec<String>,
@@ -140,13 +141,38 @@ pub async fn fetch_history(
         return Err("設定頁還沒填 API 金鑰".into());
     }
 
-    let ocid = resolve_ocid(name, &api_key).await?;
-    let mut out = Vec::new();
+    // 已經知道的日期不再問。過去某天的數字不會變，而官方對請求數有限制——
+    // 被擋掉的那次會讓基準消失，畫面上的成長量就會忽有忽無。
+    let known = crate::progress::cached_days(&app, name);
+    let mut out: Vec<DaySample> = Vec::new();
+    let mut fresh: Vec<DaySample> = Vec::new();
 
+    let mut ocid: Option<String> = None;
     for date in dates {
+        // 今天的數字還會變，所以今天那筆不吃快取
+        if date != today {
+            if let Some(hit) = known.get(&date) {
+                out.push(DaySample {
+                    date,
+                    level: hit.level,
+                    exp_percent: hit.exp_percent,
+                });
+                continue;
+            }
+        }
+
+        let id = match &ocid {
+            Some(v) => v.clone(),
+            None => {
+                let v = resolve_ocid(name, &api_key).await?;
+                ocid = Some(v.clone());
+                v
+            }
+        };
+
         let url = format!(
             "{BASE}/character/basic?ocid={}&date={}",
-            urlencoding(&ocid),
+            urlencoding(&id),
             urlencoding(&date)
         );
         let Ok(body) = get(&url, &api_key).await else {
@@ -155,7 +181,7 @@ pub async fn fetch_history(
         let Ok(basic) = serde_json::from_str::<BasicResp>(&body) else {
             continue;
         };
-        out.push(DaySample {
+        let sample = DaySample {
             date,
             level: basic.character_level,
             exp_percent: basic
@@ -163,7 +189,16 @@ pub async fn fetch_history(
                 .as_deref()
                 .and_then(|s| s.parse::<f64>().ok())
                 .unwrap_or(0.0),
-        });
+        };
+        // 今天的還會變，不進快取
+        if sample.date != today {
+            fresh.push(sample.clone());
+        }
+        out.push(sample);
+    }
+
+    if !fresh.is_empty() {
+        crate::progress::remember_days(&app, name, &fresh, 14);
     }
 
     let growth = crate::progress::growth(&out, &today, latest_level, latest_exp);
