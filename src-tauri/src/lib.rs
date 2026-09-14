@@ -1,5 +1,6 @@
 #[cfg(windows)]
 mod keyhook;
+mod maple;
 mod update;
 
 // on_window_event 的 window.app_handle() 由這個 trait 提供
@@ -17,6 +18,7 @@ pub fn run() {
             keyhook::unwatch_key,
             update::check_app_update,
             update::update_app_inplace,
+            maple::fetch_character,
         ])
         .setup(|app| {
             // 監聽式熱鍵：不搶鍵，玩家按放技能的那顆鍵時我們順便起算

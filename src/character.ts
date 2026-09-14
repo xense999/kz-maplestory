@@ -1,16 +1,15 @@
 import { ref } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 
 /**
- * 角色資料。
- *
- * ★資料來源還沒接上：`fetchCharacter` 目前是空的，等官方 API 的端點與回傳格式
- * 確定之後只要改那一支，UI 這邊不用動。型別先定下來，是為了讓畫面知道自己要
- * 顯示哪些欄位。
+ * 角色資料。實際的請求在後端（見 src-tauri/src/maple.rs）——官方 API 不給
+ * 跨來源標頭，webview 直接打會被擋。
  */
 export interface CharacterInfo {
   name: string;
   /** 職業（有的話顯示在名字旁邊） */
   job?: string;
+  world?: string;
   level: number;
   /** 這一級已經賺到的比例，0~100 */
   expPercent: number;
@@ -18,8 +17,23 @@ export interface CharacterInfo {
   exp?: number;
   /** 角色圖網址 */
   imageUrl?: string;
+  /** 官方標示的資料基準日 */
+  asOf?: string;
   /** 這筆資料抓下來的時刻 */
   fetchedAt: number;
+}
+
+/** 後端回來的形狀（欄位名沿用 Rust 那邊的 snake_case） */
+interface RawCharacter {
+  name: string;
+  job?: string;
+  world?: string;
+  level: number;
+  exp_percent: number;
+  exp?: number;
+  image_url?: string;
+  as_of?: string;
+  fetched_at: number;
 }
 
 /** 每 10 分鐘更新一次 */
@@ -47,6 +61,17 @@ export function setName(slot: string, name: string) {
   }
 }
 
-export async function fetchCharacter(_name: string, _apiKey: string): Promise<CharacterInfo> {
-  throw new Error("尚未接上官方 API");
+export async function fetchCharacter(name: string, apiKey: string): Promise<CharacterInfo> {
+  const r = await invoke<RawCharacter>("fetch_character", { name, apiKey });
+  return {
+    name: r.name,
+    job: r.job,
+    world: r.world,
+    level: r.level,
+    expPercent: r.exp_percent,
+    exp: r.exp,
+    imageUrl: r.image_url,
+    asOf: r.as_of,
+    fetchedAt: r.fetched_at,
+  };
 }
