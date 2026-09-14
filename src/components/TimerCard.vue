@@ -64,17 +64,58 @@ function isCustom() {
   return !store.spec(props.id).presets?.includes(store.timers[props.id].durationMs);
 }
 
+/** 把欄位裡的數字收下來（對齊 15 分鐘是 store 的規則，這裡只把結果寫回欄位） */
+function applyCustom() {
+  const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
+  if (raw <= 0) return;
+  store.setDuration(props.id, raw);
+  const ms = store.timers[props.id].durationMs;
+  customH.value = Math.floor(ms / 3_600_000);
+  customM.value = (ms % 3_600_000) / 60_000;
+}
+
 /** 沒有「套用」按鈕：焦點離開這一區（點別的地方、按 Enter）就收下並收起 */
 function commitCustom() {
-  const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
-  if (raw > 0) {
-    // 對齊 15 分鐘是 store 的規則（存檔讀回來時也要對齊），這裡只把結果寫回欄位
-    store.setDuration(props.id, raw);
-    const ms = store.timers[props.id].durationMs;
-    customH.value = Math.floor(ms / 3_600_000);
-    customM.value = (ms % 3_600_000) / 60_000;
-  }
+  applyCustom();
   customOpen.value = false;
+}
+
+/** 拖曳調整中。拖曳會讓欄位失焦，不擋住的話這一區會在拖到一半時收起來 */
+const dragging = ref(false);
+
+/**
+ * 左右拖曳欄位就能加減數字——比點兩下再打字快，尤其這兩格的值都很規律
+ * （小時 1 格、分鐘 15 分一格）。移動不到 4px 當作單純的點擊，編輯照舊。
+ */
+function startDrag(e: PointerEvent, which: "h" | "m") {
+  const input = e.currentTarget as HTMLInputElement;
+  const startX = e.clientX;
+  const startV = which === "h" ? Number(customH.value) || 0 : Number(customM.value) || 0;
+  const step = which === "h" ? 1 : 15;
+  const max = which === "h" ? 24 : 45;
+  let live = false;
+
+  const move = (ev: PointerEvent) => {
+    const dx = ev.clientX - startX;
+    if (!live) {
+      if (Math.abs(dx) < 4) return;
+      live = true;
+      dragging.value = true;
+      input.blur();
+    }
+    const next = Math.min(max, Math.max(0, startV + Math.round(dx / 14) * step));
+    if (which === "h") customH.value = next;
+    else customM.value = next;
+  };
+  const up = () => {
+    window.removeEventListener("pointermove", move);
+    window.removeEventListener("pointerup", up);
+    if (!live) return;
+    applyCustom();
+    dragging.value = false;
+  };
+  window.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
 }
 
 // 展開就把游標送進小時欄位：沒有焦點在裡面的話，點別處也不會觸發 focusout
@@ -86,6 +127,7 @@ watch(customOpen, async (open) => {
 
 /** 焦點還在這一區裡面（小時→分鐘）就不算離開 */
 function onCustomFocusOut(e: FocusEvent) {
+  if (dragging.value) return;
   const next = e.relatedTarget as Node | null;
   if (next && customEl.value?.contains(next)) return;
   commitCustom();
@@ -155,6 +197,8 @@ function onCustomFocusOut(e: FocusEvent) {
           min="0"
           max="24"
           aria-label="小時"
+          title="可以左右拖曳調整"
+          @pointerdown="startDrag($event, 'h')"
           @keydown.enter="commitCustom()"
         />
         <span class="unit">小時</span>
@@ -165,6 +209,8 @@ function onCustomFocusOut(e: FocusEvent) {
           max="45"
           step="15"
           aria-label="分鐘"
+          title="可以左右拖曳調整"
+          @pointerdown="startDrag($event, 'm')"
           @keydown.enter="commitCustom()"
         />
         <span class="unit">分</span>
@@ -311,6 +357,8 @@ function onCustomFocusOut(e: FocusEvent) {
   width: 74px;
   /* 跟時長膠囊同高，展開時這一列的高度才不會跳 */
   height: 32px;
+  /* 游標明講「這格可以左右拖」 */
+  cursor: ew-resize;
 }
 .unit {
   font-size: 15px;
