@@ -120,7 +120,6 @@ function delta(v?: number | null) {
             </div>
 
             <p v-if="s.error" class="note err">{{ s.error }}</p>
-            <p v-else-if="!s.name" class="note">填入角色名稱後每 10 分鐘自動更新</p>
           </div>
         </div>
 
@@ -386,11 +385,8 @@ function delta(v?: number | null) {
   transition: width 0.3s ease;
 }
 
-.note {
-  font-size: 13px;
-  color: var(--text-faint);
-}
 .note.err {
+  font-size: 13px;
   color: var(--danger);
 }
 </style>
