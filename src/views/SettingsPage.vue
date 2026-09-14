@@ -267,9 +267,13 @@ async function copyDiscord() {
           <div class="about-card">
             <span class="about-card-label">步驟</span>
             <ol class="steps">
-              <li>用你的遊戲帳號登入 NEXON Open API。</li>
-              <li>建立一個應用程式（Application），遊戲選「新楓之谷 / MapleStory Taiwan」。</li>
-              <li>建好之後頁面上會給一串 API Key，複製它貼到設定頁的欄位。</li>
+              <li>進入網站，從上方 My Page 進入 Register Application。</li>
+              <li>讀完上述兩組資料（滑到最下方打勾）。</li>
+              <li>選擇遊戲 MapleStory Taiwan。</li>
+              <li>選擇屬性 Development phase。</li>
+              <li>命名這個服務的名稱（隨意打）。</li>
+              <li>創立後從左方 Application List 進入，點選剛剛命名的 Service name。</li>
+              <li>上方的 API key details 就是你的 API 金鑰。</li>
             </ol>
             <p class="note">一組金鑰可以一直用，不必每次重新申請。</p>
           </div>
