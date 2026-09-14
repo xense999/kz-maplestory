@@ -127,11 +127,13 @@ function state(s: TimerSnap) {
   align-items: center;
   gap: 0.5em;
 }
+/* 底色可以淡到 0，所以字得自己站得住：描一圈暗影 */
 .label {
   font-size: 1em;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .time {
   margin-left: auto;
@@ -139,6 +141,7 @@ function state(s: TimerSnap) {
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .row.idle .time {
   color: var(--text-faint);

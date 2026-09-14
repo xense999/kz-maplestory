@@ -124,6 +124,8 @@ function gain(v: number | null) {
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
+  /* 角色圖是去背的，底色一淡就少了襯底——描一圈暗影讓它自己浮出來 */
+  filter: drop-shadow(0 0 0.12em rgba(0, 0, 0, 0.9));
 }
 .text {
   flex: 1;
@@ -132,18 +134,21 @@ function gain(v: number | null) {
   flex-direction: column;
   gap: 0.06em;
 }
+/* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
 .name {
   font-size: 0.95em;
   font-weight: 700;
   color: var(--text);
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sub {
   font-size: 0.75em;
-  color: var(--text-dim);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .today {
   font-size: 1.2em;
@@ -151,5 +156,6 @@ function gain(v: number | null) {
   color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 </style>
