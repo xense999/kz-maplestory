@@ -21,9 +21,6 @@ const SLOTS = [
 const info = ref<Record<string, CharacterInfo | null>>({ main: null, rival: null });
 const errors = ref<Record<string, string>>({});
 const loading = ref<Record<string, boolean>>({});
-/** 上一次更新的時刻，畫面上寫「幾分鐘前」用的 */
-const lastAt = ref<Record<string, number>>({});
-const now = ref(Date.now());
 
 async function refresh(slot: string) {
   const name = names.value[slot];
@@ -39,7 +36,6 @@ async function refresh(slot: string) {
   try {
     const got = await fetchCharacter(name, apiKey.value);
     info.value = { ...info.value, [slot]: got };
-    lastAt.value = { ...lastAt.value, [slot]: got.fetchedAt };
     errors.value = { ...errors.value, [slot]: "" };
   } catch (e) {
     errors.value = { ...errors.value, [slot]: String(e instanceof Error ? e.message : e) };
@@ -66,7 +62,6 @@ function commitName(slot: string, value: string) {
   if (next === (names.value[slot] ?? "")) return;
   setName(slot, next);
   info.value = { ...info.value, [slot]: null };
-  lastAt.value = { ...lastAt.value, [slot]: 0 };
   void refresh(slot);
 }
 
@@ -75,29 +70,15 @@ function refreshAll() {
 }
 
 let timer: number | null = null;
-let tick: number | null = null;
 
 onMounted(() => {
   refreshAll();
   timer = window.setInterval(refreshAll, REFRESH_MS);
-  // 「幾分鐘前」要會自己往前走，不然看起來像卡住了
-  tick = window.setInterval(() => (now.value = Date.now()), 30_000);
 });
 onUnmounted(() => {
   if (timer !== null) clearInterval(timer);
-  if (tick !== null) clearInterval(tick);
 });
 
-function ago(slot: string) {
-  const at = lastAt.value[slot];
-  if (!at) return "尚未更新";
-  const m = Math.floor((now.value - at) / 60_000);
-  return m <= 0 ? "剛剛更新" : `${m} 分鐘前更新`;
-}
-
-function fmt(n?: number) {
-  return n === undefined ? "—" : n.toLocaleString("zh-TW");
-}
 </script>
 
 <template>
@@ -133,9 +114,8 @@ function fmt(n?: number) {
                 {{ names[s.id] }}
               </button>
 
-              <span v-if="info[s.id]?.job" class="job">{{ info[s.id]!.job }}</span>
+              <span v-if="info[s.id]?.world" class="world">{{ info[s.id]!.world }}</span>
               <div class="spacer"></div>
-              <span class="when">{{ loading[s.id] ? "更新中…" : ago(s.id) }}</span>
               <button class="sm" :disabled="loading[s.id] || !names[s.id]" @click="refresh(s.id)">
                 更新
               </button>
@@ -151,10 +131,6 @@ function fmt(n?: number) {
                 <span class="sval">
                   {{ info[s.id] ? `${info[s.id]!.expPercent.toFixed(2)}%` : "—" }}
                 </span>
-              </div>
-              <div class="stat grow">
-                <span class="slabel">累積經驗值</span>
-                <span class="sval small">{{ fmt(info[s.id]?.exp) }}</span>
               </div>
             </div>
 
@@ -264,14 +240,9 @@ function fmt(n?: number) {
 .who-text:hover:not(:disabled) {
   background: var(--hover);
 }
-.job {
+.world {
   font-size: 14px;
   color: var(--text-faint);
-}
-.when {
-  font-size: 13px;
-  color: var(--text-faint);
-  white-space: nowrap;
 }
 
 .stats {
@@ -285,9 +256,6 @@ function fmt(n?: number) {
   gap: 2px;
   min-width: 0;
 }
-.stat.grow {
-  flex: 1;
-}
 .slabel {
   font-size: 13px;
   font-weight: 600;
@@ -299,11 +267,6 @@ function fmt(n?: number) {
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
-}
-.sval.small {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-dim);
 }
 
 .bar {
