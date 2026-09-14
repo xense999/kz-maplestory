@@ -27,7 +27,7 @@ const rows = computed(() => {
   ];
 });
 
-const ntd = computed(() => (money.deal ? `${formatNtd(money.deal.ntd)} 元` : DASH));
+const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 
 /**
  * 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，
@@ -79,11 +79,11 @@ const roundUp = computed(() =>
                   :value="money.rateText"
                   @input="money.setRate(value($event))"
                 />
-                <span class="unit">W ／ 台幣</span>
+                <span class="unit">W ／ 元</span>
               </label>
 
               <label class="field">
-                <span class="flabel">台幣</span>
+                <span class="flabel">元</span>
                 <input
                   class="num"
                   type="text"
@@ -93,7 +93,7 @@ const roundUp = computed(() =>
                   :value="money.ntdText"
                   @input="money.setNtd(value($event))"
                 />
-                <span class="unit">元</span>
+                <span class="unit"></span>
               </label>
 
               <label class="field">
@@ -122,10 +122,10 @@ const roundUp = computed(() =>
               </div>
 
               <div class="orow">
-                <span class="olabel">台幣</span>
+                <span class="olabel">元</span>
                 <span class="oval">{{ ntd }}</span>
                 <span v-if="roundUp" class="oraw">
-                  付 {{ roundUp.ntd }} 台幣 → 多拿 {{ formatMeso(roundUp.extra) }}
+                  付 {{ roundUp.ntd }} 元 → 多拿 {{ formatMeso(roundUp.extra) }}
                 </span>
               </div>
             </div>

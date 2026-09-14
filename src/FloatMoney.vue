@@ -82,7 +82,7 @@ function onDown(e: MouseEvent) {
       </label>
 
       <label class="row">
-        <span class="label">台幣</span>
+        <span class="label">元</span>
         <input
           type="text"
           inputmode="decimal"
@@ -93,7 +93,7 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('ntd', $event)"
         />
-        <span class="unit">元</span>
+        <span class="unit"></span>
       </label>
 
       <label class="row">
