@@ -100,14 +100,13 @@ function onDown(e: MouseEvent) {
       </label>
 
       <!-- 箭頭指向「被算出來的那一欄」：打楓幣就往下指台幣，打台幣就往上指楓幣。
-           算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。 -->
-      <div class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
-        <span class="flowcell">
-          <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
-            <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
-          </svg>
-        </span>
-      </div>
+           算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。
+           ★不佔一列：佔了的話楓幣與台幣之間就會比其他列寬，三列的間距要一致。 -->
+      <span class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
+        <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
+          <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
+        </svg>
+      </span>
 
       <label class="row">
         <span class="label">台幣</span>
@@ -129,15 +128,16 @@ function onDown(e: MouseEvent) {
 
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
-   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（360px 寬＝19px 字），
-   所以拖大拖小是整體等比縮放，不是版面重排。 */
+   ★整塊的尺寸都是 em，而字級同時綁在視窗的寬與高上、取比較小的那個
+   （360×182 是 19px 字的基準）。只綁寬度的話，單獨拉高會讓內容留一大片空白；
+   取 min 之後不管怎麼拖都是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(100vw / 360 * 19);
+  font-size: calc(min(100vw / 360, 100vh / 182) * 19);
 }
 .bg {
   position: absolute;
@@ -175,13 +175,15 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 0 1em 0.5em;
+  gap: 0.5em;
+  padding: 0.5em 1em;
 }
 .row {
   display: flex;
   align-items: center;
   gap: 0.6em;
   height: 1.95em;
+  flex: none;
 }
 /* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
 .label,
@@ -229,21 +231,21 @@ function onDown(e: MouseEvent) {
   width: 2.4em;
 }
 
-/* 箭頭夾在楓幣與台幣之間，落在標籤那一欄的正下方——跟著文字走，不會把數字切開 */
+/* 落在「楓幣」與「台幣」兩個標籤的正中間，橫向對齊標籤欄。
+   位置是算出來的：三列各 1.95em、列距 0.5em，所以兩列的中心相差 2.45em，
+   中點就是整疊的中心再往下 1.225em。全部是 em，縮放時位置跟著等比走。 */
 .flow {
-  display: flex;
-  align-items: center;
-  height: 1.1em;
-}
-.flowcell {
+  position: absolute;
+  left: 1em;
+  top: calc(50% + 1.225em);
+  transform: translateY(-50%);
   width: 2.5em;
-  flex: none;
   display: flex;
   justify-content: center;
 }
 .arrow {
-  width: 0.9em;
-  height: 1em;
+  width: 0.85em;
+  height: 0.95em;
   flex: none;
   color: var(--text-faint);
   transition: color 0.15s ease, transform 0.15s ease;
