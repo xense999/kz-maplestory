@@ -24,7 +24,8 @@ const revealKey = ref(false);
 /** 「怎麼拿到金鑰」的說明，點問號才展開 */
 const keyHelp = ref(false);
 
-const NEXON_OPENAPI = "https://openapi.nexon.com/";
+/** 台版角色資訊 API 的頁面。從這裡登入、建立應用程式、拿金鑰 */
+const NEXON_OPENAPI = "https://openapi.nexon.com/game/maplestorytw/?id=49";
 
 /** 開機自動啟動。狀態的真實來源是系統本身，所以開頁時去問它，不自己記一份 */
 const autostart = ref(false);
@@ -218,7 +219,8 @@ async function copyDiscord() {
             <li>建立一個應用程式（Application），遊戲選「MapleStory Taiwan / 新楓之谷」。</li>
             <li>建好之後頁面上會給一串 API Key，複製它貼到上面的欄位。</li>
           </ol>
-          <button class="link" @click="openUrl(NEXON_OPENAPI)">開啟 NEXON Open API 網站</button>
+          <button class="link" @click="openUrl(NEXON_OPENAPI)">開啟申請頁面</button>
+          <span class="url">{{ NEXON_OPENAPI }}</span>
         </div>
       </section>
 
@@ -388,6 +390,13 @@ async function copyDiscord() {
 .help .link {
   height: 30px;
   font-size: 14px;
+}
+/* 網址也寫出來：有人會想自己複製，或在別台電腦上開 */
+.url {
+  font-size: 12px;
+  color: var(--text-faint);
+  word-break: break-all;
+  user-select: text;
 }
 /* 這一頁的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
 .row button {
