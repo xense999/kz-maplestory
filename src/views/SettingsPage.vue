@@ -551,7 +551,8 @@ async function copyDiscord() {
   padding-left: 1.3em;
   font-size: 15px;
   line-height: 1.9;
-  color: var(--text-dim);
+  /* 跟按鈕同一組中性深灰：這段是要人照著做的，不該退成背景資訊 */
+  color: var(--btn-text);
 }
 /* 只有一行內容的卡片：標籤在左、動作在右 */
 .row-card {
@@ -562,7 +563,7 @@ async function copyDiscord() {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--text-faint);
+  color: var(--btn-text);
 }
 .about-card-value {
   font-size: 16px;
