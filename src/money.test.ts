@@ -133,12 +133,12 @@ describe("台幣的寫法", () => {
 });
 
 describe("楓幣的寫法", () => {
-  it("0 就是 0W", () => {
-    expect(formatMeso(0)).toBe("0W");
+  it("0 就是 0萬", () => {
+    expect(formatMeso(0)).toBe("0萬");
   });
 
-  it("不到一億只寫 W，帶千分位", () => {
-    expect(formatMeso(2660 * W)).toBe("2,660W");
+  it("不到一億只寫萬，帶千分位", () => {
+    expect(formatMeso(2660 * W)).toBe("2,660萬");
   });
 
   it("剛好一億只寫億", () => {
@@ -150,11 +150,11 @@ describe("楓幣的寫法", () => {
   });
 
   it("有零頭就兩段都寫", () => {
-    expect(formatMeso(1400 * 100_000_000 + 2660 * W)).toBe("1,400 億 2,660W");
+    expect(formatMeso(1400 * 100_000_000 + 2660 * W)).toBe("1,400 億 2,660萬");
   });
 
   it("不到一億的零頭不會被捨進成一億", () => {
-    expect(formatMeso(99_999_999)).toBe("9,999.99W");
+    expect(formatMeso(99_999_999)).toBe("9,999.99萬");
   });
 
   it("原始數字帶千分位", () => {
@@ -166,7 +166,7 @@ describe("楓幣的寫法", () => {
   });
 
   it("楓幣欄位的文字換成談價的級距", () => {
-    expect(mesoTextInWords("26600000")).toBe("2,660W");
+    expect(mesoTextInWords("26600000")).toBe("2,660萬");
     expect(mesoTextInWords("140000000000")).toBe("1,400 億");
   });
 

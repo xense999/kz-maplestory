@@ -152,7 +152,7 @@ export function formatRaw(meso: number): string {
   return sign + groups(String(Math.floor(Math.abs(meso))));
 }
 
-/** 小數點後最多兩位，尾巴的 0 不留。無條件捨去——進位會讓 9,999.9999W 變成看起來像一億 */
+/** 小數點後最多兩位，尾巴的 0 不留。無條件捨去——進位會讓 9,999.9999萬 變成看起來像一億 */
 function trimmed(value: number): string {
   const truncated = Math.floor(value * 100) / 100;
   const [int, frac] = truncated.toFixed(2).split(".");
@@ -161,8 +161,8 @@ function trimmed(value: number): string {
 }
 
 /**
- * 談價時講的寫法：不到一億就純 W（`2,660W`），滿一億才進位成
- * `1,400 億`，有零頭寫成 `1,400 億 2,660W`。
+ * 談價時講的寫法：不到一億就寫「萬」（`2,660萬`），滿一億才進位成
+ * `1,400 億`，有零頭寫成 `1,400 億 2,660萬`。
  */
 export function formatMeso(meso: number): string {
   if (!Number.isFinite(meso)) return "—";
@@ -172,9 +172,9 @@ export function formatMeso(meso: number): string {
   const yi = Math.floor(m / YI);
   const restW = (m - yi * YI) / W;
 
-  if (yi === 0) return `${sign}${trimmed(restW)}W`;
+  if (yi === 0) return `${sign}${trimmed(restW)}萬`;
 
   const head = `${sign}${groups(String(yi))} 億`;
-  // 零頭不到 0.01W 就不寫——寫出來是「1,400 億 0W」這種沒意義的尾巴
-  return restW >= 0.01 ? `${head} ${trimmed(restW)}W` : head;
+  // 零頭不到 0.01 萬就不寫——寫出來是「1,400 億 0萬」這種沒意義的尾巴
+  return restW >= 0.01 ? `${head} ${trimmed(restW)}萬` : head;
 }
