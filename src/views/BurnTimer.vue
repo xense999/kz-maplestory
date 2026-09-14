@@ -5,13 +5,12 @@ import { useBurnStore, type TimerId } from "../stores/burn";
 import { ringing } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
 import { burnPanel } from "../float";
+import FloatButton from "../components/FloatButton.vue";
 
 const store = useBurnStore();
 
 /** 正在錄按鍵的那張卡；同時只會有一張 */
 const recording = ref<TimerId | null>(null);
-/** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
-const opacityOpen = ref(false);
 /** 設定模式：只用來改兩顆技能的基本時間 */
 const editMode = ref(false);
 
@@ -77,35 +76,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
       <div class="pagebar">
         <button v-if="ringing" class="primary" @click="store.acknowledge()">停止提醒</button>
         <div class="spacer"></div>
-        <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
-          <button
-            :class="{ primary: burnPanel.open.value }"
-            :title="
-              burnPanel.open.value ? '關閉浮動視窗' : '開一個永遠置頂的小視窗，遊戲中也看得到倒數'
-            "
-            @click="burnPanel.toggle()"
-          >
-            浮動視窗
-          </button>
-
-          <div v-if="opacityOpen" class="opacity-wrap">
-            <div class="opacity">
-              <span class="olabel">透明度</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                :value="Math.round(burnPanel.opacity.value * 100)"
-                aria-label="透明度"
-                @input="
-                  burnPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
-                "
-              />
-              <span class="oval">{{ Math.round(burnPanel.opacity.value * 100) }}%</span>
-            </div>
-          </div>
-        </div>
+        <FloatButton :panel="burnPanel" hint="開一個永遠置頂的小視窗，遊戲中也看得到倒數" />
 
         <!-- 設定模式：兩顆技能的基本時間平常不該被誤觸，收在這裡面 -->
         <button
@@ -156,44 +127,6 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
 }
 .gear {
   flex: none;
-}
-/* 透明度拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */
-.floatctl {
-  position: relative;
-}
-/* 外層貼著按鈕底緣（top:100%），視覺間距用 padding 撐——中間留真空的話，
-   滑鼠往下移的瞬間就會離開 hover 區，拉桿在碰到之前就收起來了 */
-.opacity-wrap {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  z-index: 30;
-  padding-bottom: 6px;
-}
-.opacity {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 8px 12px;
-  background: var(--popover);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  backdrop-filter: blur(28px) saturate(1.8);
-}
-.opacity input[type="range"] {
-  width: 116px;
-}
-.olabel {
-  font-size: 14px;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.oval {
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  width: 40px;
-  text-align: right;
 }
 
 .pair {

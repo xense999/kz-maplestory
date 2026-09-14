@@ -4,13 +4,19 @@ import "./styles.css";
 import App from "./App.vue";
 import FloatApp from "./FloatApp.vue";
 import FloatProgress from "./FloatProgress.vue";
+import FloatMoney from "./FloatMoney.vue";
 import { initTheme } from "./theme";
 
-// 三個進入點共用同一份前端，靠 query 分辨：主視窗、輪燒面板、角色進度面板
+// 四個進入點共用同一份前端，靠 query 分辨：主視窗與三個浮動面板
 const view = new URLSearchParams(location.search).get("view");
 
-const root =
-  view === "float" ? FloatApp : view === "float-progress" ? FloatProgress : App;
+const PANELS: Record<string, typeof App> = {
+  float: FloatApp,
+  "float-progress": FloatProgress,
+  "float-money": FloatMoney,
+};
+
+const root = (view && PANELS[view]) || App;
 
 if (view) {
   // 面板永遠深色：它蓋在遊戲畫面上，淺色會變成一塊刺眼的白，

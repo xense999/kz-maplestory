@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
+import { moneyPanel, type MoneySnap } from "../float";
 import { fromNet, fromNtd, W, type Deal } from "../money";
 
 /**
@@ -60,6 +61,26 @@ export const useMoneyStore = defineStore("money", () => {
   watch(rateText, (v) => save(RATE_KEY, v));
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
 
+  function snapshot(): MoneySnap {
+    return {
+      ntd: ntdText.value,
+      mesoW: mesoWText.value,
+      rate: rateText.value,
+      face: deal.value?.face ?? null,
+    };
+  }
+
+  let lastSent = "";
+  function publish(force = false) {
+    const snap = snapshot();
+    const json = JSON.stringify(snap);
+    if (!force && json === lastSent) return;
+    lastSent = json;
+    moneyPanel.push(snap);
+  }
+
+  watch([ntdText, mesoWText, rateText, vip], () => publish());
+
   function setNtd(value: string) {
     anchor.value = "ntd";
     ntdText.value = value;
@@ -79,7 +100,24 @@ export const useMoneyStore = defineStore("money", () => {
     if (ntdText.value) anchor.value = "ntd";
   }
 
+  let wired = false;
+  /** 由 App 啟動時呼叫一次：接上浮動面板 */
+  async function init() {
+    if (wired) return;
+    wired = true;
+
+    // ★面板問「有人在嗎」時一定要回，即使內容跟上次送的一樣：
+    // 它就是因為可能沒收到第一筆才在問，被去重擋掉的話會永遠問下去。
+    await moneyPanel.onHello(() => {
+      publish(true);
+      moneyPanel.pushOpacity();
+    });
+    publish(true);
+    moneyPanel.pushOpacity();
+  }
+
   return {
+    init,
     rateText,
     ntdText,
     mesoWText,

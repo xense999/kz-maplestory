@@ -6,6 +6,7 @@ import SettingsPage from "./views/SettingsPage.vue";
 import { NAV } from "./nav";
 import { useBurnStore } from "./stores/burn";
 import { useRosterStore } from "./stores/roster";
+import { useMoneyStore } from "./stores/money";
 
 const TAB_KEY = "kz-maplestory:tab";
 
@@ -14,6 +15,7 @@ const TAB_KEY = "kz-maplestory:tab";
 onMounted(() => {
   void useBurnStore().init();
   void useRosterStore().init();
+  void useMoneyStore().init();
 });
 
 const maximized = ref(false);

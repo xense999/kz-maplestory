@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref } from "vue";
 import { progressPanel } from "../float";
+import FloatButton from "../components/FloatButton.vue";
 import { useRosterStore } from "../stores/roster";
 
 /**
@@ -11,8 +12,6 @@ const roster = useRosterStore();
 
 /** 正在改名字的那一格；其他時候名字是純文字，不是一個輸入框 */
 const editing = ref<string | null>(null);
-/** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
-const opacityOpen = ref(false);
 /** 設定模式：只用來刪卡片。其他事（改名字、開關顯示、新增）平常就能做 */
 const editMode = ref(false);
 
@@ -168,37 +167,10 @@ function delta(v?: number | null) {
       <div class="pagebar">
         <button @click="roster.addSlot()">＋ 新增角色</button>
         <div class="spacer"></div>
-        <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
-          <button
-            :class="{ primary: progressPanel.open.value }"
-            :title="
-              progressPanel.open.value
-                ? '關閉浮動視窗'
-                : '開一個永遠置頂的小視窗，遊戲中也看得到進度'
-            "
-            @click="progressPanel.toggle()"
-          >
-            浮動視窗
-          </button>
-
-          <div v-if="opacityOpen" class="opacity-wrap">
-            <div class="opacity">
-              <span class="olabel">透明度</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                :value="Math.round(progressPanel.opacity.value * 100)"
-                aria-label="透明度"
-                @input="
-                  progressPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
-                "
-              />
-              <span class="oval">{{ Math.round(progressPanel.opacity.value * 100) }}%</span>
-            </div>
-          </div>
-        </div>
+        <FloatButton
+          :panel="progressPanel"
+          hint="開一個永遠置頂的小視窗，遊戲中也看得到進度"
+        />
 
         <!-- 設定模式只管刪除：其餘（改名字、新增、顯示開關）平常就能做 -->
         <button
@@ -237,42 +209,6 @@ function delta(v?: number | null) {
   gap: var(--sp-2);
 }
 
-/* 拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */
-.floatctl {
-  position: relative;
-}
-.opacity-wrap {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  z-index: 30;
-  padding-bottom: 6px;
-}
-.opacity {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 8px 12px;
-  background: var(--popover);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius);
-  backdrop-filter: blur(28px) saturate(1.8);
-}
-.opacity input[type="range"] {
-  width: 116px;
-}
-.olabel {
-  font-size: 14px;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-.oval {
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  width: 40px;
-  text-align: right;
-}
 
 .scroller {
   flex: 1;

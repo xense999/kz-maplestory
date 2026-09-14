@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { moneyPanel } from "../float";
+import FloatButton from "../components/FloatButton.vue";
 import { formatMeso, formatRaw, roundUpSuggestion } from "../money";
 import { useMoneyStore } from "../stores/money";
 
@@ -36,6 +38,7 @@ const roundUp = computed(() =>
 <template>
   <div class="page">
     <div class="body">
+      <div class="scroller">
       <section class="card">
         <div class="card-head">
           幣值換算
@@ -113,6 +116,12 @@ const roundUp = computed(() =>
           </div>
         </div>
       </section>
+      </div>
+
+      <div class="pagebar">
+        <div class="spacer"></div>
+        <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
+      </div>
     </div>
   </div>
 </template>
@@ -124,12 +133,29 @@ const roundUp = computed(() =>
   display: flex;
   flex-direction: column;
 }
+/* 捲動發生在卡片外的這一層，不是整頁：下面那排按鈕要一直看得到 */
 .body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* 捲軸走在這段留白上，所以它在卡片外面的右邊 */
+  padding-right: 12px;
+}
+.pagebar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
 .viplabel {
   font-size: 14px;
   font-weight: 600;
