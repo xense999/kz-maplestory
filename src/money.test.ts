@@ -3,7 +3,8 @@ import {
   formatMeso,
   formatNtd,
   formatRaw,
-  mesoToWText,
+  mesoToText,
+  mesoTextInWords,
   parseAmount,
   fromNet,
   fromNtd,
@@ -160,12 +161,21 @@ describe("楓幣的寫法", () => {
     expect(formatRaw(26_600_000)).toBe("26,600,000");
   });
 
-  it("填回欄位的是純數字，不帶千分位", () => {
-    expect(mesoToWText(26_600_000)).toBe("2660");
+  it("填回欄位的是楓幣本身，帶千分位", () => {
+    expect(mesoToText(26_600_000)).toBe("26,600,000");
   });
 
-  it("填回欄位跟顯示同一個捨去方向", () => {
-    expect(mesoToWText(99_999_999)).toBe("9999.99");
-    expect(formatMeso(99_999_999)).toBe("9,999.99W");
+  it("楓幣欄位的文字換成談價的級距", () => {
+    expect(mesoTextInWords("26600000")).toBe("2,660W");
+    expect(mesoTextInWords("140000000000")).toBe("1,400 億");
+  });
+
+  it("欄位是空的或亂打的就不顯示", () => {
+    expect(mesoTextInWords("")).toBe("");
+    expect(mesoTextInWords("abc")).toBe("");
+  });
+
+  it("欄位帶著千分位也認得回來", () => {
+    expect(parseAmount(mesoToText(26_600_000))).toBe(26_600_000);
   });
 });

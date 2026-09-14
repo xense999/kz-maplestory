@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { formatMeso } from "./money";
+import { formatMeso, mesoTextInWords } from "./money";
 import { moneyPanel, type MoneyInput, type MoneySnap } from "./float";
 
 const appWin = getCurrentWindow();
@@ -13,7 +13,7 @@ const face = ref<number | null>(null);
  * 之所以不直接綁快照，是因為正在打字的那一欄不能被回來的快照覆寫——
  * 打到一半被蓋掉的話游標會跳回去。
  */
-const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", mesoW: "", rate: "" });
+const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", meso: "", rate: "" });
 const focused = ref<MoneyInput["field"] | null>(null);
 
 let stopData: (() => void) | null = null;
@@ -23,13 +23,16 @@ function apply(snap: MoneySnap) {
   face.value = snap.face;
   const incoming: Record<MoneyInput["field"], string> = {
     ntd: snap.ntd,
-    mesoW: snap.mesoW,
+    meso: snap.meso,
     rate: snap.rate,
   };
-  for (const field of ["ntd", "mesoW", "rate"] as const) {
+  for (const field of ["ntd", "meso", "rate"] as const) {
     if (field !== focused.value) text.value[field] = incoming[field];
   }
 }
+
+/** 實收欄打的是 W，但談價講的是幾億幾萬——同一個數字的另一種講法，附在欄位下面 */
+const netInWords = computed(() => mesoTextInWords(text.value.meso));
 
 function edit(field: MoneyInput["field"], e: Event) {
   const value = (e.target as HTMLInputElement).value;
@@ -67,7 +70,7 @@ function onDown(e: MouseEvent) {
 
     <div class="rows">
       <label class="row">
-        <span class="label">匯率</span>
+        <span class="label">幣值</span>
         <input
           type="text"
           inputmode="decimal"
@@ -82,7 +85,7 @@ function onDown(e: MouseEvent) {
       </label>
 
       <label class="row">
-        <span class="label">元</span>
+        <span class="label">台幣</span>
         <input
           type="text"
           inputmode="decimal"
@@ -93,7 +96,7 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('ntd', $event)"
         />
-        <span class="unit"></span>
+        <span class="unit">元</span>
       </label>
 
       <label class="row">
@@ -103,13 +106,20 @@ function onDown(e: MouseEvent) {
           inputmode="decimal"
           spellcheck="false"
           placeholder="0"
-          :value="text.mesoW"
-          @focus="focused = 'mesoW'"
+          :value="text.meso"
+          @focus="focused = 'meso'"
           @blur="focused = null"
-          @input="edit('mesoW', $event)"
+          @input="edit('meso', $event)"
         />
-        <span class="unit">W</span>
+        <span class="unit">楓幣</span>
       </label>
+
+      <!-- 上一欄同一個數字的另一種講法，所以不給標籤：靠位置說明它屬於上面那一列 -->
+      <div class="row muted">
+        <span class="label"></span>
+        <span class="derived">{{ netInWords }}</span>
+        <span class="unit"></span>
+      </div>
 
       <!-- 帳面是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
       <div class="row muted">
@@ -123,7 +133,7 @@ function onDown(e: MouseEvent) {
 
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
-   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（320px 寬＝16px 字），
+   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（340px 寬＝19px 字），
    所以拖大拖小是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
@@ -131,7 +141,7 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(100vw / 320 * 16);
+  font-size: calc(100vw / 340 * 19);
 }
 .bg {
   position: absolute;
@@ -185,9 +195,9 @@ function onDown(e: MouseEvent) {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .label {
-  width: 2.4em;
+  width: 2.5em;
   flex: none;
-  font-size: 0.78em;
+  font-size: 0.82em;
   color: var(--text-dim);
 }
 /* 數字靠右對齊成一直行，單位在外面：三個數字才比得起來 */
@@ -222,15 +232,18 @@ function onDown(e: MouseEvent) {
   box-shadow: none;
 }
 .unit {
-  width: 1.6em;
+  width: 1.5em;
   flex: none;
-  font-size: 0.78em;
+  font-size: 0.82em;
   color: var(--text-dim);
 }
 /* 帳面那一行：位置跟上面三行一樣，只是整行退到背景 */
+.row.muted {
+  height: 1.5em;
+}
 .row.muted .label,
 .row.muted .derived {
-  font-size: 0.78em;
+  font-size: 0.82em;
   font-weight: 600;
   color: var(--text-dim);
 }

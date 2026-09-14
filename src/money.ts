@@ -122,10 +122,22 @@ export function formatNtd(ntd: number): string {
   return (Math.ceil(ntd * 100 - EPS) / 100).toFixed(2);
 }
 
-/** 楓幣填回欄位時的寫法：以 W 為單位、最多兩位小數，捨去方向跟 formatMeso 一致 */
-export function mesoToWText(meso: number): string {
+/**
+ * 楓幣填回輸入欄時的寫法：楓幣本身、帶千分位，捨去方向跟 formatMeso 一致。
+ * 千分位進得了欄位也出得來——`parseAmount` 會把逗號拿掉。
+ */
+export function mesoToText(meso: number): string {
   if (!Number.isFinite(meso)) return "";
-  return String(Math.floor((meso / W) * 100) / 100);
+  return formatRaw(meso);
+}
+
+/**
+ * 楓幣欄位的文字，換成談價會用到的級距。一長串零看不出是多少，換個講法才有感。
+ * 不吃匯率，所以匯率還沒填也顯示得出來；填不出數字就回空字串，讓呼叫端直接不顯示。
+ */
+export function mesoTextInWords(text: string): string {
+  const meso = parseAmount(text);
+  return Number.isFinite(meso) && meso >= 0 ? formatMeso(meso) : "";
 }
 
 /** 千分位。自己分組而不是 toLocaleString：那個會跟著系統地區變 */

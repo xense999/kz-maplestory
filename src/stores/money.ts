@@ -5,9 +5,8 @@ import {
   formatNtd,
   fromNet,
   fromNtd,
-  mesoToWText,
+  mesoToText,
   parseAmount,
-  W,
   type Deal,
 } from "../money";
 
@@ -25,8 +24,8 @@ const VIP_KEY = "kz-maplestory:money:vip";
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
   const ntdText = ref("");
-  /** 楓幣欄位的單位是 W，跟玩家談價的單位一致 */
-  const mesoWText = ref("");
+  /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
+  const mesoText = ref("");
   const vip = ref(load(VIP_KEY) === "1");
 
   /** 最後被使用者動過的金額欄位，另一欄由它算出來 */
@@ -37,7 +36,7 @@ export const useMoneyStore = defineStore("money", () => {
   const deal = computed<Deal | null>(() =>
     anchor.value === "ntd"
       ? fromNtd(parseAmount(ntdText.value), rate.value, vip.value)
-      : fromNet(parseAmount(mesoWText.value) * W, rate.value, vip.value),
+      : fromNet(parseAmount(mesoText.value), rate.value, vip.value),
   );
 
   // 算出來的那一欄跟著走。來源欄不動——使用者正在上面打字。
@@ -45,7 +44,7 @@ export const useMoneyStore = defineStore("money", () => {
     deal,
     (d) => {
       if (anchor.value === "ntd") {
-        mesoWText.value = d ? mesoToWText(d.net) : "";
+        mesoText.value = d ? mesoToText(d.net) : "";
       } else {
         ntdText.value = d ? formatNtd(d.ntd) : "";
       }
@@ -59,7 +58,7 @@ export const useMoneyStore = defineStore("money", () => {
   function snapshot(): MoneySnap {
     return {
       ntd: ntdText.value,
-      mesoW: mesoWText.value,
+      meso: mesoText.value,
       rate: rateText.value,
       face: deal.value?.face ?? null,
     };
@@ -69,16 +68,16 @@ export const useMoneyStore = defineStore("money", () => {
     moneyPanel.push(snapshot());
   }
 
-  watch([ntdText, mesoWText, rateText, vip], publish);
+  watch([ntdText, mesoText, rateText, vip], publish);
 
   function setNtd(value: string) {
     anchor.value = "ntd";
     ntdText.value = value;
   }
 
-  function setMesoW(value: string) {
+  function setMeso(value: string) {
     anchor.value = "meso";
-    mesoWText.value = value;
+    mesoText.value = value;
   }
 
   /**
@@ -105,7 +104,7 @@ export const useMoneyStore = defineStore("money", () => {
     // 兩邊各存一份的話，先後順序一顛倒就會互相蓋掉。
     await moneyPanel.onInput(({ field, value }) => {
       if (field === "ntd") setNtd(value);
-      else if (field === "mesoW") setMesoW(value);
+      else if (field === "meso") setMeso(value);
       else setRate(value);
     });
     publish();
@@ -116,12 +115,12 @@ export const useMoneyStore = defineStore("money", () => {
     init,
     rateText,
     ntdText,
-    mesoWText,
+    mesoText,
     vip,
     rate,
     deal,
     setNtd,
-    setMesoW,
+    setMeso,
     setRate,
   };
 });
