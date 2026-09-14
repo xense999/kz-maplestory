@@ -21,12 +21,20 @@ function value(e: Event) {
 /** 算不出來的時候整塊顯示破折號，而不是 0 —— 0 會被當成「這筆交易真的是零」 */
 const DASH = "—";
 
+/** 賣的時候，手續費是買方吃的——三個數字算法一樣，只是講的是不同的人 */
+const selling = computed(() => money.mode === "sell");
+
 const rows = computed(() => {
   const d = money.deal;
-  return [
-    { key: "face", label: "交易楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
-    { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
-  ];
+  return selling.value
+    ? [
+        { key: "face", label: "交易楓幣", hint: "你要轉出去的數字", meso: d?.face },
+        { key: "net", label: "對方收到", hint: "手續費扣完，對方實際入手", meso: d?.net },
+      ]
+    : [
+        { key: "face", label: "交易楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
+        { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
+      ];
 });
 
 /** 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，換成談價的級距比較有感 */
@@ -103,7 +111,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
               </div>
             </div>
 
-            <div class="inner">
+            <div class="inner results">
               <div class="rows">
                 <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
                   <span class="rlabel">{{ r.label }}</span>
@@ -111,9 +119,17 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                 </div>
 
                 <div class="row">
-                  <span class="rlabel">實際花費</span>
+                  <span class="rlabel">{{ selling ? "實際入袋" : "實際花費" }}</span>
                   <span class="rval">{{ money.deal ? `${ntd} 元` : DASH }}</span>
                 </div>
+              </div>
+
+              <!-- 這些數字是在哪一種前提下算出來的。空心徽章：它是註記，不該跟數字搶注意力 -->
+              <div class="status">
+                <span class="badge" :class="selling ? 'sell' : 'buy'">
+                  {{ selling ? "賣幣" : "買幣" }}
+                </span>
+                <span class="badge">{{ money.vip ? "VIP 3%" : "一般 5%" }}</span>
               </div>
             </div>
           </div>
@@ -121,6 +137,11 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
       </div>
 
       <div class="pagebar">
+        <!-- 買跟賣是同三個數字，差別只在手續費算在誰頭上，所以一個開關就夠，不另開一頁 -->
+        <div class="modes" role="group" aria-label="買幣或賣幣">
+          <button :class="{ on: !selling }" @click="money.mode = 'buy'">買幣</button>
+          <button :class="{ on: selling }" @click="money.mode = 'sell'">賣幣</button>
+        </div>
         <div class="spacer"></div>
         <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
 
@@ -209,6 +230,33 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 }
 .gear {
   flex: none;
+}
+/* 雙段開關：兩個都看得到，選中的那個填色。比下拉選單少一次點擊，也少一個要記的狀態 */
+.modes {
+  display: flex;
+  flex: none;
+  padding: 2px;
+  gap: 2px;
+  background: var(--wash);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.modes button {
+  height: 26px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--btn-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+}
+.modes button:hover:not(.on) {
+  background: var(--hover);
+}
+.modes button.on {
+  color: var(--text-on-accent);
+  background: var(--accent);
 }
 /* 浮層貼著按鈕上緣，跟浮動視窗那顆的透明度拉桿同一套長相 */
 .gearctl {

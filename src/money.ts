@@ -85,6 +85,21 @@ export function fromNet(net: number, rateW: number, vip: boolean): Deal | null {
 const EPS = 1e-9;
 
 /**
+ * 賣幣：我轉出去這麼多楓幣，拿得到多少台幣。
+ *
+ * ★價格照「轉出去多少」談，所以手續費不影響我拿到的錢——它只決定對方最後收到多少。
+ * 這跟買幣是同一個物理事實（費用從轉帳的楓幣裡扣），差別只在價格掛在哪個數字上。
+ * 也不進位：付錢的是對方，我不該自己把價碼往上湊。
+ */
+export function fromSent(sent: number, rateW: number, vip: boolean): Deal | null {
+  const per = mesoPerNtd(rateW);
+  if (!per || !usable(sent)) return null;
+
+  const fee = (sent * feePercent(vip)) / 100;
+  return { ntd: sent / per, face: sent, net: sent - fee, fee };
+}
+
+/**
  * 我要入手這麼多楓幣，這筆交易實際會長什麼樣。
  *
  * ★反推出來的台幣先進位成整數，其他數字再一律從那個整數重算。
