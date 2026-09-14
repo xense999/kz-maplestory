@@ -4,7 +4,7 @@ import TimerCard from "../components/TimerCard.vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
 import { ringing } from "../alarm";
 import { hotkeyFromEvent } from "../hotkey";
-import { floatOpacity, floatOpen, setFloatOpacity, toggleFloatWindow } from "../float";
+import { burnPanel } from "../float";
 
 const store = useBurnStore();
 
@@ -50,25 +50,30 @@ const opacityOpen = ref(false);
             @mouseleave="opacityOpen = false"
           >
             <button
-              :class="{ primary: floatOpen }"
-              :title="floatOpen ? '關閉浮動視窗' : '開一個永遠置頂的小視窗，遊戲中也看得到倒數'"
-              @click="toggleFloatWindow()"
+              :class="{ primary: burnPanel.open.value }"
+              :title="
+                burnPanel.open.value ? '關閉浮動視窗' : '開一個永遠置頂的小視窗，遊戲中也看得到倒數'
+              "
+              @click="burnPanel.toggle()"
             >
               浮動視窗
             </button>
 
             <div v-if="opacityOpen" class="opacity-wrap">
               <div class="opacity">
-              <span class="olabel">透明度</span>
-              <input
-                type="range"
-                min="0"
-                max="50"
-                step="5"
-                :value="Math.round(floatOpacity * 100)"
-                @input="setFloatOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
-              />
-                <span class="oval">{{ Math.round(floatOpacity * 100) }}%</span>
+                <span class="olabel">透明度</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="5"
+                  :value="Math.round(burnPanel.opacity.value * 100)"
+                  aria-label="透明度"
+                  @input="
+                    burnPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
+                  "
+                />
+                <span class="oval">{{ Math.round(burnPanel.opacity.value * 100) }}%</span>
               </div>
             </div>
           </div>

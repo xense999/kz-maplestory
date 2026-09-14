@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { onFloatOpacity, onTimersSync, sayHello, type TimerSnap } from "./float";
+import { burnPanel, type TimerSnap } from "./float";
 
 const appWin = getCurrentWindow();
 const snaps = ref<TimerSnap[]>([]);
@@ -18,20 +18,20 @@ let stopOpacity: (() => void) | null = null;
  * 那第一聲 hello 就沒人接、畫面會一直空著。所以要到收得到資料為止。
  */
 function keepAskingUntilAnswered() {
-  sayHello();
+  burnPanel.sayHello();
   hello = window.setInterval(() => {
     if (snaps.value.length) {
       if (hello !== null) clearInterval(hello);
       hello = null;
       return;
     }
-    sayHello();
+    burnPanel.sayHello();
   }, 1000);
 }
 
 onMounted(async () => {
-  stopSync = await onTimersSync((s) => (snaps.value = s));
-  stopOpacity = await onFloatOpacity((v) => (opacity.value = v));
+  stopSync = await burnPanel.onData((s) => (snaps.value = s));
+  stopOpacity = await burnPanel.onOpacity((v) => (opacity.value = v));
   keepAskingUntilAnswered();
   tick = window.setInterval(() => (now.value = Date.now()), 250);
 });
