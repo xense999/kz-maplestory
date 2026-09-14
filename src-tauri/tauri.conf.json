@@ -36,6 +36,20 @@
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "visible": false
+      },
+      {
+        "label": "float-progress",
+        "url": "index.html?view=float-progress",
+        "title": "久世管理器 — 角色進度",
+        "width": 268,
+        "height": 132,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visible": false
       }
     ],
     "security": {

@@ -1,111 +1,88 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from "vue";
-import { apiKey } from "../apikey";
-import {
-  fetchCharacter,
-  names,
-  readProgress,
-  recordProgress,
-  setName,
-  REFRESH_MS,
-  type CharacterInfo,
-  type Progress,
-} from "../character";
+import { nextTick, ref } from "vue";
+import { progressPanel } from "../float";
+import { slotList, useRosterStore, type SlotId } from "../stores/roster";
 
 /**
- * 主頁：一張大卡片裝著上下兩個角色欄位——上面是自己、下面是拿來比較的那隻。
- * 資料每 10 分鐘更新一次，還沒接上來源之前顯示的是空欄位。
+ * 主頁：一張大卡片裝著上下兩張小卡——上面是自己、下面是拿來比較的那隻。
+ * 資料與更新排程都在 roster store，這一頁只負責顯示與輸入。
  */
-const SLOTS = [
-  { id: "main", label: "主角色" },
-  { id: "rival", label: "對照角色" },
-];
-
-const info = ref<Record<string, CharacterInfo | null>>({ main: null, rival: null });
-const growth = ref<Record<string, Progress | null>>({ main: null, rival: null });
-const errors = ref<Record<string, string>>({});
-const loading = ref<Record<string, boolean>>({});
-
-async function refresh(slot: string) {
-  const name = names.value[slot];
-  if (!name) {
-    errors.value = { ...errors.value, [slot]: "" };
-    return;
-  }
-  if (!apiKey.value) {
-    errors.value = { ...errors.value, [slot]: "設定頁還沒填 API 金鑰" };
-    return;
-  }
-  loading.value = { ...loading.value, [slot]: true };
-  try {
-    const got = await fetchCharacter(name, apiKey.value);
-    info.value = { ...info.value, [slot]: got };
-    growth.value = { ...growth.value, [slot]: await recordProgress(slot, got.level, got.expPercent) };
-    errors.value = { ...errors.value, [slot]: "" };
-  } catch (e) {
-    errors.value = { ...errors.value, [slot]: String(e instanceof Error ? e.message : e) };
-  } finally {
-    loading.value = { ...loading.value, [slot]: false };
-  }
-}
+const roster = useRosterStore();
 
 /** 正在改名字的那一格；其他時候名字是純文字，不是一個輸入框 */
-const editing = ref<string | null>(null);
+const editing = ref<SlotId | null>(null);
+/** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
+const opacityOpen = ref(false);
 
-async function beginEdit(slot: string) {
-  editing.value = slot;
+async function beginEdit(id: SlotId) {
+  editing.value = id;
   await nextTick();
-  const el = document.querySelector<HTMLInputElement>(`[data-slot="${slot}"] input.who`);
+  const el = document.querySelector<HTMLInputElement>(`[data-slot="${id}"] input.who`);
   el?.focus();
   el?.select();
 }
 
-/** 改完名字就直接去查，不必再按一次更新 */
-function commitName(slot: string, value: string) {
+function commitName(id: SlotId, value: string) {
   editing.value = null;
-  const next = value.trim();
-  if (next === (names.value[slot] ?? "")) return;
-  setName(slot, next);
-  info.value = { ...info.value, [slot]: null };
-  growth.value = { ...growth.value, [slot]: null };
-  void refresh(slot);
+  void roster.setName(id, value);
 }
 
 /** 成長量：沒資料是破折號，有就帶正負號 */
-function delta(v?: number) {
+function delta(v?: number | null) {
   if (v === undefined || v === null) return "—";
-  const sign = v > 0 ? "+" : "";
-  return `${sign}${v.toFixed(2)}%`;
+  return `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
 }
-
-function refreshAll() {
-  for (const s of SLOTS) void refresh(s.id);
-}
-
-let timer: number | null = null;
-
-onMounted(async () => {
-  // 先把上次留下的成長量讀回來，畫面不會在第一次抓到之前空著
-  for (const s of SLOTS) {
-    if (names.value[s.id]) growth.value[s.id] = await readProgress(s.id).catch(() => null);
-  }
-  refreshAll();
-  timer = window.setInterval(refreshAll, REFRESH_MS);
-});
-onUnmounted(() => {
-  if (timer !== null) clearInterval(timer);
-});
-
 </script>
 
 <template>
   <div class="page">
     <div class="body">
+      <div class="pagebar">
+        <div class="spacer"></div>
+        <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
+          <button
+            :class="{ primary: progressPanel.open.value }"
+            :title="
+              progressPanel.open.value
+                ? '關閉浮動視窗'
+                : '開一個永遠置頂的小視窗，遊戲中也看得到進度'
+            "
+            @click="progressPanel.toggle()"
+          >
+            浮動視窗
+          </button>
+
+          <div v-if="opacityOpen" class="opacity-wrap">
+            <div class="opacity">
+              <span class="olabel">透明度</span>
+              <input
+                type="range"
+                min="0"
+                max="50"
+                step="5"
+                :value="Math.round(progressPanel.opacity.value * 100)"
+                aria-label="透明度"
+                @input="
+                  progressPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
+                "
+              />
+              <span class="oval">{{ Math.round(progressPanel.opacity.value * 100) }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
+           但各自要有自己的邊界，不然兩段資料會糊成一片 -->
       <section class="card outer">
-        <div v-for="s in SLOTS" :key="s.id" class="inner" :data-slot="s.id">
-          <!-- 左：角色圖。沒資料時是一個空的框，版面不會因為抓到沒抓到而跳動 -->
+        <div v-for="s in slotList" :key="s.id" class="inner" :data-slot="s.id">
+          <!-- 角色圖是去背 PNG，框裡不上底色 -->
           <div class="portrait">
-            <img v-if="info[s.id]?.imageUrl" :src="info[s.id]!.imageUrl" :alt="s.label" />
+            <img
+              v-if="roster.slots[s.id].info?.imageUrl"
+              :src="roster.slots[s.id].info!.imageUrl"
+              :alt="s.label"
+            />
             <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
               <circle cx="12" cy="8.5" r="3.6" />
               <path d="M4.8 20c0-3.4 3.2-5.4 7.2-5.4s7.2 2 7.2 5.4" stroke-linecap="round" />
@@ -118,22 +95,28 @@ onUnmounted(() => {
 
               <!-- 名字設定好之後就是一段文字，點一下才變回可以改的欄位 -->
               <input
-                v-if="editing === s.id || !names[s.id]"
+                v-if="editing === s.id || !roster.slots[s.id].name"
                 class="who"
                 type="text"
-                :value="names[s.id] ?? ''"
+                :value="roster.slots[s.id].name"
                 placeholder="角色名稱"
                 spellcheck="false"
                 @keydown.enter="commitName(s.id, ($event.target as HTMLInputElement).value)"
                 @blur="commitName(s.id, ($event.target as HTMLInputElement).value)"
               />
               <button v-else class="who-text" title="點一下改角色" @click="beginEdit(s.id)">
-                {{ names[s.id] }}
+                {{ roster.slots[s.id].name }}
               </button>
 
-              <span v-if="info[s.id]?.world" class="world">{{ info[s.id]!.world }}</span>
+              <span v-if="roster.slots[s.id].info?.world" class="world">
+                {{ roster.slots[s.id].info!.world }}
+              </span>
               <div class="spacer"></div>
-              <button class="sm" :disabled="loading[s.id] || !names[s.id]" @click="refresh(s.id)">
+              <button
+                class="sm"
+                :disabled="roster.slots[s.id].loading || !roster.slots[s.id].name"
+                @click="roster.refresh(s.id)"
+              >
                 更新
               </button>
             </div>
@@ -141,30 +124,38 @@ onUnmounted(() => {
             <div class="stats">
               <div class="stat">
                 <span class="slabel">等級</span>
-                <span class="sval">{{ info[s.id] ? info[s.id]!.level : "—" }}</span>
+                <span class="sval">{{ roster.slots[s.id].info?.level ?? "—" }}</span>
               </div>
               <div class="stat">
                 <span class="slabel">經驗</span>
                 <span class="sval">
-                  {{ info[s.id] ? `${info[s.id]!.expPercent.toFixed(2)}%` : "—" }}
+                  {{
+                    roster.slots[s.id].info
+                      ? `${roster.slots[s.id].info!.expPercent.toFixed(2)}%`
+                      : "—"
+                  }}
                 </span>
               </div>
               <div class="stat">
                 <span class="slabel">今天</span>
-                <span class="sval gain">{{ delta(growth[s.id]?.today) }}</span>
+                <span class="sval gain">{{ delta(roster.slots[s.id].growth?.today) }}</span>
               </div>
               <div class="stat">
                 <span class="slabel">本次</span>
-                <span class="sval gain small">{{ delta(growth[s.id]?.session) }}</span>
+                <span class="sval gain small">
+                  {{ delta(roster.slots[s.id].growth?.session) }}
+                </span>
               </div>
             </div>
 
             <div class="bar">
-              <i :style="{ width: (info[s.id]?.expPercent ?? 0) + '%' }"></i>
+              <i :style="{ width: (roster.slots[s.id].info?.expPercent ?? 0) + '%' }"></i>
             </div>
 
-            <p v-if="errors[s.id]" class="note err">{{ errors[s.id] }}</p>
-            <p v-else-if="!names[s.id]" class="note">填入角色名稱後每 10 分鐘自動更新</p>
+            <p v-if="roster.slots[s.id].error" class="note err">{{ roster.slots[s.id].error }}</p>
+            <p v-else-if="!roster.slots[s.id].name" class="note">
+              填入角色名稱後每 10 分鐘自動更新
+            </p>
           </div>
         </div>
       </section>
@@ -184,10 +175,52 @@ onUnmounted(() => {
   min-height: 0;
   overflow-y: auto;
   padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.pagebar {
+  display: flex;
+  align-items: center;
 }
 
-/* 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
-   但各自要有自己的邊界，不然兩段資料會糊成一片 */
+/* 拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 */
+.floatctl {
+  position: relative;
+}
+.opacity-wrap {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  padding-top: 6px;
+}
+.opacity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: var(--popover);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(28px) saturate(1.8);
+}
+.opacity input[type="range"] {
+  width: 116px;
+}
+.olabel {
+  font-size: 14px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.oval {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  width: 40px;
+  text-align: right;
+}
+
 .outer {
   display: flex;
   flex-direction: column;
@@ -203,7 +236,6 @@ onUnmounted(() => {
   border-radius: var(--radius);
 }
 
-/* 角色圖本身是去背的 PNG，所以框裡不上底色——鋪一塊白會讓角色像貼在紙上 */
 .portrait {
   width: 96px;
   height: 96px;
@@ -290,14 +322,14 @@ onUnmounted(() => {
 .gain {
   color: var(--text-dim);
 }
-.sval.small {
-  font-size: 20px;
-}
 .sval {
   font-size: 26px;
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
+}
+.sval.small {
+  font-size: 20px;
 }
 
 .bar {

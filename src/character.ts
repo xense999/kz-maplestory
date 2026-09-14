@@ -1,4 +1,3 @@
-import { ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 
 /**
@@ -38,28 +37,6 @@ interface RawCharacter {
 
 /** 每 10 分鐘更新一次 */
 export const REFRESH_MS = 10 * 60_000;
-
-/** 兩張卡各記一個角色名（設定好之後就固定抓這隻） */
-const NAMES_KEY = "kz-maplestory:character-names";
-
-export const names = ref<Record<string, string>>(loadNames());
-
-function loadNames(): Record<string, string> {
-  try {
-    return JSON.parse(localStorage.getItem(NAMES_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
-}
-
-export function setName(slot: string, name: string) {
-  names.value = { ...names.value, [slot]: name.trim() };
-  try {
-    localStorage.setItem(NAMES_KEY, JSON.stringify(names.value));
-  } catch {
-    /* 存不了就只在這次執行有效 */
-  }
-}
 
 /** 成長量（等值百分比：一級算 100） */
 export interface Progress {

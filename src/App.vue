@@ -5,11 +5,16 @@ import AppNavbar from "./components/AppNavbar.vue";
 import SettingsPage from "./views/SettingsPage.vue";
 import { NAV } from "./nav";
 import { useBurnStore } from "./stores/burn";
+import { useRosterStore } from "./stores/roster";
 
 const TAB_KEY = "kz-maplestory:tab";
 
-// 熱鍵監聽是整個程式的事，不是某一頁的事：從設定頁開始也要接得回上次的設定
-onMounted(() => void useBurnStore().init());
+// 這兩件事都不屬於某一頁：熱鍵要接回上次的設定，角色資料要餵給浮動視窗，
+// 綁在頁面的生命週期上的話，停在別頁時它們就沒有在運作
+onMounted(() => {
+  void useBurnStore().init();
+  void useRosterStore().init();
+});
 
 const maximized = ref(false);
 const showSettings = ref(false);

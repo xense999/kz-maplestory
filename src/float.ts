@@ -110,3 +110,16 @@ export interface TimerSnap {
 }
 
 export const burnPanel = createFloatPanel<TimerSnap[]>("float");
+
+/** 角色進度面板送的東西：每隻角色的現況與今天的成長量 */
+export interface CharacterSnap {
+  slot: string;
+  label: string;
+  name: string;
+  level: number | null;
+  expPercent: number | null;
+  today: number | null;
+  imageUrl?: string;
+}
+
+export const progressPanel = createFloatPanel<CharacterSnap[]>("float-progress");
