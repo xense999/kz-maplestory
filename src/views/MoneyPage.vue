@@ -32,6 +32,15 @@ const rows = computed(() => {
 /** 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，換成談價的級距比較有感 */
 const mesoInWords = computed(() => mesoTextInWords(money.mesoText));
 
+/**
+ * 這一欄是算出來的嗎——是的話字變琥珀色，跟浮動面板同一條規則。
+ * 打楓幣時台幣是算出來的，反過來也一樣；算不出來時兩欄都不變色，
+ * 不然空欄位會看起來像已經有結果了。
+ */
+function derived(field: "ntd" | "meso") {
+  return money.deal !== null && money.anchor !== field;
+}
+
 /** 實際要掏出來的錢 */
 const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 </script>
@@ -64,6 +73,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   <span class="rlabel">楓幣</span>
                   <input
                     class="rval"
+                    :class="{ derived: derived('meso') }"
                     type="text"
                     inputmode="decimal"
                     spellcheck="false"
@@ -79,6 +89,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   <span class="rlabel">台幣</span>
                   <input
                     class="rval"
+                    :class="{ derived: derived('ntd') }"
                     type="text"
                     inputmode="decimal"
                     spellcheck="false"
@@ -89,19 +100,6 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   <span class="rnote unit">元</span>
                 </label>
 
-                <div v-if="editMode" class="row">
-                  <span class="rlabel">VIP</span>
-                  <span class="rval switchcell">
-                    <button
-                      class="switch"
-                      role="switch"
-                      :class="{ on: money.vip }"
-                      :aria-checked="money.vip"
-                      @click="money.vip = !money.vip"
-                    ></button>
-                  </span>
-                  <span class="rnote unit">手續費 {{ money.vip ? "3%" : "5%" }}</span>
-                </div>
               </div>
             </div>
 
@@ -126,15 +124,29 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
         <div class="spacer"></div>
         <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
 
-        <!-- VIP 短期內不會變，平常不該被誤觸，收在這裡面 -->
-        <button
-          class="gear"
-          :class="{ primary: editMode }"
-          :title="editMode ? '完成' : '設定是不是 VIP'"
-          @click="editMode = !editMode"
-        >
-          {{ editMode ? "完成" : "設定" }}
-        </button>
+        <!-- VIP 短期內不會變，平常不該被誤觸，收在設定鈕上方的小浮層裡 -->
+        <div class="gearctl">
+          <div v-if="editMode" class="pop">
+            <span class="poplabel">VIP</span>
+            <button
+              class="switch"
+              role="switch"
+              :class="{ on: money.vip }"
+              :aria-checked="money.vip"
+              @click="money.vip = !money.vip"
+            ></button>
+            <span class="popnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
+          </div>
+
+          <button
+            class="gear"
+            :class="{ primary: editMode }"
+            :title="editMode ? '完成' : '設定是不是 VIP'"
+            @click="editMode = !editMode"
+          >
+            {{ editMode ? "完成" : "設定" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -198,10 +210,35 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .gear {
   flex: none;
 }
-/* 開關對齊右邊的數字欄，那一列才跟上面三列同一條軸線 */
-.switchcell {
+/* 浮層貼著按鈕上緣，跟浮動視窗那顆的透明度拉桿同一套長相 */
+.gearctl {
+  position: relative;
+  flex: none;
+}
+.pop {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  z-index: 30;
+  margin-bottom: 6px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: var(--popover);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(28px) saturate(1.8);
+  white-space: nowrap;
+}
+.poplabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.popnote {
+  font-size: 14px;
+  color: var(--text-dim);
 }
 
 /* 兩張卡的內容用同一組規則：列高、欄寬、字級都一致，左右才對得起來 */
@@ -253,6 +290,12 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .unit {
   flex: none;
   color: var(--text-dim);
+}
+
+/* 琥珀色只標左卡那兩個互相換算的欄位：哪一欄是算出來的。
+   右卡整張都是結果，全部上色等於沒標。 */
+.rval.derived {
+  color: var(--warn);
 }
 
 /* 輸入欄要跟右邊的唯讀數字長得一樣高、一樣重，只是多一個可以點進去的框 */

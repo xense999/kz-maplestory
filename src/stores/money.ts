@@ -120,6 +120,7 @@ export const useMoneyStore = defineStore("money", () => {
     vip,
     rate,
     deal,
+    anchor,
     setNtd,
     setMeso,
     setRate,
