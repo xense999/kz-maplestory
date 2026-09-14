@@ -102,9 +102,11 @@ function onDown(e: MouseEvent) {
       <!-- 箭頭指向「被算出來的那一欄」：打楓幣就往下指台幣，打台幣就往上指楓幣。
            算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。 -->
       <div class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
-        <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
-          <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
-        </svg>
+        <span class="flowcell">
+          <svg class="arrow" :class="{ on: ok, up: anchor === 'ntd' }" viewBox="0 0 14 16" fill="currentColor">
+            <path d="M5.6 1 H8.4 V8 H11 L7 15 L3 8 H5.6 Z" />
+          </svg>
+        </span>
       </div>
 
       <label class="row">
@@ -227,12 +229,17 @@ function onDown(e: MouseEvent) {
   width: 2.4em;
 }
 
-/* 箭頭夾在楓幣與台幣中間，橫向置中：它講的是兩列之間的關係，不屬於任何一欄 */
+/* 箭頭夾在楓幣與台幣之間，落在標籤那一欄的正下方——跟著文字走，不會把數字切開 */
 .flow {
   display: flex;
   align-items: center;
-  justify-content: center;
   height: 1.1em;
+}
+.flowcell {
+  width: 2.5em;
+  flex: none;
+  display: flex;
+  justify-content: center;
 }
 .arrow {
   width: 0.9em;
