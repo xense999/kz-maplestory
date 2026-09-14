@@ -7,42 +7,16 @@ const appWin = getCurrentWindow();
 const rows = ref<CharacterSnap[]>([]);
 const opacity = ref(0.5);
 
-let hello: number | null = null;
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
 
-/**
- * 兩個 webview 是同時載入的，這一聲可能比主視窗的監聽器還早到，所以問到有人回應為止。
- *
- * ★判斷「有人回應」而不是「有資料」：一隻角色都沒開的時候回來的本來就是空清單，
- * 拿長度當條件會變成永遠問下去。
- */
-const answered = ref(false);
-
-function keepAskingUntilAnswered() {
-  progressPanel.sayHello();
-  hello = window.setInterval(() => {
-    if (answered.value) {
-      if (hello !== null) clearInterval(hello);
-      hello = null;
-      return;
-    }
-    progressPanel.sayHello();
-  }, 1000);
-}
-
 onMounted(async () => {
-  stopData = await progressPanel.onData((r) => {
-    rows.value = r;
-    answered.value = true;
-  });
+  stopData = await progressPanel.connect((r) => (rows.value = r));
   stopOpacity = await progressPanel.onOpacity((v) => (opacity.value = v));
-  keepAskingUntilAnswered();
 });
 onUnmounted(() => {
   stopData?.();
   stopOpacity?.();
-  if (hello !== null) clearInterval(hello);
 });
 
 function onDown(e: MouseEvent) {

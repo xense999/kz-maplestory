@@ -16,24 +16,8 @@ const face = ref<number | null>(null);
 const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", mesoW: "", rate: "" });
 const focused = ref<MoneyInput["field"] | null>(null);
 
-let hello: number | null = null;
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
-
-/** 兩個 webview 同時載入，這一聲可能比主視窗的監聽器還早到，所以問到有人回應為止 */
-const answered = ref(false);
-
-function keepAskingUntilAnswered() {
-  moneyPanel.sayHello();
-  hello = window.setInterval(() => {
-    if (answered.value) {
-      if (hello !== null) clearInterval(hello);
-      hello = null;
-      return;
-    }
-    moneyPanel.sayHello();
-  }, 1000);
-}
 
 function apply(snap: MoneySnap) {
   face.value = snap.face;
@@ -54,17 +38,12 @@ function edit(field: MoneyInput["field"], e: Event) {
 }
 
 onMounted(async () => {
-  stopData = await moneyPanel.onData((snap) => {
-    apply(snap);
-    answered.value = true;
-  });
+  stopData = await moneyPanel.connect(apply);
   stopOpacity = await moneyPanel.onOpacity((v) => (opacity.value = v));
-  keepAskingUntilAnswered();
 });
 onUnmounted(() => {
   stopData?.();
   stopOpacity?.();
-  if (hello !== null) clearInterval(hello);
 });
 
 function onDown(e: MouseEvent) {

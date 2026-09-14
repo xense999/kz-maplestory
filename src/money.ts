@@ -40,8 +40,8 @@ export interface Deal {
   fee: number;
 }
 
-function usable(...values: number[]): boolean {
-  return values.every((v) => Number.isFinite(v) && v >= 0);
+function usable(value: number): boolean {
+  return Number.isFinite(value) && value >= 0;
 }
 
 /** 每台幣換得到的楓幣。匯率不合法時回 0，呼叫端一律先擋掉 */
@@ -68,7 +68,10 @@ export function fromNet(net: number, rateW: number, vip: boolean): Deal | null {
   return { ntd: face / per, face, net, fee: face - net };
 }
 
-/** 浮點數的往返誤差落在小數第 15 位上下，比這個小就當作同一個數 */
+/**
+ * 台幣↔楓幣來回換算會累積浮點誤差（3 會變成 3.0000000000000004）。
+ * 這個門檻比誤差大得多、又比任何有意義的金額小，用來把那種尾巴當成 0。
+ */
 const EPS = 1e-9;
 
 export interface RoundUp {
@@ -97,6 +100,22 @@ export function roundUpSuggestion(
   if (!rounded) return null;
 
   return { ntd: target, extra: rounded.net - exact.net };
+}
+
+/**
+ * 台幣的寫法：無條件進位到小數第 2 位。
+ * ★不能四捨五入——付的錢比算出來的少就換不到那麼多楓幣，
+ * 而且捨進之後畫面會跟湊整建議打架（顯示「2.00 元」卻建議「付 3 台幣」）。
+ */
+export function formatNtd(ntd: number): string {
+  if (!Number.isFinite(ntd)) return "—";
+  return (Math.ceil(ntd * 100 - EPS) / 100).toFixed(2);
+}
+
+/** 楓幣填回欄位時的寫法：以 W 為單位、最多兩位小數，捨去方向跟 formatMeso 一致 */
+export function mesoToWText(meso: number): string {
+  if (!Number.isFinite(meso)) return "";
+  return String(Math.floor((meso / W) * 100) / 100);
 }
 
 /** 千分位。自己分組而不是 toLocaleString：那個會跟著系統地區變 */

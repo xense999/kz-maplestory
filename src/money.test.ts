@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   formatMeso,
+  formatNtd,
   formatRaw,
+  mesoToWText,
   fromNet,
   fromNtd,
   roundUpSuggestion,
@@ -95,6 +97,27 @@ describe("湊整建議", () => {
   });
 });
 
+describe("台幣的寫法", () => {
+  it("無條件進位到小數第 2 位——付的錢不能比算出來的少", () => {
+    expect(formatNtd(1.8796992481203008)).toBe("1.88");
+    expect(formatNtd(2.001)).toBe("2.01");
+  });
+
+  it("往返換算留下的浮點尾巴不會把整數推上去", () => {
+    expect(formatNtd(3.0000000000000004)).toBe("3.00");
+  });
+
+  it("顯示成整數時就不該有湊整建議，兩邊不能各說各話", () => {
+    const back = fromNet(fromNtd(3, RATE, false)!.net, RATE, false)!;
+    expect(formatNtd(back.ntd)).toBe("3.00");
+    expect(roundUpSuggestion(back.ntd, RATE, false)).toBeNull();
+  });
+
+  it("算不出來是破折號", () => {
+    expect(formatNtd(Number.NaN)).toBe("—");
+  });
+});
+
 describe("楓幣的寫法", () => {
   it("0 就是 0W", () => {
     expect(formatMeso(0)).toBe("0W");
@@ -122,5 +145,14 @@ describe("楓幣的寫法", () => {
 
   it("原始數字帶千分位", () => {
     expect(formatRaw(26_600_000)).toBe("26,600,000");
+  });
+
+  it("填回欄位的是純數字，不帶千分位", () => {
+    expect(mesoToWText(26_600_000)).toBe("2660");
+  });
+
+  it("填回欄位跟顯示同一個捨去方向", () => {
+    expect(mesoToWText(99_999_999)).toBe("9999.99");
+    expect(formatMeso(99_999_999)).toBe("9,999.99W");
   });
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, type Ref } from "vue";
+import { ref } from "vue";
+import type { FloatPanelControls } from "../float";
 
 /**
  * 每個有浮動視窗的功能頁，下方那一排都長一樣：一顆開關按鈕，滑鼠停上去才出現透明度拉桿。
@@ -8,22 +9,18 @@ import { ref, type Ref } from "vue";
  * 只吃面板的開關與透明度——這支不碰資料，所以不需要知道面板送的是什麼型別。
  */
 defineProps<{
-  panel: {
-    open: Ref<boolean>;
-    opacity: Ref<number>;
-    toggle(): Promise<void>;
-    setOpacity(v: number): void;
-  };
+  panel: FloatPanelControls;
   /** 關著的時候提示這個面板能看到什麼 */
   hint: string;
 }>();
 
-const open = ref(false);
+/** 拉桿是否展開。跟 panel.open（面板本身開著沒有）是兩回事 */
+const opacityOpen = ref(false);
 </script>
 
 <template>
   <!-- 拉桿掛在按鈕底下，滑鼠從按鈕滑到拉桿上不能斷，所以兩者共用同一個 hover 容器 -->
-  <div class="floatctl" @mouseenter="open = true" @mouseleave="open = false">
+  <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
     <button
       :class="{ primary: panel.open.value }"
       :title="panel.open.value ? '關閉浮動視窗' : hint"
@@ -32,7 +29,7 @@ const open = ref(false);
       浮動視窗
     </button>
 
-    <div v-if="open" class="opacity-wrap">
+    <div v-if="opacityOpen" class="opacity-wrap">
       <div class="opacity">
         <span class="olabel">透明度</span>
         <input

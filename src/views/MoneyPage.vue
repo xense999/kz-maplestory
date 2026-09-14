@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, formatRaw, roundUpSuggestion } from "../money";
+import { formatMeso, formatNtd, formatRaw, roundUpSuggestion } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -27,7 +27,7 @@ const rows = computed(() => {
   ];
 });
 
-const ntd = computed(() => (money.deal ? `${money.deal.ntd.toFixed(2)} 元` : DASH));
+const ntd = computed(() => (money.deal ? `${formatNtd(money.deal.ntd)} 元` : DASH));
 
 /** 付整數台幣的話。精確值本來就是整數時沒有建議，那一行就不出現 */
 const roundUp = computed(() =>
@@ -186,6 +186,12 @@ const roundUp = computed(() =>
   flex: none;
   font-variant-numeric: tabular-nums;
   text-align: right;
+  /* 框比全域的欄位淡一級：這三欄一直都在，深框會變成三條搶注意力的線 */
+  background: transparent;
+  border-color: var(--border);
+}
+.num:hover:not(:focus) {
+  background: var(--input-bg);
 }
 .unit {
   font-size: 14px;

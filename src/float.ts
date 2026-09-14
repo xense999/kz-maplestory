@@ -36,17 +36,27 @@ export interface FloatPanel<T, I = never> {
   pushOpacity(): void;
   /** 主視窗：面板開起來時會喊一聲，收到就補送一份 */
   onHello(cb: () => void): Promise<UnlistenFn>;
-  /** 面板：收主視窗的快照 */
-  onData(cb: (data: T) => void): Promise<UnlistenFn>;
+  /**
+   * 面板：接主視窗的快照。
+   *
+   * 兩個 webview 是同時載入的，面板的第一聲招呼可能比主視窗的監聽器還早到，
+   * 所以這裡會一直問到有人回應為止——這是面板的不變量，不該由各個面板自己重寫。
+   * 回傳的函式把監聽與招呼一起收掉。
+   */
+  connect(cb: (data: T) => void): Promise<() => void>;
   /** 面板：收透明度 */
   onOpacity(cb: (v: number) => void): Promise<UnlistenFn>;
-  /** 面板：跟主視窗要一份現況 */
-  sayHello(): void;
   /** 面板：把使用者在面板上改的東西送回主視窗（只有可以打字的面板用得到） */
   sendInput(data: I): void;
   /** 主視窗：收面板送回來的修改 */
   onInput(cb: (data: I) => void): Promise<UnlistenFn>;
 }
+
+/** 開關按鈕用得到的那幾支。型別的 owner 在這裡，按鈕不自己抄一份 */
+export type FloatPanelControls = Pick<
+  FloatPanel<unknown>,
+  "open" | "opacity" | "toggle" | "setOpacity"
+>;
 
 export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> {
   const DATA = `${label}:data`;
@@ -122,11 +132,30 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
     },
     pushOpacity,
     onHello: (cb) => listen(HELLO, cb),
-    onData: (cb) => listen<T>(DATA, (e) => cb(e.payload)),
-    onOpacity: (cb) => listen<number>(OPACITY, (e) => cb(e.payload)),
-    sayHello() {
+    async connect(cb) {
+      // ★判斷「有人回應」而不是「有資料」：內容本來就可能是空的，
+      // 拿內容當條件會變成永遠問下去。
+      let answered = false;
+      const stop = await listen<T>(DATA, (e) => {
+        answered = true;
+        cb(e.payload);
+      });
+
       void emit(HELLO);
+      const asking = window.setInterval(() => {
+        if (answered) {
+          clearInterval(asking);
+          return;
+        }
+        void emit(HELLO);
+      }, 1000);
+
+      return () => {
+        void stop();
+        clearInterval(asking);
+      };
     },
+    onOpacity: (cb) => listen<number>(OPACITY, (e) => cb(e.payload)),
     sendInput(data: I) {
       void emit(INPUT, data);
     },

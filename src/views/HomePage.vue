@@ -209,7 +209,6 @@ function delta(v?: number | null) {
   gap: var(--sp-2);
 }
 
-
 .scroller {
   flex: 1;
   min-height: 0;

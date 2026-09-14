@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import { moneyPanel, type MoneySnap } from "../float";
-import { fromNet, fromNtd, W, type Deal } from "../money";
+import { formatNtd, fromNet, fromNtd, mesoToWText, W, type Deal } from "../money";
 
 /**
  * 幣值換算的欄位狀態。
@@ -19,12 +19,6 @@ function toNumber(text: string): number {
   const cleaned = text.replace(/[,\s]/g, "");
   if (!cleaned) return Number.NaN;
   return Number(cleaned);
-}
-
-/** 算出來的數字填回欄位：小數最多兩位，尾巴的 0 不留 */
-function toText(value: number): string {
-  if (!Number.isFinite(value)) return "";
-  return String(Math.round(value * 100) / 100);
 }
 
 export const useMoneyStore = defineStore("money", () => {
@@ -50,9 +44,9 @@ export const useMoneyStore = defineStore("money", () => {
     deal,
     (d) => {
       if (anchor.value === "ntd") {
-        mesoWText.value = d ? toText(d.net / W) : "";
+        mesoWText.value = d ? mesoToWText(d.net) : "";
       } else {
-        ntdText.value = d ? d.ntd.toFixed(2) : "";
+        ntdText.value = d ? formatNtd(d.ntd) : "";
       }
     },
     { immediate: true },
@@ -70,16 +64,11 @@ export const useMoneyStore = defineStore("money", () => {
     };
   }
 
-  let lastSent = "";
-  function publish(force = false) {
-    const snap = snapshot();
-    const json = JSON.stringify(snap);
-    if (!force && json === lastSent) return;
-    lastSent = json;
-    moneyPanel.push(snap);
+  function publish() {
+    moneyPanel.push(snapshot());
   }
 
-  watch([ntdText, mesoWText, rateText, vip], () => publish());
+  watch([ntdText, mesoWText, rateText, vip], publish);
 
   function setNtd(value: string) {
     anchor.value = "ntd";
@@ -106,10 +95,8 @@ export const useMoneyStore = defineStore("money", () => {
     if (wired) return;
     wired = true;
 
-    // ★面板問「有人在嗎」時一定要回，即使內容跟上次送的一樣：
-    // 它就是因為可能沒收到第一筆才在問，被去重擋掉的話會永遠問下去。
     await moneyPanel.onHello(() => {
-      publish(true);
+      publish();
       moneyPanel.pushOpacity();
     });
 
@@ -120,7 +107,7 @@ export const useMoneyStore = defineStore("money", () => {
       else if (field === "mesoW") setMesoW(value);
       else setRate(value);
     });
-    publish(true);
+    publish();
     moneyPanel.pushOpacity();
   }
 
