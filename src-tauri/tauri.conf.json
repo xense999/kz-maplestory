@@ -21,6 +21,7 @@
         "decorations": false,
         "transparent": true,
         "shadow": false,
+        "dragDropEnabled": false,
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       },
       {
@@ -43,8 +44,8 @@
         "label": "float-progress",
         "url": "index.html?view=float-progress",
         "title": "久世管理器 — 角色進度",
-        "width": 360,
-        "height": 180,
+        "width": 380,
+        "height": 124,
         "minWidth": 240,
         "minHeight": 120,
         "resizable": true,

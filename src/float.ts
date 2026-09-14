@@ -1,6 +1,6 @@
 import { ref, type Ref } from "vue";
 import { emit, listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { LogicalSize } from "@tauri-apps/api/dpi";
+import { LogicalPosition, LogicalSize } from "@tauri-apps/api/dpi";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 /**
@@ -74,6 +74,9 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
         await win.hide();
         open.value = false;
       } else {
+        // 第一次開啟時落在主視窗框內：面板預設位置是螢幕左上角，
+        // 使用者會以為按了沒反應。之後他自己拖到哪就是哪，不再干涉。
+        await placeInsideMainOnce(win);
         await win.show();
         await win.setFocus();
         open.value = true;
@@ -113,6 +116,44 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
       void emit(HELLO);
     },
   };
+}
+
+/**
+ * 把面板挪進主視窗的範圍內，只做一次。
+ *
+ * 面板是在設定檔裡宣告的，Windows 給它的預設位置在主視窗外面（多半是螢幕左上角）；
+ * 第一次開啟時如果出現在那裡，使用者會以為按鈕壞了。
+ */
+async function placeInsideMainOnce(win: WebviewWindow) {
+  const key = `kz-maplestory:float-placed:${win.label}`;
+  try {
+    if (localStorage.getItem(key)) return;
+  } catch {
+    /* 讀不到就當作沒放過，最多是多挪一次 */
+  }
+
+  const main = await WebviewWindow.getByLabel("main");
+  if (!main) return;
+
+  const scale = await main.scaleFactor();
+  const mPos = (await main.outerPosition()).toLogical(scale);
+  const mSize = (await main.outerSize()).toLogical(scale);
+  const pSize = (await win.outerSize()).toLogical(scale);
+
+  // 貼在主視窗內側的右下角，留一點邊距
+  const margin = 24;
+  await win.setPosition(
+    new LogicalPosition(
+      Math.round(mPos.x + mSize.width - pSize.width - margin),
+      Math.round(mPos.y + mSize.height - pSize.height - margin),
+    ),
+  );
+
+  try {
+    localStorage.setItem(key, "1");
+  } catch {
+    /* 存不了就下次再挪一次，無害 */
+  }
 }
 
 /** 輪燒面板送的東西：每個計時器叫什麼、什麼時候到期 */

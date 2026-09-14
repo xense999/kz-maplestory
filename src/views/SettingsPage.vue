@@ -4,6 +4,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { disable as disableAutostart, enable as enableAutostart, isEnabled } from "@tauri-apps/plugin-autostart";
 import { setTheme, themePref, type ThemePref } from "../theme";
 import { setVolume, testBeep, volume } from "../alarm";
 import { apiKey, setApiKey } from "../apikey";
@@ -20,6 +21,24 @@ const THEMES: { id: ThemePref; label: string }[] = [
 
 /** 金鑰預設遮起來：這東西會被截圖、也會被旁邊的人看到 */
 const revealKey = ref(false);
+
+/** 開機自動啟動。狀態的真實來源是系統本身，所以開頁時去問它，不自己記一份 */
+const autostart = ref(false);
+const autostartBusy = ref(false);
+
+async function toggleAutostart() {
+  if (autostartBusy.value) return;
+  autostartBusy.value = true;
+  try {
+    if (autostart.value) await disableAutostart();
+    else await enableAutostart();
+    autostart.value = await isEnabled();
+  } catch (e) {
+    console.error(e);
+  } finally {
+    autostartBusy.value = false;
+  }
+}
 
 const version = ref("");
 const showAbout = ref(false);
@@ -97,6 +116,7 @@ let stopProgress: (() => void) | null = null;
 
 onMounted(async () => {
   version.value = await getVersion();
+  autostart.value = await isEnabled().catch(() => false);
   stopProgress = await listen<[number, number]>("update-progress", (e) => {
     const [done, total] = e.payload;
     updatePct.value = total > 0 ? Math.floor((done * 100) / total) : 0;
@@ -132,6 +152,21 @@ async function copyDiscord() {
               {{ t.label }}
             </button>
           </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <span class="row-title">開機時啟動</span>
+          <button
+            class="switch"
+            role="switch"
+            :class="{ on: autostart }"
+            :aria-checked="autostart"
+            :disabled="autostartBusy"
+            :title="autostart ? '登入 Windows 後會自動開啟' : '開啟後，登入 Windows 就會自動啟動'"
+            @click="toggleAutostart()"
+          ></button>
         </div>
       </section>
 
