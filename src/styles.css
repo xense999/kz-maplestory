@@ -284,6 +284,23 @@ textarea {
 input::placeholder {
   color: var(--text-faint);
 }
+
+/* WebView 會自己往密碼欄塞一顆「顯示密碼」的眼睛、往搜尋欄塞一顆叉，
+   兩個都不吃我們的樣式。關掉，需要的話自己畫一顆。 */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+/* 數字欄的上下箭頭同理：它是系統畫的，跟旁邊的控制項對不起來 */
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 input:focus,
 textarea:focus,
 select:focus {

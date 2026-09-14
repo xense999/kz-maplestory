@@ -138,18 +138,26 @@ async function copyDiscord() {
       <section class="card">
         <div class="row">
           <span class="row-title">API 金鑰</span>
-          <div class="ctrl">
+          <div class="keyfield">
             <input
               :type="revealKey ? 'text' : 'password'"
-              class="key"
               :value="apiKey"
               placeholder="貼上你自己的 API 金鑰"
               spellcheck="false"
               autocomplete="off"
               @input="setApiKey(($event.target as HTMLInputElement).value)"
             />
-            <button :title="revealKey ? '隱藏' : '顯示'" @click="revealKey = !revealKey">
-              {{ revealKey ? "隱藏" : "顯示" }}
+            <button
+              class="eye"
+              :title="revealKey ? '隱藏金鑰' : '顯示金鑰'"
+              @click="revealKey = !revealKey"
+            >
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+                   stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z" />
+                <circle cx="12" cy="12" r="3.1" />
+                <path v-if="!revealKey" d="M4 20 20 4" />
+              </svg>
             </button>
           </div>
         </div>
@@ -293,8 +301,31 @@ async function copyDiscord() {
 .ctrl input[type="range"] {
   width: 160px;
 }
-.key {
-  width: 320px;
+/* 眼睛長在輸入格裡面的右緣，不是旁邊另一顆按鈕 */
+.keyfield {
+  position: relative;
+  width: 340px;
+}
+.keyfield input {
+  width: 100%;
+  padding-right: 40px;
+}
+.eye {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  border-radius: var(--radius-xs);
+}
+.eye:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--hover);
 }
 .ctrl-val {
   width: 44px;
