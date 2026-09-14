@@ -85,7 +85,7 @@ const roundUp = computed(() =>
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">實收</span>
+                  <span class="rlabel">楓幣</span>
                   <input
                     class="rval"
                     type="text"
@@ -95,7 +95,6 @@ const roundUp = computed(() =>
                     :value="money.mesoText"
                     @input="money.setMeso(value($event))"
                   />
-                  <span class="rnote unit">楓幣</span>
                   <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
                   <span class="rnote">{{ mesoInWords }}</span>
                 </label>
@@ -231,15 +230,18 @@ const roundUp = computed(() =>
 .row {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   min-height: 34px;
 }
+/* 標籤靠右：左卡的標籤是兩個字、右卡是四個字，等寬又靠左的話短標籤跟欄位之間
+   會空一大段。靠右讓每個標籤都貼著自己的數字，欄位本身還是對齊的。 */
 .rlabel {
-  width: 76px;
+  width: 64px;
   flex: none;
   font-size: 15px;
   font-weight: 600;
   color: var(--text-dim);
+  text-align: right;
 }
 .rval {
   width: 190px;
