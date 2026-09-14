@@ -41,7 +41,8 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
 <template>
   <div class="page">
     <div class="body">
-      <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列；兩顆技能是它底下的操作 -->
+      <div class="scroller">
+        <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列；兩顆技能是它底下的操作 -->
       <TimerCard
         id="rental"
         :editing="editMode"
@@ -64,6 +65,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
           :recording="recording === 'burning'"
           @record="onRecord"
         />
+        </div>
       </div>
 
       <div class="pagebar">
@@ -120,21 +122,31 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
   display: flex;
   flex-direction: column;
 }
+/* 跟主頁同一個骨架：body 不捲，捲的是裡面那層，最底下那排按鈕固定看得到 */
 .body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   padding: var(--sp-4);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+}
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* 捲軸走在這段留白上，所以它在卡片外面的右邊 */
+  padding-right: 12px;
 }
 .pagebar {
   flex: none;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: 0 var(--sp-4) var(--sp-4);
 }
 .gear {
   flex: none;
