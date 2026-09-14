@@ -544,7 +544,7 @@ async function copyDiscord() {
 }
 /* 說明比「關於」長得多，給它寬一點，步驟才不會每一條都折行 */
 .about-window.wide {
-  width: 620px;
+  width: 550px;
 }
 .steps {
   margin: 0;
