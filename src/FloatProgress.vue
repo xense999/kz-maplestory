@@ -12,13 +12,17 @@ let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
 
 /**
- * 兩個 webview 是同時載入的，這一聲可能比主視窗的監聽器還早到，
- * 所以問到有資料為止（跟輪燒面板同一個理由）。
+ * 兩個 webview 是同時載入的，這一聲可能比主視窗的監聽器還早到，所以問到有人回應為止。
+ *
+ * ★判斷「有人回應」而不是「有資料」：一隻角色都沒開的時候回來的本來就是空清單，
+ * 拿長度當條件會變成永遠問下去。
  */
+const answered = ref(false);
+
 function keepAskingUntilAnswered() {
   progressPanel.sayHello();
   hello = window.setInterval(() => {
-    if (rows.value.length) {
+    if (answered.value) {
       if (hello !== null) clearInterval(hello);
       hello = null;
       return;
@@ -28,7 +32,10 @@ function keepAskingUntilAnswered() {
 }
 
 onMounted(async () => {
-  stopData = await progressPanel.onData((r) => (rows.value = r));
+  stopData = await progressPanel.onData((r) => {
+    rows.value = r;
+    answered.value = true;
+  });
   stopOpacity = await progressPanel.onOpacity((v) => (opacity.value = v));
   keepAskingUntilAnswered();
 });

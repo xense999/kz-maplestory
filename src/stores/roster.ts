@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { apiKey } from "../apikey";
 import { progressPanel, type CharacterSnap } from "../float";
 import {
