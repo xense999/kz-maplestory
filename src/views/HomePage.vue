@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { apiKey } from "../apikey";
 import {
   fetchCharacter,
@@ -48,6 +48,28 @@ async function refresh(slot: string) {
   }
 }
 
+/** 正在改名字的那一格；其他時候名字是純文字，不是一個輸入框 */
+const editing = ref<string | null>(null);
+
+async function beginEdit(slot: string) {
+  editing.value = slot;
+  await nextTick();
+  const el = document.querySelector<HTMLInputElement>(`[data-slot="${slot}"] input.who`);
+  el?.focus();
+  el?.select();
+}
+
+/** 改完名字就直接去查，不必再按一次更新 */
+function commitName(slot: string, value: string) {
+  editing.value = null;
+  const next = value.trim();
+  if (next === (names.value[slot] ?? "")) return;
+  setName(slot, next);
+  info.value = { ...info.value, [slot]: null };
+  lastAt.value = { ...lastAt.value, [slot]: 0 };
+  void refresh(slot);
+}
+
 function refreshAll() {
   for (const s of SLOTS) void refresh(s.id);
 }
@@ -82,7 +104,7 @@ function fmt(n?: number) {
   <div class="page">
     <div class="body">
       <section class="card outer">
-        <div v-for="(s, i) in SLOTS" :key="s.id" class="inner" :class="{ sep: i > 0 }">
+        <div v-for="s in SLOTS" :key="s.id" class="inner" :data-slot="s.id">
           <!-- 左：角色圖。沒資料時是一個空的框，版面不會因為抓到沒抓到而跳動 -->
           <div class="portrait">
             <img v-if="info[s.id]?.imageUrl" :src="info[s.id]!.imageUrl" :alt="s.label" />
@@ -95,18 +117,28 @@ function fmt(n?: number) {
           <div class="detail">
             <div class="head">
               <span class="slot-label">{{ s.label }}</span>
+
+              <!-- 名字設定好之後就是一段文字，點一下才變回可以改的欄位 -->
               <input
+                v-if="editing === s.id || !names[s.id]"
                 class="who"
                 type="text"
                 :value="names[s.id] ?? ''"
                 placeholder="角色名稱"
                 spellcheck="false"
-                @change="setName(s.id, ($event.target as HTMLInputElement).value)"
+                @keydown.enter="commitName(s.id, ($event.target as HTMLInputElement).value)"
+                @blur="commitName(s.id, ($event.target as HTMLInputElement).value)"
               />
+              <button v-else class="who-text" title="點一下改角色" @click="beginEdit(s.id)">
+                {{ names[s.id] }}
+              </button>
+
               <span v-if="info[s.id]?.job" class="job">{{ info[s.id]!.job }}</span>
               <div class="spacer"></div>
               <span class="when">{{ loading[s.id] ? "更新中…" : ago(s.id) }}</span>
-              <button class="sm" :disabled="loading[s.id]" @click="refresh(s.id)">更新</button>
+              <button class="sm" :disabled="loading[s.id] || !names[s.id]" @click="refresh(s.id)">
+                更新
+              </button>
             </div>
 
             <div class="stats">
@@ -153,20 +185,24 @@ function fmt(n?: number) {
   padding: var(--sp-4);
 }
 
-/* 一張大卡片裝兩個角色，中間一條線分開——兩隻是拿來對照的，不該是兩張各自獨立的卡 */
+/* 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
+   但各自要有自己的邊界，不然兩段資料會糊成一片 */
 .outer {
   display: flex;
   flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
 }
 .inner {
   display: flex;
   gap: var(--sp-4);
   padding: var(--sp-4);
-}
-.inner.sep {
-  border-top: 1px solid var(--border);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
+/* 圖框底色比內卡淺一階，不然兩層 --bg-2 疊在一起就看不出框 */
 .portrait {
   width: 96px;
   height: 96px;
@@ -174,7 +210,7 @@ function fmt(n?: number) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-2);
+  background: var(--bg-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -214,6 +250,20 @@ function fmt(n?: number) {
   width: 160px;
   height: 30px;
   font-size: 15px;
+}
+/* 已經設定好的名字：看起來是文字，不是欄位 */
+.who-text {
+  height: 30px;
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-strong);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+}
+.who-text:hover:not(:disabled) {
+  background: var(--hover);
 }
 .job {
   font-size: 14px;
