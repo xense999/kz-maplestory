@@ -11,7 +11,6 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::OnceLock;
 
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
@@ -42,34 +41,28 @@ impl Sample {
 pub struct Progress {
     /// 今天漲了多少（等值百分比）
     pub today: f64,
-    /// 這次程式開著以來漲了多少
-    pub session: f64,
     /// 今天的基準點是哪一筆（沒有基準就是 None）
     pub today_base_at: Option<i64>,
-    pub session_base_at: Option<i64>,
 }
 
-/// 從一串樣本算出成長量。
+/// 從一串樣本算出今天的成長量。
 ///
-/// `day_start` 是本機時區今天 00:00 的 epoch 毫秒，`session_start` 是本次程式啟動的時刻。
-/// 樣本不必先排序。
-pub fn summarize(samples: &[Sample], day_start: i64, session_start: i64) -> Progress {
+/// `day_start` 是本機時區今天 00:00 的 epoch 毫秒。樣本不必先排序。
+pub fn summarize(samples: &[Sample], day_start: i64) -> Progress {
     let Some(latest) = samples.iter().max_by_key(|s| s.at) else {
         return Progress::default();
     };
 
-    // 基準＝該區間內最早的一筆。只有一筆樣本時基準就是它自己，所以成長量是 0——
+    // 基準＝今天最早的一筆。只有一筆樣本時基準就是它自己，所以成長量是 0——
     // 這是對的：我們知道現在的值，但不知道它從哪裡來。
-    let base_in = |from: i64| samples.iter().filter(|s| s.at >= from).min_by_key(|s| s.at);
-
-    let today_base = base_in(day_start);
-    let session_base = base_in(session_start);
+    let base = samples
+        .iter()
+        .filter(|s| s.at >= day_start)
+        .min_by_key(|s| s.at);
 
     Progress {
-        today: today_base.map_or(0.0, |b| latest.equivalent() - b.equivalent()),
-        session: session_base.map_or(0.0, |b| latest.equivalent() - b.equivalent()),
-        today_base_at: today_base.map(|b| b.at),
-        session_base_at: session_base.map(|b| b.at),
+        today: base.map_or(0.0, |b| latest.equivalent() - b.equivalent()),
+        today_base_at: base.map(|b| b.at),
     }
 }
 
@@ -97,13 +90,6 @@ pub fn push_sample(samples: &mut Vec<Sample>, next: Sample) {
 // ─── 檔案 ─────────────────────────────────────────────────────────────────────
 
 type Store = HashMap<String, Vec<Sample>>;
-
-/// 本次程式啟動的時刻。「本次漲多少」的基準。
-static SESSION_START: OnceLock<i64> = OnceLock::new();
-
-fn session_start() -> i64 {
-    *SESSION_START.get_or_init(now_ms)
-}
 
 fn now_ms() -> i64 {
     std::time::SystemTime::now()
@@ -145,7 +131,6 @@ pub fn record_progress(
     day_start: i64,
 ) -> Result<Progress, String> {
     let now = now_ms();
-    let session = session_start();
 
     let mut store = load(&app);
     let samples = store.entry(slot).or_default();
@@ -159,7 +144,7 @@ pub fn record_progress(
     );
     prune(samples, now);
 
-    let progress = summarize(samples, day_start, session);
+    let progress = summarize(samples, day_start);
     save(&app, &store)?;
     Ok(progress)
 }
@@ -172,7 +157,17 @@ pub fn progress_summary(
 ) -> Result<Progress, String> {
     let store = load(&app);
     let samples = store.get(&slot).map(Vec::as_slice).unwrap_or(&[]);
-    Ok(summarize(samples, day_start, session_start()))
+    Ok(summarize(samples, day_start))
+}
+
+/// 換角色＝這一格的歷史整段作廢。
+///
+/// ★沒有這一步的話，成長量會拿新角色的數字去減舊角色的數字，算出一個荒謬的漲幅。
+#[tauri::command]
+pub fn clear_progress(app: tauri::AppHandle, slot: String) -> Result<(), String> {
+    let mut store = load(&app);
+    store.remove(&slot);
+    save(&app, &store)
 }
 
 #[cfg(test)]
@@ -193,15 +188,13 @@ mod tests {
 
     #[test]
     fn no_samples_is_zero_not_missing() {
-        let p = summarize(&[], T0, T0);
+        let p = summarize(&[], T0);
         assert_eq!(p, Progress::default());
     }
 
     #[test]
     fn a_single_sample_has_no_growth_yet() {
-        let p = summarize(&[s(T0 + 60_000, 200, 40.0)], T0, T0);
-        assert_eq!(p.today, 0.0);
-        assert_eq!(p.session, 0.0);
+        assert_eq!(summarize(&[s(T0 + 60_000, 200, 40.0)], T0).today, 0.0);
     }
 
     #[test]
@@ -211,7 +204,7 @@ mod tests {
             s(T0 + 2_000, 200, 25.0),
             s(T0 + 3_000, 200, 31.5),
         ];
-        assert_eq!(summarize(&samples, T0, T0).today, 21.5);
+        assert_eq!(summarize(&samples, T0).today, 21.5);
     }
 
     #[test]
@@ -221,39 +214,26 @@ mod tests {
             s(T0 + 1_000, 200, 60.0),      // 今天第一筆
             s(T0 + 2_000, 200, 70.0),
         ];
-        assert_eq!(summarize(&samples, T0, T0).today, 10.0);
+        assert_eq!(summarize(&samples, T0).today, 10.0);
     }
 
     #[test]
     fn levelling_up_does_not_read_as_a_loss() {
         // 98% → 升級 → 3%：實際是漲了 5，不是掉了 95
         let samples = [s(T0 + 1_000, 200, 98.0), s(T0 + 2_000, 201, 3.0)];
-        assert_eq!(summarize(&samples, T0, T0).today, 5.0);
+        assert_eq!(summarize(&samples, T0).today, 5.0);
     }
 
     #[test]
     fn two_levels_in_one_day_add_up() {
         let samples = [s(T0 + 1_000, 200, 50.0), s(T0 + 2_000, 202, 50.0)];
-        assert_eq!(summarize(&samples, T0, T0).today, 200.0);
-    }
-
-    #[test]
-    fn session_starts_later_than_the_day() {
-        let session = T0 + 5_000;
-        let samples = [
-            s(T0 + 1_000, 200, 10.0), // 今天、但這次啟動之前
-            s(session + 1_000, 200, 40.0),
-            s(session + 2_000, 200, 45.0),
-        ];
-        let p = summarize(&samples, T0, session);
-        assert_eq!(p.today, 35.0);
-        assert_eq!(p.session, 5.0);
+        assert_eq!(summarize(&samples, T0).today, 200.0);
     }
 
     #[test]
     fn samples_need_not_be_in_order() {
         let samples = [s(T0 + 3_000, 200, 30.0), s(T0 + 1_000, 200, 10.0)];
-        assert_eq!(summarize(&samples, T0, T0).today, 20.0);
+        assert_eq!(summarize(&samples, T0).today, 20.0);
     }
 
     #[test]
@@ -273,7 +253,7 @@ mod tests {
             push_sample(&mut samples, s(T0 + at, 200, pct));
         }
         assert_eq!(samples.len(), 2);
-        assert_eq!(summarize(&samples, T0, T0).today, 15.0);
+        assert_eq!(summarize(&samples, T0).today, 15.0);
     }
 
     #[test]
@@ -293,8 +273,8 @@ mod tests {
     fn pruning_does_not_change_the_numbers() {
         let now = T0 + 7 * DAY;
         let mut samples = vec![s(T0 - DAY, 199, 0.0), s(now - 1_000, 200, 10.0), s(now, 200, 30.0)];
-        let before = summarize(&samples, now - 2_000, now - 2_000);
+        let before = summarize(&samples, now - 2_000);
         prune(&mut samples, now);
-        assert_eq!(summarize(&samples, now - 2_000, now - 2_000), before);
+        assert_eq!(summarize(&samples, now - 2_000), before);
     }
 }

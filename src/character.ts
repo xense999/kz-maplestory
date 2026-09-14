@@ -38,17 +38,14 @@ interface RawCharacter {
 /** 每 10 分鐘更新一次 */
 export const REFRESH_MS = 10 * 60_000;
 
-/** 成長量（等值百分比：一級算 100） */
+/** 今天練了多少（等值百分比：一級算 100） */
 export interface Progress {
   today: number;
-  session: number;
 }
 
 interface RawProgress {
   today: number;
-  session: number;
   today_base_at: number | null;
-  session_base_at: number | null;
 }
 
 /** 本機時區今天 00:00。日界是本機的事，後端不處理時區，由這裡算好給它 */
@@ -70,7 +67,7 @@ export async function recordProgress(
     expPercent,
     dayStart: startOfToday(),
   });
-  return { today: r.today, session: r.session };
+  return { today: r.today };
 }
 
 /** 不寫入，只讀出目前的成長量（畫面重建時用） */
@@ -79,7 +76,12 @@ export async function readProgress(slot: string): Promise<Progress> {
     slot,
     dayStart: startOfToday(),
   });
-  return { today: r.today, session: r.session };
+  return { today: r.today };
+}
+
+/** 換角色時整段作廢：新角色的數字不能拿舊角色的當基準 */
+export function clearProgress(slot: string) {
+  return invoke("clear_progress", { slot });
 }
 
 export async function fetchCharacter(name: string, apiKey: string): Promise<CharacterInfo> {

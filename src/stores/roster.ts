@@ -3,6 +3,7 @@ import { computed, reactive } from "vue";
 import { apiKey } from "../apikey";
 import { progressPanel, type CharacterSnap } from "../float";
 import {
+  clearProgress,
   fetchCharacter,
   readProgress,
   recordProgress,
@@ -132,6 +133,8 @@ export const useRosterStore = defineStore("roster", () => {
     slots[id].name = next;
     slots[id].info = null;
     slots[id].growth = null;
+    // 這一格的歷史是舊角色的，留著會讓成長量拿兩隻不同角色的數字相減
+    await clearProgress(id).catch(() => {});
     persist();
     publish();
     await refresh(id);

@@ -143,12 +143,6 @@ function delta(v?: number | null) {
                 <span class="slabel">今天練了</span>
                 <span class="sval gain">{{ delta(roster.slots[s.id].growth?.today) }}</span>
               </div>
-              <div class="stat" title="這次打開程式到現在練了多少（關掉程式就重新算）">
-                <span class="slabel">本次開機</span>
-                <span class="sval gain small">
-                  {{ delta(roster.slots[s.id].growth?.session) }}
-                </span>
-              </div>
             </div>
 
             <div class="bar">
@@ -324,9 +318,6 @@ function delta(v?: number | null) {
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
-}
-.sval.small {
-  font-size: 20px;
 }
 
 .bar {

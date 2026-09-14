@@ -22,6 +22,7 @@ pub fn run() {
             maple::fetch_character,
             progress::record_progress,
             progress::progress_summary,
+            progress::clear_progress,
         ])
         .setup(|app| {
             // 監聽式熱鍵：不搶鍵，玩家按放技能的那顆鍵時我們順便起算
