@@ -9,6 +9,9 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
  * 每個面板都是另一個 webview，記憶體不共用，所以資料靠事件同步：主視窗廣播一份快照，
  * 面板自己畫。事件名以視窗代號開頭，多個面板才不會收到彼此的資料。
  *
+ * 面板多半只是主視窗的鏡子，但也有可以打字的（幣值換算）：那種面板把使用者的修改
+ * 送回主視窗，由主視窗改狀態、再廣播回來——狀態只有一份，兩邊才不會各自漂走。
+ *
  * 面板都在 tauri.conf.json 宣告好、開機建起來但 visible:false，這裡只切換顯示。
  * ★不在執行期 new WebviewWindow：那樣建出來的子視窗有過空白不 render 的前例。
  * 關閉一律用 hide 不用 close——close 掉的視窗叫不回來，就沒得再開了。
@@ -17,7 +20,7 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 /** 預設半透明——疊在遊戲上，一開始就實心會擋掉太多畫面 */
 const DEFAULT_OPACITY = 0.5;
 
-export interface FloatPanel<T> {
+export interface FloatPanel<T, I = never> {
   label: string;
   /** 目前開著沒有（主視窗的按鈕靠它標狀態） */
   open: Ref<boolean>;
@@ -39,12 +42,17 @@ export interface FloatPanel<T> {
   onOpacity(cb: (v: number) => void): Promise<UnlistenFn>;
   /** 面板：跟主視窗要一份現況 */
   sayHello(): void;
+  /** 面板：把使用者在面板上改的東西送回主視窗（只有可以打字的面板用得到） */
+  sendInput(data: I): void;
+  /** 主視窗：收面板送回來的修改 */
+  onInput(cb: (data: I) => void): Promise<UnlistenFn>;
 }
 
-export function createFloatPanel<T>(label: string): FloatPanel<T> {
+export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> {
   const DATA = `${label}:data`;
   const HELLO = `${label}:hello`;
   const OPACITY = `${label}:opacity`;
+  const INPUT = `${label}:input`;
   const OPACITY_KEY = `kz-maplestory:float-opacity:${label}`;
 
   function loadOpacity() {
@@ -119,6 +127,10 @@ export function createFloatPanel<T>(label: string): FloatPanel<T> {
     sayHello() {
       void emit(HELLO);
     },
+    sendInput(data: I) {
+      void emit(INPUT, data);
+    },
+    onInput: (cb) => listen<I>(INPUT, (e) => cb(e.payload)),
   };
 }
 
@@ -191,4 +203,10 @@ export interface MoneySnap {
   face: number | null;
 }
 
-export const moneyPanel = createFloatPanel<MoneySnap>("float-money");
+/** 幣值換算面板送回來的東西：使用者改了哪一欄、改成什麼 */
+export interface MoneyInput {
+  field: "ntd" | "mesoW" | "rate";
+  value: string;
+}
+
+export const moneyPanel = createFloatPanel<MoneySnap, MoneyInput>("float-money");

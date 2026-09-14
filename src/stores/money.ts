@@ -112,6 +112,14 @@ export const useMoneyStore = defineStore("money", () => {
       publish(true);
       moneyPanel.pushOpacity();
     });
+
+    // 面板上的欄位也能打字。改的是這一份狀態，不是面板自己的副本——
+    // 兩邊各存一份的話，先後順序一顛倒就會互相蓋掉。
+    await moneyPanel.onInput(({ field, value }) => {
+      if (field === "ntd") setNtd(value);
+      else if (field === "mesoW") setMesoW(value);
+      else setRate(value);
+    });
     publish(true);
     moneyPanel.pushOpacity();
   }
