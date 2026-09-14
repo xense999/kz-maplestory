@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { formatMeso, mesoTextInWords } from "./money";
+import { mesoTextInWords } from "./money";
 import { moneyPanel, type MoneyInput, type MoneySnap } from "./float";
 
 const appWin = getCurrentWindow();
 const opacity = ref(0.5);
-const face = ref<number | null>(null);
-const net = ref<number | null>(null);
 
 /**
  * 欄位的文字自己留一份，但那不是另一份狀態：主視窗才是唯一的來源，這裡只是它的回音。
@@ -17,12 +15,19 @@ const net = ref<number | null>(null);
 const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", meso: "", rate: "" });
 const focused = ref<MoneyInput["field"] | null>(null);
 
+/** 目前是從哪一欄算的，還有算不算得出來——兩個都只給中間那支箭頭用 */
+const anchor = ref<MoneySnap["anchor"]>("ntd");
+const ok = ref(false);
+
+/** 楓幣欄打的是一長串零，看不出是多少，換個講法接在右邊 */
+const mesoInWords = computed(() => mesoTextInWords(text.value.meso));
+
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
 
 function apply(snap: MoneySnap) {
-  face.value = snap.face;
-  net.value = snap.net;
+  anchor.value = snap.anchor;
+  ok.value = snap.ok;
   const incoming: Record<MoneyInput["field"], string> = {
     ntd: snap.ntd,
     meso: snap.meso,
@@ -32,9 +37,6 @@ function apply(snap: MoneySnap) {
     if (field !== focused.value) text.value[field] = incoming[field];
   }
 }
-
-/** 實收欄打的是 W，但談價講的是幾億幾萬——同一個數字的另一種講法，附在欄位下面 */
-const netInWords = computed(() => mesoTextInWords(text.value.meso));
 
 function edit(field: MoneyInput["field"], e: Event) {
   const value = (e.target as HTMLInputElement).value;
@@ -98,9 +100,26 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('meso', $event)"
         />
-        <!-- 一長串零看不出是多少，換個講法接在欄位右邊 -->
-        <span class="echo">{{ netInWords }}</span>
+        <span class="echo">{{ mesoInWords }}</span>
       </label>
+
+      <!-- 箭頭指向「被算出來的那一欄」：打楓幣就往下指台幣，打台幣就往上指楓幣。
+           算不出來（幣值還沒填）時不點亮，免得它看起來像在說結果已經好了。 -->
+      <div class="flow" :title="anchor === 'meso' ? '由楓幣算出台幣' : '由台幣算出楓幣'">
+        <svg
+          class="arrow"
+          :class="{ on: ok, up: anchor === 'ntd' }"
+          viewBox="0 0 12 16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 2 V14" />
+          <path d="M2 10 L6 14 L10 10" />
+        </svg>
+      </div>
 
       <label class="row">
         <span class="label">台幣</span>
@@ -116,19 +135,6 @@ function onDown(e: MouseEvent) {
         />
         <span class="unit">元</span>
       </label>
-
-      <!-- 算出來的兩個數字：整行淡下去，一眼分得出哪些可改、哪些是結果 -->
-      <div class="row muted">
-        <span class="label">交易</span>
-        <span class="derived">{{ face === null ? "—" : formatMeso(face) }}</span>
-        <span class="unit"></span>
-      </div>
-
-      <div class="row muted">
-        <span class="label">實收</span>
-        <span class="derived">{{ net === null ? "—" : formatMeso(net) }}</span>
-        <span class="unit"></span>
-      </div>
     </div>
   </div>
 </template>
@@ -185,14 +191,14 @@ function onDown(e: MouseEvent) {
 }
 .row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.6em;
   height: 1.95em;
 }
 /* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
 .label,
 .unit,
-.derived,
+.echo,
 .row input {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
@@ -203,23 +209,17 @@ function onDown(e: MouseEvent) {
   color: var(--text-dim);
 }
 /* 數字靠右對齊成一直行，單位在外面：三個數字才比得起來 */
-.row input,
-.derived {
+.row input {
   flex: 1;
   min-width: 0;
+  height: 1.6em;
+  padding: 0 0.4em;
   font-size: 1.05em;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
   text-align: right;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* 欄位平常看不出是欄位——碰到才浮出底色。疊在遊戲上，三個框會比數字還搶眼 */
-.row input {
-  height: 1.6em;
-  padding: 0 0.4em;
+  /* 欄位平常看不出是欄位——碰到才浮出底色。疊在遊戲上，三個框會比數字還搶眼 */
   background: transparent;
   border: 1px solid transparent;
   border-radius: 0.35em;
@@ -233,37 +233,44 @@ function onDown(e: MouseEvent) {
   border-color: var(--accent);
   box-shadow: none;
 }
-.unit {
-  width: 1.5em;
+.unit,
+.echo {
   flex: none;
   font-size: 0.82em;
   color: var(--text-dim);
 }
-/* 同一個數字換個講法。是附註不是第二個數字，所以比欄位淡 */
+.unit {
+  width: 1.5em;
+}
 .echo {
   width: 4.6em;
-  flex: none;
-  font-size: 0.82em;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
-/* 交易楓幣那一行：位置跟上面三行一樣，只是整行退到背景 */
-.row.muted {
-  height: 1.5em;
+
+/* 箭頭夾在楓幣與台幣之間，對齊左邊的標籤欄——擺中間會把兩個數字切開 */
+.flow {
+  display: flex;
+  align-items: center;
+  height: 1.1em;
 }
-.row.muted .label,
-.row.muted .derived {
-  font-size: 0.82em;
-  font-weight: 600;
-  color: var(--text-dim);
+.arrow {
+  width: 2.5em;
+  height: 1em;
+  flex: none;
+  color: var(--text-faint);
+  transition: color 0.15s ease, transform 0.15s ease;
 }
-.row.muted .derived {
-  /* 對齊上面三個欄位的文字，而不是欄位的框 */
-  padding-right: 0.4em;
+.arrow.up {
+  transform: rotate(180deg);
+}
+/* 點亮＝這個方向正在算。綠色在這套 token 裡就是「正常運作中」 */
+.arrow.on {
+  color: var(--good);
+  filter: drop-shadow(0 0 0.2em rgba(0, 0, 0, 0.9));
 }
 </style>

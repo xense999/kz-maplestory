@@ -60,8 +60,8 @@ export const useMoneyStore = defineStore("money", () => {
       ntd: ntdText.value,
       meso: mesoText.value,
       rate: rateText.value,
-      face: deal.value?.face ?? null,
-      net: deal.value?.net ?? null,
+      anchor: anchor.value,
+      ok: deal.value !== null,
     };
   }
 
@@ -69,7 +69,7 @@ export const useMoneyStore = defineStore("money", () => {
     moneyPanel.push(snapshot());
   }
 
-  watch([ntdText, mesoText, rateText, vip], publish);
+  watch([ntdText, mesoText, rateText, vip, anchor], publish);
 
   function setNtd(value: string) {
     anchor.value = "ntd";
