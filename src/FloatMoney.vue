@@ -27,11 +27,14 @@ let stopResize: (() => void) | null = null;
  * 視窗的長寬比鎖死。
  *
  * 內容是整體等比縮放的，視窗自己被拉成別的形狀就會多出留白。設定檔沒有長寬比這個選項，
- * 所以每次改完大小自己修回來：比較哪一邊被拖得多，那一邊當主、另一邊跟著算。
- * 差一兩個像素就不動，不然修正本身會跟下一次事件互推。
+ * 所以自己修回來：比較哪一邊被拖得多，那一邊當主、另一邊跟著算。
+ *
+ * ★只在停手之後修，不在拖曳途中修：拖的每一格都去改視窗大小會跟滑鼠互推，拉起來會卡。
+ * 差一兩個像素就不動，不然修正本身會再觸發一次事件。
  */
 const RATIO = 360 / 182;
 let last = { w: 360, h: 182 };
+let settle: number | null = null;
 
 async function keepRatio(w: number, h: number) {
   const [wantW, wantH] =
@@ -68,15 +71,21 @@ onMounted(async () => {
   stopData = await moneyPanel.connect(apply);
   stopOpacity = await moneyPanel.onOpacity((v) => (opacity.value = v));
 
-  stopResize = await appWin.onResized(async ({ payload }) => {
-    const size = payload.toLogical(await appWin.scaleFactor());
-    await keepRatio(Math.round(size.width), Math.round(size.height));
+  stopResize = await appWin.onResized(({ payload }) => {
+    if (settle !== null) clearTimeout(settle);
+    // 事件停下來就代表放手了。拖曳中不碰視窗大小，讓它跟著滑鼠走
+    settle = window.setTimeout(async () => {
+      settle = null;
+      const size = payload.toLogical(await appWin.scaleFactor());
+      await keepRatio(Math.round(size.width), Math.round(size.height));
+    }, 160);
   });
 });
 onUnmounted(() => {
   stopData?.();
   stopOpacity?.();
   stopResize?.();
+  if (settle !== null) clearTimeout(settle);
 });
 
 function onDown(e: MouseEvent) {
