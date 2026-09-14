@@ -212,16 +212,6 @@ async function copyDiscord() {
           </div>
         </div>
 
-        <div v-if="keyHelp" class="help">
-          <p>金鑰要自己去 NEXON 的開發者網站申請，一組可以一直用：</p>
-          <ol>
-            <li>用你的遊戲帳號登入 NEXON Open API。</li>
-            <li>建立一個應用程式（Application），遊戲選「MapleStory Taiwan / 新楓之谷」。</li>
-            <li>建好之後頁面上會給一串 API Key，複製它貼到上面的欄位。</li>
-          </ol>
-          <button class="link" @click="openUrl(NEXON_OPENAPI)">開啟申請頁面</button>
-          <span class="url">{{ NEXON_OPENAPI }}</span>
-        </div>
       </section>
 
       <section class="card">
@@ -258,6 +248,39 @@ async function copyDiscord() {
           <circle cx="12" cy="7.75" r="1.05" fill="currentColor" />
         </svg>
       </button>
+    </div>
+
+    <!-- 金鑰說明：跟「關於」同一種內視窗，不是攤在設定列底下的一段字 -->
+    <div v-if="keyHelp" class="about-overlay" @click.self="keyHelp = false">
+      <div class="about-window wide">
+        <div class="about-titlebar">
+          <span class="about-title">如何取得 API 金鑰</span>
+          <button class="about-close" title="關閉" @click="keyHelp = false">
+            <svg viewBox="0 0 12 12" width="11" height="11">
+              <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="about-body">
+          <div class="about-card">
+            <span class="about-card-label">步驟</span>
+            <ol class="steps">
+              <li>用你的遊戲帳號登入 NEXON Open API。</li>
+              <li>建立一個應用程式（Application），遊戲選「新楓之谷 / MapleStory Taiwan」。</li>
+              <li>建好之後頁面上會給一串 API Key，複製它貼到設定頁的欄位。</li>
+            </ol>
+            <p class="note">一組金鑰可以一直用，不必每次重新申請。</p>
+          </div>
+
+          <div class="about-card">
+            <span class="about-card-label">申請頁面</span>
+            <button class="btn-update" @click="openUrl(NEXON_OPENAPI)">在瀏覽器開啟</button>
+            <span class="url">{{ NEXON_OPENAPI }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 關於：自成一個小視窗（標題列＋內嵌小卡），不是一張攤平的大卡片 -->
@@ -368,121 +391,6 @@ async function copyDiscord() {
   background: var(--hover);
 }
 
-/* 說明只在問號按下去時展開，平常這一列就只是一個欄位 */
-.help {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  margin: 0 var(--sp-4) var(--sp-4);
-  padding: var(--sp-3);
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-dim);
-}
-.help ol {
-  margin: 0;
-  padding-left: 1.3em;
-}
-.help .link {
-  height: 30px;
-  font-size: 14px;
-}
-/* 網址也寫出來：有人會想自己複製，或在別台電腦上開 */
-.url {
-  font-size: 12px;
-  color: var(--text-faint);
-  word-break: break-all;
-  user-select: text;
-}
-/* 這一頁的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
-.row button {
-  font-weight: 600;
-}
-.ctrl {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-.ctrl input[type="range"] {
-  width: 160px;
-}
-/* 眼睛長在輸入格裡面的右緣，不是旁邊另一顆按鈕 */
-.keyfield {
-  position: relative;
-  width: 340px;
-}
-/* 尺寸與線條跟主頁的角色名欄位同一套；差別只在金鑰填好之後仍然保持是欄位
-   （角色名會變成純文字，金鑰不會——它要讓人看得出「這裡是可以改的」） */
-.keyfield input {
-  width: 100%;
-  height: 32px;
-  padding-right: 40px;
-  font-size: 16px;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-}
-/* ★遮罩不用 type=password：那種欄位瀏覽器會自己塞東西進去（顯示密碼鈕、
-   密碼管理員圖示、另一套畫圓點的字型），於是遮起來與看得到的樣子對不齊。
-   這裡永遠是一般文字欄位，只是把字換成圓點。 */
-.keyfield input.masked {
-  -webkit-text-security: disc;
-}
-.eye {
-  position: absolute;
-  top: 50%;
-  right: 3px;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-faint);
-  border-radius: var(--radius-xs);
-}
-.eye:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--hover);
-}
-.ctrl-val {
-  width: 44px;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-  text-align: right;
-}
-
-.bottom-bar {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-4);
-  border-top: 1px solid var(--border);
-}
-.icon {
-  width: 44px;
-  height: 34px;
-  padding: 0;
-  flex: none;
-  color: var(--text-dim);
-}
-.icon:hover:not(:disabled) {
-  color: var(--text);
-}
-/* 贊助鍵是這一頁唯一帶感情的東西，hover 才露出紅色 */
-.heart:hover:not(:disabled) {
-  color: var(--danger);
-  border-color: var(--danger);
-  background: var(--danger-soft);
-}
-
-/* 遮罩蓋到導覽列上（fixed 而非 absolute），只留標題列——那裡有視窗按鈕，
-   蓋掉的話關不了視窗。44px 是標題列高度。 */
 .about-overlay {
   position: fixed;
   inset: 44px 0 0 0;
@@ -548,6 +456,29 @@ async function copyDiscord() {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
+/* 說明比「關於」長，給它寬一點 */
+.about-window.wide {
+  width: 420px;
+}
+.steps {
+  margin: 0;
+  padding-left: 1.3em;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-dim);
+}
+.note {
+  font-size: 13px;
+  color: var(--text-faint);
+}
+/* 網址也寫出來：有人會想自己複製，或在別台電腦上開 */
+.url {
+  font-size: 12px;
+  color: var(--text-faint);
+  word-break: break-all;
+  user-select: text;
+}
+
 .about-card-label {
   font-size: 12px;
   font-weight: 600;
