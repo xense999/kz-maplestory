@@ -379,8 +379,6 @@ function delta(v?: number | null) {
 .who-text:hover:not(:disabled) {
   background: var(--hover);
 }
-/* 伺服器是標籤不是句子：做成徽章。空心＋紫色——填色的話它會跟旁邊的
-   控制項搶注意力，而紫色在這一頁沒有別的用途，不會跟狀態色混淆。 */
 .gear {
   flex: none;
 }

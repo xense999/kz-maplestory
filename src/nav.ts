@@ -1,6 +1,7 @@
 import type { Component } from "vue";
 import HomePage from "./views/HomePage.vue";
 import BurnTimer from "./views/BurnTimer.vue";
+import MoneyPage from "./views/MoneyPage.vue";
 
 /**
  * 導覽列＝這張表。要加一個新功能頁只動這裡：
@@ -26,5 +27,11 @@ export const NAV: NavItem[] = [
     label: "輪燒計時器",
     hint: "輪迴與燃燒的場次計時",
     view: BurnTimer,
+  },
+  {
+    id: "money",
+    label: "幣值換算",
+    hint: "楓幣現金交易的手續費換算",
+    view: MoneyPage,
   },
 ];
