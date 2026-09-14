@@ -4,9 +4,12 @@ import { apiKey } from "../apikey";
 import {
   fetchCharacter,
   names,
+  readProgress,
+  recordProgress,
   setName,
   REFRESH_MS,
   type CharacterInfo,
+  type Progress,
 } from "../character";
 
 /**
@@ -19,6 +22,7 @@ const SLOTS = [
 ];
 
 const info = ref<Record<string, CharacterInfo | null>>({ main: null, rival: null });
+const growth = ref<Record<string, Progress | null>>({ main: null, rival: null });
 const errors = ref<Record<string, string>>({});
 const loading = ref<Record<string, boolean>>({});
 
@@ -36,6 +40,7 @@ async function refresh(slot: string) {
   try {
     const got = await fetchCharacter(name, apiKey.value);
     info.value = { ...info.value, [slot]: got };
+    growth.value = { ...growth.value, [slot]: await recordProgress(slot, got.level, got.expPercent) };
     errors.value = { ...errors.value, [slot]: "" };
   } catch (e) {
     errors.value = { ...errors.value, [slot]: String(e instanceof Error ? e.message : e) };
@@ -62,7 +67,15 @@ function commitName(slot: string, value: string) {
   if (next === (names.value[slot] ?? "")) return;
   setName(slot, next);
   info.value = { ...info.value, [slot]: null };
+  growth.value = { ...growth.value, [slot]: null };
   void refresh(slot);
+}
+
+/** 成長量：沒資料是破折號，有就帶正負號 */
+function delta(v?: number) {
+  if (v === undefined || v === null) return "—";
+  const sign = v > 0 ? "+" : "";
+  return `${sign}${v.toFixed(2)}%`;
 }
 
 function refreshAll() {
@@ -71,7 +84,11 @@ function refreshAll() {
 
 let timer: number | null = null;
 
-onMounted(() => {
+onMounted(async () => {
+  // 先把上次留下的成長量讀回來，畫面不會在第一次抓到之前空著
+  for (const s of SLOTS) {
+    if (names.value[s.id]) growth.value[s.id] = await readProgress(s.id).catch(() => null);
+  }
   refreshAll();
   timer = window.setInterval(refreshAll, REFRESH_MS);
 });
@@ -131,6 +148,14 @@ onUnmounted(() => {
                 <span class="sval">
                   {{ info[s.id] ? `${info[s.id]!.expPercent.toFixed(2)}%` : "—" }}
                 </span>
+              </div>
+              <div class="stat">
+                <span class="slabel">今天</span>
+                <span class="sval gain">{{ delta(growth[s.id]?.today) }}</span>
+              </div>
+              <div class="stat">
+                <span class="slabel">本次</span>
+                <span class="sval gain small">{{ delta(growth[s.id]?.session) }}</span>
               </div>
             </div>
 
@@ -261,6 +286,12 @@ onUnmounted(() => {
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--text-faint);
+}
+.gain {
+  color: var(--text-dim);
+}
+.sval.small {
+  font-size: 20px;
 }
 .sval {
   font-size: 26px;

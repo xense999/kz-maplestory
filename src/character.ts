@@ -61,6 +61,50 @@ export function setName(slot: string, name: string) {
   }
 }
 
+/** 成長量（等值百分比：一級算 100） */
+export interface Progress {
+  today: number;
+  session: number;
+}
+
+interface RawProgress {
+  today: number;
+  session: number;
+  today_base_at: number | null;
+  session_base_at: number | null;
+}
+
+/** 本機時區今天 00:00。日界是本機的事，後端不處理時區，由這裡算好給它 */
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/** 記一筆並拿回成長量 */
+export async function recordProgress(
+  slot: string,
+  level: number,
+  expPercent: number,
+): Promise<Progress> {
+  const r = await invoke<RawProgress>("record_progress", {
+    slot,
+    level,
+    expPercent,
+    dayStart: startOfToday(),
+  });
+  return { today: r.today, session: r.session };
+}
+
+/** 不寫入，只讀出目前的成長量（畫面重建時用） */
+export async function readProgress(slot: string): Promise<Progress> {
+  const r = await invoke<RawProgress>("progress_summary", {
+    slot,
+    dayStart: startOfToday(),
+  });
+  return { today: r.today, session: r.session };
+}
+
 export async function fetchCharacter(name: string, apiKey: string): Promise<CharacterInfo> {
   const r = await invoke<RawCharacter>("fetch_character", { name, apiKey });
   return {
