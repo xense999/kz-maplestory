@@ -4,6 +4,7 @@ import {
   formatNtd,
   formatRaw,
   mesoToWText,
+  parseAmount,
   fromNet,
   fromNtd,
   roundUpSuggestion,
@@ -94,6 +95,18 @@ describe("湊整建議", () => {
   it("算不出來時不建議", () => {
     expect(roundUpSuggestion(1.5, 0, false)).toBeNull();
     expect(roundUpSuggestion(Number.NaN, RATE, false)).toBeNull();
+  });
+});
+
+describe("欄位文字轉數字", () => {
+  it("千分位一起貼進來也認得", () => {
+    expect(parseAmount("2,800")).toBe(2800);
+  });
+
+  it("空的與亂打的都是 NaN，由呼叫端決定那代表什麼", () => {
+    expect(parseAmount("")).toBeNaN();
+    expect(parseAmount("   ")).toBeNaN();
+    expect(parseAmount("abc")).toBeNaN();
   });
 });
 

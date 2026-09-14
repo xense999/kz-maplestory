@@ -48,17 +48,20 @@ onUnmounted(() => {
 
 function onDown(e: MouseEvent) {
   if (e.button !== 0) return;
+  // 欄位以外的地方都能拖。只留頂端那一條的話抓不到——它太細，
+  // 而這個視窗大部分面積都不是欄位。欄位本身要留給打字與選字。
+  if ((e.target as HTMLElement).closest("input")) return;
   void appWin.startDragging();
 }
 </script>
 
 <template>
-  <div class="float">
+  <div class="float" @mousedown="onDown">
     <!-- 透明度只吃這一層底：整塊調的話字會跟著淡，蓋在遊戲上就看不清了 -->
     <div class="bg" :style="{ opacity }"></div>
 
-    <!-- 只有這一條能拖：整塊都吃拖曳的話，點下面的欄位就變成搬視窗了 -->
-    <div class="grip" title="拖曳可移動" @mousedown="onDown">
+    <!-- 看得見的拖曳提示。真正吃拖曳的是欄位以外的整塊，這裡只是告訴人可以抓 -->
+    <div class="grip" title="拖曳可移動">
       <i></i>
     </div>
 
@@ -75,7 +78,7 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('rate', $event)"
         />
-        <span class="unit">W／元</span>
+        <span class="unit">W</span>
       </label>
 
       <label class="row">
@@ -108,7 +111,12 @@ function onDown(e: MouseEvent) {
         <span class="unit">W</span>
       </label>
 
-      <p class="face">帳面 {{ face === null ? "—" : formatMeso(face) }}</p>
+      <!-- 帳面是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
+      <div class="row muted">
+        <span class="label">帳面</span>
+        <span class="derived">{{ face === null ? "—" : formatMeso(face) }}</span>
+        <span class="unit"></span>
+      </div>
     </div>
   </div>
 </template>
@@ -122,6 +130,7 @@ function onDown(e: MouseEvent) {
   height: 100%;
   display: flex;
   flex-direction: column;
+  user-select: none;
   font-size: calc(100vw / 320 * 16);
 }
 .bg {
@@ -135,22 +144,21 @@ function onDown(e: MouseEvent) {
 
 .grip {
   position: relative;
-  height: 1.1em;
+  height: 1.4em;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
-  user-select: none;
 }
 .grip:active {
   cursor: grabbing;
 }
 /* 一條短橫線就夠了：它只要看起來像「這裡可以抓」 */
 .grip i {
-  width: 2.2em;
-  height: 0.18em;
-  border-radius: 0.09em;
+  width: 2.4em;
+  height: 0.2em;
+  border-radius: 0.1em;
   background: var(--text-faint);
 }
 
@@ -161,59 +169,73 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.3em;
-  padding: 0.2em 0.9em 0.5em;
+  padding: 0 1em 0.5em;
 }
 .row {
   display: flex;
-  align-items: center;
-  gap: 0.5em;
+  align-items: baseline;
+  gap: 0.6em;
+  height: 1.95em;
 }
 /* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
 .label,
 .unit,
-.face {
+.derived,
+.row input {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .label {
-  width: 2.6em;
+  width: 2.4em;
   flex: none;
-  font-size: 0.8em;
+  font-size: 0.78em;
   color: var(--text-dim);
-  user-select: none;
 }
-/* 欄位跟著視窗縮放，所以尺寸一律是 em，不能吃全域那套固定 px */
-.row input {
+/* 數字靠右對齊成一直行，單位在外面：三個數字才比得起來 */
+.row input,
+.derived {
   flex: 1;
   min-width: 0;
-  height: 1.7em;
-  padding: 0 0.5em;
   font-size: 1.05em;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
   text-align: right;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 欄位平常看不出是欄位——碰到才浮出底色。疊在遊戲上，三個框會比數字還搶眼 */
+.row input {
+  height: 1.6em;
+  padding: 0 0.4em;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 0.35em;
+  user-select: text;
+}
+.row input:hover:not(:focus) {
+  background: var(--wash-strong);
 }
 .row input:focus {
+  background: var(--input-bg);
   border-color: var(--accent);
   box-shadow: none;
 }
 .unit {
-  width: 3.4em;
+  width: 1.6em;
   flex: none;
-  font-size: 0.75em;
+  font-size: 0.78em;
   color: var(--text-dim);
-  user-select: none;
 }
-.face {
-  font-size: 0.75em;
+/* 帳面那一行：位置跟上面三行一樣，只是整行退到背景 */
+.row.muted .label,
+.row.muted .derived {
+  font-size: 0.78em;
+  font-weight: 600;
   color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  padding-right: 3.9em;
-  user-select: none;
+}
+.row.muted .derived {
+  /* 對齊上面三個欄位的文字，而不是欄位的框 */
+  padding-right: 0.4em;
 }
 </style>

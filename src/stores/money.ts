@@ -1,7 +1,15 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import { moneyPanel, type MoneySnap } from "../float";
-import { formatNtd, fromNet, fromNtd, mesoToWText, W, type Deal } from "../money";
+import {
+  formatNtd,
+  fromNet,
+  fromNtd,
+  mesoToWText,
+  parseAmount,
+  W,
+  type Deal,
+} from "../money";
 
 /**
  * 幣值換算的欄位狀態。
@@ -14,13 +22,6 @@ import { formatNtd, fromNet, fromNtd, mesoToWText, W, type Deal } from "../money
 const RATE_KEY = "kz-maplestory:money:rate";
 const VIP_KEY = "kz-maplestory:money:vip";
 
-/** 使用者可能連千分位一起貼進來 */
-function toNumber(text: string): number {
-  const cleaned = text.replace(/[,\s]/g, "");
-  if (!cleaned) return Number.NaN;
-  return Number(cleaned);
-}
-
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
   const ntdText = ref("");
@@ -31,12 +32,12 @@ export const useMoneyStore = defineStore("money", () => {
   /** 最後被使用者動過的金額欄位，另一欄由它算出來 */
   const anchor = ref<"ntd" | "meso">("ntd");
 
-  const rate = computed(() => toNumber(rateText.value));
+  const rate = computed(() => parseAmount(rateText.value));
 
   const deal = computed<Deal | null>(() =>
     anchor.value === "ntd"
-      ? fromNtd(toNumber(ntdText.value), rate.value, vip.value)
-      : fromNet(toNumber(mesoWText.value) * W, rate.value, vip.value),
+      ? fromNtd(parseAmount(ntdText.value), rate.value, vip.value)
+      : fromNet(parseAmount(mesoWText.value) * W, rate.value, vip.value),
   );
 
   // 算出來的那一欄跟著走。來源欄不動——使用者正在上面打字。

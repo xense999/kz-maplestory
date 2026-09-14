@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, formatNtd, formatRaw, roundUpSuggestion } from "../money";
+import { formatMeso, formatNtd, formatRaw, parseAmount, roundUpSuggestion, W } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -29,6 +29,16 @@ const rows = computed(() => {
 
 const ntd = computed(() => (money.deal ? `${formatNtd(money.deal.ntd)} 元` : DASH));
 
+/**
+ * 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，
+ * 換成談價會用到的級距（滿一億寫成幾億幾萬）比較有感。
+ * 這不吃匯率，所以匯率還沒填也顯示得出來。
+ */
+const mesoInWords = computed(() => {
+  const w = parseAmount(money.mesoWText);
+  return Number.isFinite(w) && w >= 0 ? formatMeso(w * W) : "";
+});
+
 /** 付整數台幣的話。精確值本來就是整數時沒有建議，那一行就不出現 */
 const roundUp = computed(() =>
   money.deal ? roundUpSuggestion(money.deal.ntd, money.rate, money.vip) : null,
@@ -39,83 +49,88 @@ const roundUp = computed(() =>
   <div class="page">
     <div class="body">
       <div class="scroller">
-      <section class="card">
-        <div class="card-head">
-          幣值換算
-          <div class="spacer"></div>
-          <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
-          <span class="viplabel">VIP</span>
-          <button
-            class="switch"
-            role="switch"
-            :class="{ on: money.vip }"
-            :aria-checked="money.vip"
-            :title="money.vip ? '手續費 3%' : '手續費 5%'"
-            @click="money.vip = !money.vip"
-          ></button>
-        </div>
-
-        <div class="fields">
-          <label class="field">
-            <span class="flabel">匯率</span>
-            <input
-              class="num"
-              type="text"
-              inputmode="decimal"
-              spellcheck="false"
-              placeholder="2800"
-              :value="money.rateText"
-              @input="money.setRate(value($event))"
-            />
-            <span class="unit">W ／ 台幣</span>
-          </label>
-
-          <label class="field">
-            <span class="flabel">台幣</span>
-            <input
-              class="num"
-              type="text"
-              inputmode="decimal"
-              spellcheck="false"
-              placeholder="0"
-              :value="money.ntdText"
-              @input="money.setNtd(value($event))"
-            />
-            <span class="unit">元</span>
-          </label>
-
-          <label class="field">
-            <span class="flabel">楓幣</span>
-            <input
-              class="num"
-              type="text"
-              inputmode="decimal"
-              spellcheck="false"
-              placeholder="0"
-              :value="money.mesoWText"
-              @input="money.setMesoW(value($event))"
-            />
-            <span class="unit">W（實際入手）</span>
-          </label>
-        </div>
-
-        <div class="out">
-          <div v-for="r in rows" :key="r.key" class="orow" :title="r.hint">
-            <span class="olabel">{{ r.label }}</span>
-            <span class="oval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
-            <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
-            <span class="oraw">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
+        <section class="card">
+          <div class="card-head">
+            幣值換算
+            <div class="spacer"></div>
+            <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
+            <span class="viplabel">VIP</span>
+            <button
+              class="switch"
+              role="switch"
+              :class="{ on: money.vip }"
+              :aria-checked="money.vip"
+              :title="money.vip ? '手續費 3%' : '手續費 5%'"
+              @click="money.vip = !money.vip"
+            ></button>
           </div>
 
-          <div class="orow">
-            <span class="olabel">台幣</span>
-            <span class="oval">{{ ntd }}</span>
-            <span v-if="roundUp" class="oraw">
-              付 {{ roundUp.ntd }} 台幣 → 多拿 {{ formatMeso(roundUp.extra) }}
-            </span>
+          <!-- 填的在左、算出來的在右 -->
+          <div class="split">
+            <div class="fields">
+              <label class="field">
+                <span class="flabel">匯率</span>
+                <input
+                  class="num"
+                  type="text"
+                  inputmode="decimal"
+                  spellcheck="false"
+                  placeholder="2800"
+                  :value="money.rateText"
+                  @input="money.setRate(value($event))"
+                />
+                <span class="unit">W ／ 台幣</span>
+              </label>
+
+              <label class="field">
+                <span class="flabel">台幣</span>
+                <input
+                  class="num"
+                  type="text"
+                  inputmode="decimal"
+                  spellcheck="false"
+                  placeholder="0"
+                  :value="money.ntdText"
+                  @input="money.setNtd(value($event))"
+                />
+                <span class="unit">元</span>
+              </label>
+
+              <label class="field">
+                <span class="flabel">實收</span>
+                <input
+                  class="num"
+                  type="text"
+                  inputmode="decimal"
+                  spellcheck="false"
+                  placeholder="0"
+                  :value="money.mesoWText"
+                  @input="money.setMesoW(value($event))"
+                />
+                <span class="unit">W</span>
+                <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
+                <span class="echo">{{ mesoInWords }}</span>
+              </label>
+            </div>
+
+            <div class="out">
+              <div v-for="r in rows" :key="r.key" class="orow" :title="r.hint">
+                <span class="olabel">{{ r.label }}</span>
+                <span class="oval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
+                <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
+                <span class="oraw">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
+              </div>
+
+              <div class="orow">
+                <span class="olabel">台幣</span>
+                <span class="oval">{{ ntd }}</span>
+                <span v-if="roundUp" class="oraw">
+                  付 {{ roundUp.ntd }} 台幣 → 多拿 {{ formatMeso(roundUp.extra) }}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       </div>
 
       <div class="pagebar">
@@ -162,9 +177,26 @@ const roundUp = computed(() =>
   color: var(--text-dim);
 }
 
+/* 填的在左、算出來的在右：兩邊同時看得到，改一個數字不必上下找 */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+/* 視窗窄到兩欄各自塞不下時就疊回一欄 */
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .out {
+    border-left: none;
+    border-top: 0.5px solid var(--border);
+  }
+}
+
 .fields {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--sp-3);
   padding: var(--sp-4);
 }
@@ -196,14 +228,24 @@ const roundUp = computed(() =>
 .unit {
   font-size: 14px;
   color: var(--text-dim);
+  white-space: nowrap;
+}
+/* 同一個數字換個級距講一次。是附註不是第二個數字，所以比欄位淡 */
+.echo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* 結果區：跟輸入區同一張卡，中間一條髮絲線分開——它們是同一筆交易的兩面 */
 .out {
   display: flex;
   flex-direction: column;
-  padding: var(--sp-3) var(--sp-4) var(--sp-4);
-  border-top: 0.5px solid var(--border);
+  justify-content: center;
+  padding: var(--sp-4);
+  border-left: 0.5px solid var(--border);
 }
 .orow {
   display: flex;

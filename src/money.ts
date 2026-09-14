@@ -10,6 +10,16 @@
  * - `W` 是「萬楓幣」，畫面上的輸入欄用它，換算進來時乘 `W`。
  */
 
+/**
+ * 欄位裡的文字轉成數字。填不出數字（空的、亂打的）一律是 NaN，
+ * 由呼叫端決定那代表「還沒填」還是「算不出來」。
+ * 使用者可能連千分位一起貼進來，所以逗號先拿掉。
+ */
+export function parseAmount(text: string): number {
+  const cleaned = text.replace(/[,\s]/g, "");
+  return cleaned ? Number(cleaned) : Number.NaN;
+}
+
 /** 1W ＝ 一萬楓幣 */
 export const W = 10_000;
 
