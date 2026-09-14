@@ -202,6 +202,19 @@ export const useRosterStore = defineStore("roster", () => {
     persist();
   }
 
+  /** 把一張卡搬到另一張卡的位置（拖曳排序用）。順序本身也要存。 */
+  function moveSlot(id: string, beforeId: string) {
+    if (id === beforeId) return;
+    const list = [...slots.value];
+    const from = list.findIndex((s) => s.id === id);
+    const to = list.findIndex((s) => s.id === beforeId);
+    if (from < 0 || to < 0) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    slots.value = list;
+    persist();
+  }
+
   function removeSlot(id: string) {
     slots.value = slots.value.filter((s) => s.id !== id);
     // 一張都不留的話這一頁就沒有東西可以操作了
@@ -237,6 +250,7 @@ export const useRosterStore = defineStore("roster", () => {
     setName,
     setShown,
     addSlot,
+    moveSlot,
     removeSlot,
     init,
   };

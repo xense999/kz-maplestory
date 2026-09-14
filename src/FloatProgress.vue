@@ -56,7 +56,7 @@ function pct(v: number | null) {
 
 function gain(v: number | null) {
   if (v === null) return "—";
-  return `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+  return `${v < 0 ? "" : "+"}${v.toFixed(2)}%`;
 }
 </script>
 

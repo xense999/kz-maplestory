@@ -16,6 +16,16 @@ const opacityOpen = ref(false);
 /** 設定模式：只用來刪卡片。其他事（改名字、開關顯示、新增）平常就能做 */
 const editMode = ref(false);
 
+/** 拖曳排序：拿著的是哪一張、現在懸在哪一張上面 */
+const dragId = ref<string | null>(null);
+const overId = ref<string | null>(null);
+
+function onDrop(id: string) {
+  if (editMode.value && dragId.value) roster.moveSlot(dragId.value, id);
+  dragId.value = null;
+  overId.value = null;
+}
+
 async function beginEdit(id: string) {
   editing.value = id;
   await nextTick();
@@ -29,10 +39,10 @@ function commitName(id: string, value: string) {
   void roster.setName(id, value);
 }
 
-/** 成長量：沒資料是破折號，有就帶正負號 */
+/** 成長量：沒資料是破折號。0 也帶正號——那是「今天目前為止練了 0」，不是缺資料 */
 function delta(v?: number | null) {
   if (v === undefined || v === null) return "—";
-  return `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+  return `${v < 0 ? "" : "+"}${v.toFixed(2)}%`;
 }
 </script>
 
@@ -44,7 +54,36 @@ function delta(v?: number | null) {
         <!-- 外面一張大卡片，裡面每隻角色一張小卡：它們是拿來對照的，所以收在同一張卡裡，
              但各自要有自己的邊界，不然兩段資料會糊成一片 -->
         <section class="card outer">
-        <div v-for="s in roster.slots" :key="s.id" class="inner" :data-slot="s.id">
+        <div
+          v-for="s in roster.slots"
+          :key="s.id"
+          class="inner"
+          :class="{ over: overId === s.id && dragId !== s.id, dragging: dragId === s.id }"
+          :data-slot="s.id"
+          @dragover.prevent="editMode && (overId = s.id)"
+          @dragleave="overId === s.id && (overId = null)"
+          @drop.prevent="onDrop(s.id)"
+        >
+          <!-- 排序把手只在設定模式出現：平常這一頁是看數字的，不該一碰就被搬動。
+               只有把手可以拖——整張卡都能拖的話，卡片裡的欄位就選不了字。 -->
+          <div
+            v-if="editMode"
+            class="grip"
+            draggable="true"
+            title="拖曳可以調整順序"
+            @dragstart="dragId = s.id"
+            @dragend="((dragId = null), (overId = null))"
+          >
+            <svg viewBox="0 0 12 20" width="10" height="16" fill="currentColor">
+              <circle cx="4" cy="5" r="1.3" />
+              <circle cx="8" cy="5" r="1.3" />
+              <circle cx="4" cy="10" r="1.3" />
+              <circle cx="8" cy="10" r="1.3" />
+              <circle cx="4" cy="15" r="1.3" />
+              <circle cx="8" cy="15" r="1.3" />
+            </svg>
+          </div>
+
           <!-- 角色圖是去背 PNG，框裡不上底色 -->
           <div class="portrait">
             <img v-if="s.info?.imageUrl" :src="s.info.imageUrl" :alt="s.name" />
@@ -250,11 +289,38 @@ function delta(v?: number | null) {
 }
 .inner {
   display: flex;
-  gap: var(--sp-4);
+  align-items: center;
+  gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+/* 拖曳中：被拿起來的那張淡掉，目標那張在上緣標一條線 */
+.inner.dragging {
+  opacity: 0.4;
+}
+.inner.over {
+  border-top-color: var(--accent);
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+/* 把手平常很淡，滑到卡片上才明顯——它不是這張卡的重點 */
+.grip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  align-self: stretch;
+  color: var(--text-faint);
+  opacity: 0.35;
+  cursor: grab;
+}
+.inner:hover .grip {
+  opacity: 1;
+}
+.grip:active {
+  cursor: grabbing;
 }
 
 .portrait {
