@@ -15,6 +15,12 @@ const opacityOpen = ref(false);
 /** 設定模式：只用來改兩顆技能的基本時間 */
 const editMode = ref(false);
 
+/** 進設定＝要動時長，正在跑的那些就不算數了，先全部歸零再讓人改 */
+function toggleEdit() {
+  if (!editMode.value) store.resetAll();
+  editMode.value = !editMode.value;
+}
+
 function onRecord(id: TimerId) {
   recording.value = recording.value === id ? null : id;
 }
@@ -106,7 +112,7 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
           class="gear"
           :class="{ primary: editMode }"
           :title="editMode ? '完成' : '設定基本時間'"
-          @click="editMode = !editMode"
+          @click="toggleEdit()"
         >
           {{ editMode ? "完成" : "設定" }}
         </button>

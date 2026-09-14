@@ -216,6 +216,11 @@ export const useBurnStore = defineStore("burn", () => {
     clearAlarmFor(id);
   }
 
+  /** 全部歸零。改基本時間之前會先做這件事——時長換了，正在跑的那一輪就不算數了 */
+  function resetAll() {
+    for (const s of SPECS) reset(s.id);
+  }
+
   /**
    * 「停止提醒」按下去＝這一輪處理完了，所以除了收鈴，也把已經到期的計時器歸零。
    * 對出租來說這一步是必要的：不歸零的話它的 endAt 還在，下一次按技能鍵不會
@@ -337,6 +342,7 @@ export const useBurnStore = defineStore("burn", () => {
     start,
     pressKey,
     reset,
+    resetAll,
     acknowledge,
     setDuration,
     setHotkey,

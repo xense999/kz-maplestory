@@ -221,37 +221,6 @@ function onCustomFocusOut(e: FocusEvent) {
       </div>
     </div>
 
-    <!-- 技能卡的基本時間：只有設定模式看得到，平常沒有人要動它 -->
-    <div v-if="editing && !store.spec(id).presets" class="spans">
-      <span class="unit">基本時間</span>
-      <div class="custom">
-        <input
-          v-model.number="skillM"
-          type="number"
-          min="0"
-          max="120"
-          aria-label="分"
-          title="可以左右拖曳調整"
-          @pointerdown="startSkillDrag($event, 'm')"
-          @change="commitSkillDuration()"
-          @keydown.enter="commitSkillDuration()"
-        />
-        <span class="unit">分</span>
-        <input
-          v-model.number="skillS"
-          type="number"
-          min="0"
-          max="59"
-          aria-label="秒"
-          title="可以左右拖曳調整"
-          @pointerdown="startSkillDrag($event, 's')"
-          @change="commitSkillDuration()"
-          @keydown.enter="commitSkillDuration()"
-        />
-        <span class="unit">秒</span>
-      </div>
-    </div>
-
     <!-- 時長可選的卡片（出租輪迴）才有這一列 -->
     <div v-if="store.spec(id).presets" class="spans">
       <div class="chips">
@@ -302,7 +271,33 @@ function onCustomFocusOut(e: FocusEvent) {
     </div>
 
     <div class="main">
-      <div class="digits">{{ display() }}</div>
+      <!-- 設定模式：大數字本身就是欄位，改的就是眼前這個時間 -->
+      <div v-if="editing && !store.spec(id).presets" class="digits edit">
+        <input
+          v-model.number="skillM"
+          type="number"
+          min="0"
+          max="120"
+          aria-label="分"
+          title="可以左右拖曳調整"
+          @pointerdown="startSkillDrag($event, 'm')"
+          @change="commitSkillDuration()"
+          @keydown.enter="commitSkillDuration()"
+        />
+        <span class="colon">:</span>
+        <input
+          v-model.number="skillS"
+          type="number"
+          min="0"
+          max="59"
+          aria-label="秒"
+          title="可以左右拖曳調整"
+          @pointerdown="startSkillDrag($event, 's')"
+          @change="commitSkillDuration()"
+          @keydown.enter="commitSkillDuration()"
+        />
+      </div>
+      <div v-else class="digits">{{ display() }}</div>
       <div class="tail">
         <span v-if="state() === 'due'" class="due-tag">時間到</span>
         <span v-else-if="state() === 'idle'" class="idle-tag">尚未起算</span>
@@ -464,6 +459,26 @@ function onCustomFocusOut(e: FocusEvent) {
 }
 .timer.compact .digits {
   font-size: 46px;
+}
+/* 欄位長得跟那串數字一樣大，改的時候看得出來改的就是它 */
+.digits.edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.digits.edit input {
+  width: 1.9em;
+  height: 1.15em;
+  padding: 0 0.1em;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  cursor: ew-resize;
+}
+.colon {
+  opacity: 0.5;
 }
 .tail {
   flex: 1;
