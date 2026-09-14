@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
 import {
@@ -16,6 +16,9 @@ import { useMoneyStore } from "../stores/money";
  * 算式與寫法都在 money 模組，這一頁只負責欄位與版面。
  */
 const money = useMoneyStore();
+
+/** 設定模式：VIP 是「我是誰」的設定，不是每筆交易要動的東西，所以收在設定裡 */
+const editMode = ref(false);
 
 function value(e: Event) {
   return (e.target as HTMLInputElement).value;
@@ -50,21 +53,6 @@ const roundUp = computed(() =>
         <!-- 外面一張大卡片，裡面左右兩張小卡：它們是同一筆交易的兩面，所以收在同一張卡裡，
              但「談好的條件」與「算出來的結果」各自要有邊界，不然會糊成一片 -->
         <section class="card outer">
-          <div class="card-head">
-            幣值換算
-            <div class="spacer"></div>
-            <!-- 費率是這一頁唯一的「我是誰」設定，所以擺在標題列而不是欄位之間 -->
-            <span class="viplabel">VIP</span>
-            <button
-              class="switch"
-              role="switch"
-              :class="{ on: money.vip }"
-              :aria-checked="money.vip"
-              :title="money.vip ? '手續費 3%' : '手續費 5%'"
-              @click="money.vip = !money.vip"
-            ></button>
-          </div>
-
           <div class="split">
             <div class="inner">
               <div class="rows">
@@ -111,6 +99,20 @@ const roundUp = computed(() =>
                   <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
                   <span class="rnote">{{ mesoInWords }}</span>
                 </label>
+
+                <div v-if="editMode" class="row">
+                  <span class="rlabel">VIP</span>
+                  <span class="rval switchcell">
+                    <button
+                      class="switch"
+                      role="switch"
+                      :class="{ on: money.vip }"
+                      :aria-checked="money.vip"
+                      @click="money.vip = !money.vip"
+                    ></button>
+                  </span>
+                  <span class="rnote unit">手續費 {{ money.vip ? "3%" : "5%" }}</span>
+                </div>
               </div>
             </div>
 
@@ -139,6 +141,16 @@ const roundUp = computed(() =>
       <div class="pagebar">
         <div class="spacer"></div>
         <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
+
+        <!-- VIP 短期內不會變，平常不該被誤觸，收在這裡面 -->
+        <button
+          class="gear"
+          :class="{ primary: editMode }"
+          :title="editMode ? '完成' : '設定是不是 VIP'"
+          @click="editMode = !editMode"
+        >
+          {{ editMode ? "完成" : "設定" }}
+        </button>
       </div>
     </div>
   </div>
@@ -199,10 +211,13 @@ const roundUp = computed(() =>
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-.viplabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-dim);
+.gear {
+  flex: none;
+}
+/* 開關對齊右邊的數字欄，那一列才跟上面三列同一條軸線 */
+.switchcell {
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* 兩張卡的內容用同一組規則：列高、欄寬、字級都一致，左右才對得起來 */
