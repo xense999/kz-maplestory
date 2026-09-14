@@ -13,7 +13,7 @@ const roster = useRosterStore();
 const editing = ref<string | null>(null);
 /** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
 const opacityOpen = ref(false);
-/** 設定模式：平常這一頁只是看數字，按了設定才會出現增刪與顯示開關 */
+/** 設定模式：只用來刪卡片。其他事（改名字、開關顯示、新增）平常就能做 */
 const editMode = ref(false);
 
 async function beginEdit(id: string) {
@@ -39,9 +39,11 @@ function delta(v?: number | null) {
 <template>
   <div class="page">
     <div class="body">
-      <!-- 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
-           但各自要有自己的邊界，不然兩段資料會糊成一片 -->
-      <section class="card outer">
+      <!-- 捲動的是這一層而不是卡片本身：捲軸落在卡片右邊的留白上，不會壓在內容上 -->
+      <div class="scroller">
+        <!-- 外面一張大卡片，裡面每隻角色一張小卡：它們是拿來對照的，所以收在同一張卡裡，
+             但各自要有自己的邊界，不然兩段資料會糊成一片 -->
+        <section class="card outer">
         <div v-for="s in roster.slots" :key="s.id" class="inner" :data-slot="s.id">
           <!-- 角色圖是去背 PNG，框裡不上底色 -->
           <div class="portrait">
@@ -56,7 +58,7 @@ function delta(v?: number | null) {
             <div class="head">
               <!-- 直接就是角色名：這一列是誰，看名字就好，不必再標「主角色／對照角色」 -->
               <input
-                v-if="editMode && (editing === s.id || !s.name)"
+                v-if="editing === s.id || !s.name"
                 class="who"
                 type="text"
                 :value="s.name"
@@ -65,14 +67,8 @@ function delta(v?: number | null) {
                 @keydown.enter="commitName(s.id, ($event.target as HTMLInputElement).value)"
                 @blur="commitName(s.id, ($event.target as HTMLInputElement).value)"
               />
-              <button
-                v-else
-                class="who-text"
-                :disabled="!editMode"
-                :title="editMode ? '點一下改角色' : ''"
-                @click="beginEdit(s.id)"
-              >
-                {{ s.name || "未設定" }}
+              <button v-else class="who-text" title="點一下改角色" @click="beginEdit(s.id)">
+                {{ s.name }}
               </button>
 
               <span v-if="s.info?.world" class="badge world" title="伺服器">
@@ -81,7 +77,6 @@ function delta(v?: number | null) {
               <div class="spacer"></div>
               <!-- 打開才會出現在浮動視窗上。資料本來就會自己更新，所以這裡不放更新鈕 -->
               <button
-                v-if="editMode"
                 class="switch"
                 role="switch"
                 :class="{ on: s.shown }"
@@ -129,10 +124,11 @@ function delta(v?: number | null) {
           </div>
         </div>
 
-      </section>
+        </section>
+      </div>
 
       <div class="pagebar">
-        <button v-if="editMode" @click="roster.addSlot()">＋ 新增角色</button>
+        <button @click="roster.addSlot()">＋ 新增角色</button>
         <div class="spacer"></div>
         <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
           <button
@@ -170,7 +166,7 @@ function delta(v?: number | null) {
         <button
           class="gear"
           :class="{ primary: editMode }"
-          :title="editMode ? '完成設定' : '設定角色'"
+          :title="editMode ? '完成' : '刪除角色卡片'"
           @click="editMode = !editMode"
         >
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
@@ -196,7 +192,7 @@ function delta(v?: number | null) {
   display: flex;
   flex-direction: column;
 }
-/* 捲動發生在卡片裡，不是整頁：下面那排按鈕要一直看得到 */
+/* 捲動發生在卡片外的這一層，不是整頁：下面那排按鈕要一直看得到 */
 .body {
   flex: 1;
   min-height: 0;
@@ -249,10 +245,14 @@ function delta(v?: number | null) {
   text-align: right;
 }
 
-.outer {
+.scroller {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* 捲軸走在這段留白上，所以它在卡片外面的右邊 */
+  padding-right: 12px;
+}
+.outer {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -329,10 +329,6 @@ function delta(v?: number | null) {
   width: 40px;
   padding: 0;
   flex: none;
-}
-.who-text:disabled {
-  opacity: 1;
-  cursor: default;
 }
 .x {
   width: 26px;
