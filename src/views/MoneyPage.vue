@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, mesoTextInWords, spend } from "../money";
+import { formatMeso, formatNtd, mesoTextInWords } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -32,10 +32,8 @@ const rows = computed(() => {
 /** 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，換成談價的級距比較有感 */
 const mesoInWords = computed(() => mesoTextInWords(money.mesoText));
 
-/** 實際要掏出來的錢。台幣付不出小數，所以這裡是整數 */
-const cost = computed(() =>
-  money.deal ? spend(money.deal.ntd, money.rate, money.vip) : null,
-);
+/** 實際要掏出來的錢 */
+const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 </script>
 
 <template>
@@ -116,11 +114,7 @@ const cost = computed(() =>
 
                 <div class="row">
                   <span class="rlabel">實際花費</span>
-                  <span class="rval">{{ cost ? `${cost.ntd} 元` : DASH }}</span>
-                  <!-- 湊整多付的那點不是白花的，會變成多拿的楓幣 -->
-                  <span v-if="cost && cost.extra > 0" class="rnote">
-                    多拿 {{ formatMeso(cost.extra) }}
-                  </span>
+                  <span class="rval">{{ money.deal ? `${ntd} 元` : DASH }}</span>
                 </div>
               </div>
             </div>

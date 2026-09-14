@@ -7,7 +7,7 @@ import {
   parseAmount,
   fromNet,
   fromNtd,
-  spend,
+  fromWanted,
   W,
 } from "./money";
 
@@ -77,26 +77,32 @@ describe("算不出來的輸入", () => {
   });
 });
 
-describe("實際花費", () => {
-  it("一律進位到整數台幣，湊上去的那點變成多拿的楓幣", () => {
-    const d = fromNet(5000 * W, RATE, false)!;
-    const s = spend(d.ntd, RATE, false)!;
-    expect(s.ntd).toBe(2);
-    // 2 台幣的實收 5320W，比原本要的 5000W 多 320W
-    expect(s.extra).toBeCloseTo(320 * W, 2);
+describe("我要入手這麼多楓幣", () => {
+  it("台幣進位成整數，其他數字從那個整數重算", () => {
+    const d = fromWanted(5000 * W, RATE, false)!;
+    // 精確要 1.88 台幣，付不出小數所以付 2
+    expect(d.ntd).toBe(2);
+    // ★三個數字是同一筆交易：帳面就是台幣 × 幣值
+    expect(d.face).toBe(2 * RATE * W);
+    expect(d.net).toBe(d.face * 0.95);
   });
 
-  it("精確值本來就是整數時沒有多拿", () => {
-    const d = fromNtd(3, RATE, false)!;
-    const back = fromNet(d.net, RATE, false)!;
-    const s = spend(back.ntd, RATE, false)!;
-    expect(s.ntd).toBe(3);
-    expect(s.extra).toBeCloseTo(0, 2);
+  it("湊成整數台幣，所以實收比要的多一點", () => {
+    const d = fromWanted(5000 * W, RATE, false)!;
+    expect(d.net).toBeGreaterThan(5000 * W);
+    expect(d.net - 5000 * W).toBeCloseTo(320 * W, 2);
+  });
+
+  it("本來就剛好是整數台幣時不會多收", () => {
+    const exact = fromNtd(3, RATE, false)!;
+    const d = fromWanted(exact.net, RATE, false)!;
+    expect(d.ntd).toBe(3);
+    expect(d.net).toBeCloseTo(exact.net, 2);
   });
 
   it("算不出來時回 null", () => {
-    expect(spend(1.5, 0, false)).toBeNull();
-    expect(spend(Number.NaN, RATE, false)).toBeNull();
+    expect(fromWanted(5000 * W, 0, false)).toBeNull();
+    expect(fromWanted(Number.NaN, RATE, false)).toBeNull();
   });
 });
 
@@ -113,19 +119,13 @@ describe("欄位文字轉數字", () => {
 });
 
 describe("台幣的寫法", () => {
-  it("無條件進位到整數——台幣付不出小數，少付一塊就換不到要的量", () => {
-    expect(ntdToText(1.8796992481203008)).toBe("2");
-    expect(ntdToText(2.001)).toBe("3");
+  it("整數不留小數點，有小數就留最多兩位", () => {
+    expect(ntdToText(2)).toBe("2");
+    expect(ntdToText(1.5)).toBe("1.5");
   });
 
-  it("往返換算留下的浮點尾巴不會把整數推上去", () => {
+  it("往返換算留下的浮點尾巴不會冒出來", () => {
     expect(ntdToText(3.0000000000000004)).toBe("3");
-  });
-
-  it("欄位填回來的跟實際花費是同一個數字，兩處不能各說各話", () => {
-    const back = fromNet(fromNtd(3, RATE, false)!.net, RATE, false)!;
-    expect(ntdToText(back.ntd)).toBe("3");
-    expect(spend(back.ntd, RATE, false)!.ntd).toBe(3);
   });
 
   it("算不出來就讓欄位空著", () => {

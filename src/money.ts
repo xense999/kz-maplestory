@@ -84,38 +84,29 @@ export function fromNet(net: number, rateW: number, vip: boolean): Deal | null {
  */
 const EPS = 1e-9;
 
-export interface Spend {
-  /** 實際要掏出來的台幣，整數 */
-  ntd: number;
-  /** 因為湊成整數而比要求多拿到的楓幣。精確值本來就是整數時是 0 */
-  extra: number;
-}
-
 /**
- * 實際要付多少錢。
+ * 我要入手這麼多楓幣，這筆交易實際會長什麼樣。
  *
- * ★一律無條件進位到整數：台幣付不出小數，而少付一塊就換不到要的量。
- * 湊上去的那一點不會白花，會變成多拿的楓幣，所以一起回傳。
+ * ★反推出來的台幣先進位成整數，其他數字再一律從那個整數重算。
+ * 只把台幣進位、其他照舊的話，畫面上會出現「帳面 ≠ 台幣 × 幣值」——
+ * 三個數字必須是同一筆交易的三個面，不能各算各的。
+ * 代價是實收會比你要的略多一點，那是湊成整數台幣換來的。
  */
-export function spend(ntd: number, rateW: number, vip: boolean): Spend | null {
-  const exact = fromNtd(ntd, rateW, vip);
-  if (!exact) return null;
-
-  const target = Math.ceil(ntd - EPS);
-  const rounded = fromNtd(target, rateW, vip);
-  if (!rounded) return null;
-
-  return { ntd: target, extra: rounded.net - exact.net };
+export function fromWanted(wanted: number, rateW: number, vip: boolean): Deal | null {
+  const back = fromNet(wanted, rateW, vip);
+  if (!back) return null;
+  return fromNtd(Math.ceil(back.ntd - EPS), rateW, vip);
 }
 
-/**
- * 台幣填回輸入欄時的寫法：無條件進位到整數。
- * ★不能四捨五入也不留小數——台幣付不出小數，而少付一塊就換不到要的量。
- * 這跟 `spend` 回的數字是同一個，畫面上兩處才不會各說各話。
- */
+/** 台幣填回輸入欄時的寫法：最多兩位小數，尾巴的 0 不留（進位已經在 `fromWanted` 做完） */
 export function ntdToText(ntd: number): string {
   if (!Number.isFinite(ntd)) return "";
-  return String(Math.ceil(ntd - EPS));
+  return trimmed(ntd);
+}
+
+/** 台幣顯示。算不出來是破折號，不是 0 */
+export function formatNtd(ntd: number): string {
+  return Number.isFinite(ntd) ? trimmed(ntd) : "—";
 }
 
 /**

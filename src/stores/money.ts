@@ -3,8 +3,8 @@ import { computed, ref, watch } from "vue";
 import { moneyPanel, type MoneySnap } from "../float";
 import {
   ntdToText,
-  fromNet,
   fromNtd,
+  fromWanted,
   mesoToText,
   parseAmount,
   type Deal,
@@ -36,7 +36,7 @@ export const useMoneyStore = defineStore("money", () => {
   const deal = computed<Deal | null>(() =>
     anchor.value === "ntd"
       ? fromNtd(parseAmount(ntdText.value), rate.value, vip.value)
-      : fromNet(parseAmount(mesoText.value), rate.value, vip.value),
+      : fromWanted(parseAmount(mesoText.value), rate.value, vip.value),
   );
 
   // 算出來的那一欄跟著走。來源欄不動——使用者正在上面打字。
