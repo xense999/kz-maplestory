@@ -224,12 +224,13 @@ export interface CharacterSnap {
 
 export const progressPanel = createFloatPanel<CharacterSnap[]>("float-progress");
 
-/** 幣值換算面板送的東西：三個欄位的文字，外加跟對方談的交易金額（楓幣） */
+/** 幣值換算面板送的東西：三個欄位的文字，外加算出來的交易金額與實收（楓幣） */
 export interface MoneySnap {
   ntd: string;
   meso: string;
   rate: string;
   face: number | null;
+  net: number | null;
 }
 
 /** 幣值換算面板送回來的東西：使用者改了哪一欄、改成什麼 */

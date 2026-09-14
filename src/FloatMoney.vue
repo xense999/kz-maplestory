@@ -7,6 +7,7 @@ import { moneyPanel, type MoneyInput, type MoneySnap } from "./float";
 const appWin = getCurrentWindow();
 const opacity = ref(0.5);
 const face = ref<number | null>(null);
+const net = ref<number | null>(null);
 
 /**
  * 欄位的文字自己留一份，但那不是另一份狀態：主視窗才是唯一的來源，這裡只是它的回音。
@@ -21,6 +22,7 @@ let stopOpacity: (() => void) | null = null;
 
 function apply(snap: MoneySnap) {
   face.value = snap.face;
+  net.value = snap.net;
   const incoming: Record<MoneyInput["field"], string> = {
     ntd: snap.ntd,
     meso: snap.meso,
@@ -96,15 +98,9 @@ function onDown(e: MouseEvent) {
           @blur="focused = null"
           @input="edit('meso', $event)"
         />
-        <span class="unit"></span>
+        <!-- 一長串零看不出是多少，換個講法接在欄位右邊 -->
+        <span class="echo">{{ netInWords }}</span>
       </label>
-
-      <!-- 上一欄同一個數字的另一種講法，所以不給標籤：靠位置說明它屬於上面那一列 -->
-      <div class="row muted">
-        <span class="label"></span>
-        <span class="derived">{{ netInWords }}</span>
-        <span class="unit"></span>
-      </div>
 
       <label class="row">
         <span class="label">台幣</span>
@@ -121,10 +117,16 @@ function onDown(e: MouseEvent) {
         <span class="unit">元</span>
       </label>
 
-      <!-- 交易楓幣是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
+      <!-- 算出來的兩個數字：整行淡下去，一眼分得出哪些可改、哪些是結果 -->
       <div class="row muted">
         <span class="label">交易</span>
         <span class="derived">{{ face === null ? "—" : formatMeso(face) }}</span>
+        <span class="unit"></span>
+      </div>
+
+      <div class="row muted">
+        <span class="label">實收</span>
+        <span class="derived">{{ net === null ? "—" : formatMeso(net) }}</span>
         <span class="unit"></span>
       </div>
     </div>
@@ -133,7 +135,7 @@ function onDown(e: MouseEvent) {
 
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
-   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（340px 寬＝19px 字），
+   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（360px 寬＝19px 字），
    所以拖大拖小是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
@@ -141,7 +143,7 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(100vw / 340 * 19);
+  font-size: calc(100vw / 360 * 19);
 }
 .bg {
   position: absolute;
@@ -236,6 +238,19 @@ function onDown(e: MouseEvent) {
   flex: none;
   font-size: 0.82em;
   color: var(--text-dim);
+}
+/* 同一個數字換個講法。是附註不是第二個數字，所以比欄位淡 */
+.echo {
+  width: 4.6em;
+  flex: none;
+  font-size: 0.82em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 /* 交易楓幣那一行：位置跟上面三行一樣，只是整行退到背景 */
 .row.muted {

@@ -61,6 +61,7 @@ export const useMoneyStore = defineStore("money", () => {
       meso: mesoText.value,
       rate: rateText.value,
       face: deal.value?.face ?? null,
+      net: deal.value?.net ?? null,
     };
   }
 
