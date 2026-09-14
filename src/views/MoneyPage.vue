@@ -67,8 +67,6 @@ const roundUp = computed(() =>
 
           <div class="split">
             <div class="inner">
-              <p class="ititle">交易條件</p>
-
               <div class="rows">
                 <label class="row">
                   <span class="rlabel">幣值</span>
@@ -117,8 +115,6 @@ const roundUp = computed(() =>
             </div>
 
             <div class="inner">
-              <p class="ititle">換算結果</p>
-
               <div class="rows">
                 <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
                   <span class="rlabel">{{ r.label }}</span>
@@ -198,16 +194,10 @@ const roundUp = computed(() =>
 .inner {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-}
-.ititle {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-strong);
 }
 .viplabel {
   font-size: 14px;
