@@ -60,6 +60,7 @@ function gain(v: number | null) {
     <div class="bg" :style="{ opacity }"></div>
 
     <div class="rows">
+      <p v-if="!rows.length" class="hint">在主頁的設定裡選要顯示的角色</p>
       <div v-for="r in rows" :key="r.slot" class="row">
         <div class="portrait">
           <img v-if="r.imageUrl" :src="r.imageUrl" :alt="r.name" />
@@ -94,6 +95,13 @@ function gain(v: number | null) {
   border-radius: 0.9em;
   corner-shape: superellipse(1.5);
 }
+.hint {
+  font-size: 0.8em;
+  color: var(--text-dim);
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+  padding: 0.3em 0.2em;
+}
+
 .rows {
   position: relative;
   flex: 1;

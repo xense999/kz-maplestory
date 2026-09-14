@@ -140,7 +140,8 @@ async function copyDiscord() {
           <span class="row-title">API 金鑰</span>
           <div class="keyfield">
             <input
-              :type="revealKey ? 'text' : 'password'"
+              type="text"
+              :class="{ masked: !revealKey }"
               :value="apiKey"
               placeholder="貼上你自己的 API 金鑰"
               spellcheck="false"
@@ -313,10 +314,14 @@ async function copyDiscord() {
   height: 32px;
   padding-right: 40px;
   font-size: 16px;
-  /* 密碼欄位預設會換一套字型畫圓點，於是「遮起來」跟「看得到」兩種狀態
-     連字寬都不一樣。指定同一套字型與字距，兩種狀態才長得一樣。 */
   font-family: inherit;
   letter-spacing: 0.02em;
+}
+/* ★遮罩不用 type=password：那種欄位瀏覽器會自己塞東西進去（顯示密碼鈕、
+   密碼管理員圖示、另一套畫圓點的字型），於是遮起來與看得到的樣子對不齊。
+   這裡永遠是一般文字欄位，只是把字換成圓點。 */
+.keyfield input.masked {
+  -webkit-text-security: disc;
 }
 .eye {
   position: absolute;

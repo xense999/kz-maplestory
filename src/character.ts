@@ -73,12 +73,17 @@ function recentDates(n: number) {
  * ★歷史由官方提供而不是自己記帳：記帳只在程式開著時才有資料，而且換角色時
  * 很容易把兩隻的數字混在一起減。
  */
+/**
+ * ★天數壓在 2（今天與昨天）：算「今天練了多少」只需要昨天那一筆，而官方對請求數
+ * 有限制——一次抓七天、兩隻角色就是十幾個請求，會被回 "Please try again later"。
+ * 之後要做趨勢圖再把天數加回來，並且改成一天只抓一次。
+ */
 export async function fetchHistory(
   name: string,
   apiKey: string,
   latestLevel: number,
   latestExp: number,
-  days = 7,
+  days = 2,
 ): Promise<History> {
   return invoke<History>("fetch_history", {
     name,

@@ -103,6 +103,10 @@ export const useRosterStore = defineStore("roster", () => {
     }
   }
 
+  // ★開檔就立刻寫回一次。舊格式遷移完會把舊鍵刪掉，如果不在這裡存新的，
+  // 使用者的角色名會在「舊的已刪、新的還沒寫」之間整個消失。
+  persist();
+
   function find(id: string) {
     return slots.value.find((s) => s.id === id);
   }
@@ -122,7 +126,7 @@ export const useRosterStore = defineStore("roster", () => {
       }));
   }
 
-  /** 送資料，順便讓面板高度跟著顯示的張數走 */
+  /** 送資料，順便讓面板高度跟著「顯示中」的張數走 */
   function publish() {
     const rows = snapshot();
     progressPanel.push(rows);

@@ -5,6 +5,9 @@
 //!
 //! 兩段式：角色名先換成 `ocid`（帳號內的角色識別碼），再拿 ocid 查資料。
 
+use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
+
 use serde::{Deserialize, Serialize};
 use tauri::http::header;
 
@@ -88,11 +91,25 @@ pub struct DaySample {
     pub exp_percent: f64,
 }
 
-/// 角色名換 ocid。ocid 是穩定的，同一次批次查詢只需要換一次。
+/// 角色名 → ocid 的快取。
+///
+/// ocid 不會變，而官方對請求數有限制（連打會回 "Please try again later"）。
+/// 每隻角色只查一次，之後每次更新就少一個請求。
+static OCID_CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+
 async fn resolve_ocid(name: &str, api_key: &str) -> Result<String, String> {
+    let cache = OCID_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+    if let Some(hit) = cache.lock().ok().and_then(|c| c.get(name).cloned()) {
+        return Ok(hit);
+    }
+
     let url = format!("{BASE}/id?character_name={}", urlencoding(name));
     let resp: OcidResp =
         serde_json::from_str(&get(&url, api_key).await?).map_err(|e| format!("查角色失敗：{e}"))?;
+
+    if let Ok(mut c) = cache.lock() {
+        c.insert(name.to_string(), resp.ocid.clone());
+    }
     Ok(resp.ocid)
 }
 

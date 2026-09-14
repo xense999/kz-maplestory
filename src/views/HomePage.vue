@@ -13,6 +13,8 @@ const roster = useRosterStore();
 const editing = ref<string | null>(null);
 /** 透明度拉桿只在滑鼠停在那顆按鈕上時出現 */
 const opacityOpen = ref(false);
+/** 設定模式：平常這一頁只是看數字，按了設定才會出現增刪與顯示開關 */
+const editMode = ref(false);
 
 async function beginEdit(id: string) {
   editing.value = id;
@@ -37,41 +39,6 @@ function delta(v?: number | null) {
 <template>
   <div class="page">
     <div class="body">
-      <div class="pagebar">
-        <div class="spacer"></div>
-        <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
-          <button
-            :class="{ primary: progressPanel.open.value }"
-            :title="
-              progressPanel.open.value
-                ? '關閉浮動視窗'
-                : '開一個永遠置頂的小視窗，遊戲中也看得到進度'
-            "
-            @click="progressPanel.toggle()"
-          >
-            浮動視窗
-          </button>
-
-          <div v-if="opacityOpen" class="opacity-wrap">
-            <div class="opacity">
-              <span class="olabel">透明度</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="5"
-                :value="Math.round(progressPanel.opacity.value * 100)"
-                aria-label="透明度"
-                @input="
-                  progressPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
-                "
-              />
-              <span class="oval">{{ Math.round(progressPanel.opacity.value * 100) }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 外面一張大卡片，裡面上下兩張小卡：兩隻角色是拿來對照的，所以收在同一張卡裡，
            但各自要有自己的邊界，不然兩段資料會糊成一片 -->
       <section class="card outer">
@@ -89,7 +56,7 @@ function delta(v?: number | null) {
             <div class="head">
               <!-- 直接就是角色名：這一列是誰，看名字就好，不必再標「主角色／對照角色」 -->
               <input
-                v-if="editing === s.id || !s.name"
+                v-if="editMode && (editing === s.id || !s.name)"
                 class="who"
                 type="text"
                 :value="s.name"
@@ -98,8 +65,14 @@ function delta(v?: number | null) {
                 @keydown.enter="commitName(s.id, ($event.target as HTMLInputElement).value)"
                 @blur="commitName(s.id, ($event.target as HTMLInputElement).value)"
               />
-              <button v-else class="who-text" title="點一下改角色" @click="beginEdit(s.id)">
-                {{ s.name }}
+              <button
+                v-else
+                class="who-text"
+                :disabled="!editMode"
+                :title="editMode ? '點一下改角色' : ''"
+                @click="beginEdit(s.id)"
+              >
+                {{ s.name || "未設定" }}
               </button>
 
               <span v-if="s.info?.world" class="badge world" title="伺服器">
@@ -108,6 +81,7 @@ function delta(v?: number | null) {
               <div class="spacer"></div>
               <!-- 打開才會出現在浮動視窗上。資料本來就會自己更新，所以這裡不放更新鈕 -->
               <button
+                v-if="editMode"
                 class="switch"
                 role="switch"
                 :class="{ on: s.shown }"
@@ -116,7 +90,12 @@ function delta(v?: number | null) {
                 :title="s.shown ? '會顯示在浮動視窗上' : '打開後才會顯示在浮動視窗上'"
                 @click="roster.setShown(s.id, !s.shown)"
               ></button>
-              <button class="plain x" title="移除這張卡片" @click="roster.removeSlot(s.id)">
+              <button
+                v-if="editMode"
+                class="plain x"
+                title="移除這張卡片"
+                @click="roster.removeSlot(s.id)"
+              >
                 <svg viewBox="0 0 12 12" width="11" height="11">
                   <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.4"
                         stroke-linecap="round" />
@@ -150,8 +129,62 @@ function delta(v?: number | null) {
           </div>
         </div>
 
-        <button class="add" @click="roster.addSlot()">＋ 新增角色</button>
       </section>
+
+      <div class="pagebar">
+        <button v-if="editMode" @click="roster.addSlot()">＋ 新增角色</button>
+        <div class="spacer"></div>
+        <div class="floatctl" @mouseenter="opacityOpen = true" @mouseleave="opacityOpen = false">
+          <button
+            :class="{ primary: progressPanel.open.value }"
+            :title="
+              progressPanel.open.value
+                ? '關閉浮動視窗'
+                : '開一個永遠置頂的小視窗，遊戲中也看得到進度'
+            "
+            @click="progressPanel.toggle()"
+          >
+            浮動視窗
+          </button>
+
+          <div v-if="opacityOpen" class="opacity-wrap">
+            <div class="opacity">
+              <span class="olabel">透明度</span>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                :value="Math.round(progressPanel.opacity.value * 100)"
+                aria-label="透明度"
+                @input="
+                  progressPanel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)
+                "
+              />
+              <span class="oval">{{ Math.round(progressPanel.opacity.value * 100) }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 設定模式：進去才能增刪角色、改名字、選要不要上浮動視窗 -->
+        <button
+          class="gear"
+          :class="{ primary: editMode }"
+          :title="editMode ? '完成設定' : '設定角色'"
+          @click="editMode = !editMode"
+        >
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <template v-if="editMode">
+              <path d="M5 12.5 10 17.5 19 7" />
+            </template>
+            <template v-else>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </template>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -163,10 +196,11 @@ function delta(v?: number | null) {
   display: flex;
   flex-direction: column;
 }
+/* 捲動發生在卡片裡，不是整頁：下面那排按鈕要一直看得到 */
 .body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   padding: var(--sp-4);
   display: flex;
   flex-direction: column;
@@ -184,10 +218,10 @@ function delta(v?: number | null) {
 }
 .opacity-wrap {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   right: 0;
   z-index: 30;
-  padding-top: 6px;
+  padding-bottom: 6px;
 }
 .opacity {
   display: flex;
@@ -216,6 +250,9 @@ function delta(v?: number | null) {
 }
 
 .outer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -288,15 +325,20 @@ function delta(v?: number | null) {
 }
 /* 伺服器是標籤不是句子：做成徽章。空心＋紫色——填色的話它會跟旁邊的
    控制項搶注意力，而紫色在這一頁沒有別的用途，不會跟狀態色混淆。 */
+.gear {
+  width: 40px;
+  padding: 0;
+  flex: none;
+}
+.who-text:disabled {
+  opacity: 1;
+  cursor: default;
+}
 .x {
   width: 26px;
   height: 26px;
   padding: 0;
   flex: none;
-}
-.add {
-  align-self: flex-start;
-  height: 34px;
 }
 .world {
   font-size: 13px;
