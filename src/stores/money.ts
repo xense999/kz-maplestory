@@ -82,12 +82,12 @@ export const useMoneyStore = defineStore("money", () => {
   }
 
   /**
-   * 改匯率時維持台幣不變、重算楓幣：改匯率通常是在跟著行情調價，手上的預算沒有變。
-   * 台幣還沒填的話就維持原本的來源欄，不然會把使用者剛打的楓幣清掉。
+   * 改幣值不換來源欄：你最後打的那一欄還是那一欄，另一欄跟著重算。
+   * ★以前這裡會硬切回台幣，結果是打了楓幣再調一次幣值，畫面上「算出來的」
+   * 標記就跑到你自己打的那一欄上，等於在說謊。
    */
   function setRate(value: string) {
     rateText.value = value;
-    if (ntdText.value) anchor.value = "ntd";
   }
 
   let wired = false;
