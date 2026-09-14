@@ -2,13 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import {
-  formatMeso,
-  formatNtd,
-  formatRaw,
-  mesoTextInWords,
-  roundUpSuggestion,
-} from "../money";
+import { formatMeso, mesoTextInWords, spend } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -30,19 +24,17 @@ const DASH = "—";
 const rows = computed(() => {
   const d = money.deal;
   return [
-    { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
     { key: "face", label: "帳面楓幣", hint: "跟對方談的數字；沒有手續費的話就是這個", meso: d?.face },
+    { key: "net", label: "實收楓幣", hint: "手續費扣完，實際入手", meso: d?.net },
   ];
 });
-
-const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 
 /** 楓幣欄旁邊的換算：打「2660」不好一眼看出那是多少，換成談價的級距比較有感 */
 const mesoInWords = computed(() => mesoTextInWords(money.mesoText));
 
-/** 付整數台幣的話。精確值本來就是整數時沒有建議，那一行就不出現 */
-const roundUp = computed(() =>
-  money.deal ? roundUpSuggestion(money.deal.ntd, money.rate, money.vip) : null,
+/** 實際要掏出來的錢。台幣付不出小數，所以這裡是整數 */
+const cost = computed(() =>
+  money.deal ? spend(money.deal.ntd, money.rate, money.vip) : null,
 );
 </script>
 
@@ -71,20 +63,6 @@ const roundUp = computed(() =>
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">台幣</span>
-                  <input
-                    class="rval"
-                    type="text"
-                    inputmode="decimal"
-                    spellcheck="false"
-                    placeholder="0"
-                    :value="money.ntdText"
-                    @input="money.setNtd(value($event))"
-                  />
-                  <span class="rnote unit">元</span>
-                </label>
-
-                <label class="row">
                   <span class="rlabel">楓幣</span>
                   <input
                     class="rval"
@@ -97,6 +75,20 @@ const roundUp = computed(() =>
                   />
                   <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
                   <span class="rnote">{{ mesoInWords }}</span>
+                </label>
+
+                <label class="row">
+                  <span class="rlabel">台幣</span>
+                  <input
+                    class="rval"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="0"
+                    :value="money.ntdText"
+                    @input="money.setNtd(value($event))"
+                  />
+                  <span class="rnote unit">元</span>
                 </label>
 
                 <div v-if="editMode" class="row">
@@ -120,15 +112,14 @@ const roundUp = computed(() =>
                 <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
                   <span class="rlabel">{{ r.label }}</span>
                   <span class="rval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
-                  <!-- 原始數字是拿來照著打進遊戲的，所以永遠附一份 -->
-                  <span class="rnote">{{ r.meso === undefined ? "" : formatRaw(r.meso) }}</span>
                 </div>
 
                 <div class="row">
                   <span class="rlabel">實際花費</span>
-                  <span class="rval">{{ ntd }}</span>
-                  <span v-if="roundUp" class="rnote">
-                    付 {{ roundUp.ntd }} 元 → 多拿 {{ formatMeso(roundUp.extra) }}
+                  <span class="rval">{{ cost ? `${cost.ntd} 元` : DASH }}</span>
+                  <!-- 湊整多付的那點不是白花的，會變成多拿的楓幣 -->
+                  <span v-if="cost && cost.extra > 0" class="rnote">
+                    多拿 {{ formatMeso(cost.extra) }}
                   </span>
                 </div>
               </div>

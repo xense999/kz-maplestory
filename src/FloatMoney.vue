@@ -85,6 +85,28 @@ function onDown(e: MouseEvent) {
       </label>
 
       <label class="row">
+        <span class="label">楓幣</span>
+        <input
+          type="text"
+          inputmode="decimal"
+          spellcheck="false"
+          placeholder="0"
+          :value="text.meso"
+          @focus="focused = 'meso'"
+          @blur="focused = null"
+          @input="edit('meso', $event)"
+        />
+        <span class="unit"></span>
+      </label>
+
+      <!-- 上一欄同一個數字的另一種講法，所以不給標籤：靠位置說明它屬於上面那一列 -->
+      <div class="row muted">
+        <span class="label"></span>
+        <span class="derived">{{ netInWords }}</span>
+        <span class="unit"></span>
+      </div>
+
+      <label class="row">
         <span class="label">台幣</span>
         <input
           type="text"
@@ -98,28 +120,6 @@ function onDown(e: MouseEvent) {
         />
         <span class="unit">元</span>
       </label>
-
-      <label class="row">
-        <span class="label">實收</span>
-        <input
-          type="text"
-          inputmode="decimal"
-          spellcheck="false"
-          placeholder="0"
-          :value="text.meso"
-          @focus="focused = 'meso'"
-          @blur="focused = null"
-          @input="edit('meso', $event)"
-        />
-        <span class="unit">楓幣</span>
-      </label>
-
-      <!-- 上一欄同一個數字的另一種講法，所以不給標籤：靠位置說明它屬於上面那一列 -->
-      <div class="row muted">
-        <span class="label"></span>
-        <span class="derived">{{ netInWords }}</span>
-        <span class="unit"></span>
-      </div>
 
       <!-- 帳面是算出來的，不是欄位：同一條格線上但整行淡下去，一眼分得出可改與不可改 -->
       <div class="row muted">

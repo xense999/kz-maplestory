@@ -84,28 +84,24 @@ export function fromNet(net: number, rateW: number, vip: boolean): Deal | null {
  */
 const EPS = 1e-9;
 
-export interface RoundUp {
-  /** 湊整之後要付的台幣 */
+export interface Spend {
+  /** 實際要掏出來的台幣，整數 */
   ntd: number;
-  /** 因為湊整而多拿到的楓幣 */
+  /** 因為湊成整數而比要求多拿到的楓幣。精確值本來就是整數時是 0 */
   extra: number;
 }
 
 /**
- * 付整數台幣的話要付多少、會多拿多少。
- * 精確值本來就是整數（或算不出來）時回 null——這時畫面上不該出現建議。
+ * 實際要付多少錢。
+ *
+ * ★一律無條件進位到整數：台幣付不出小數，而少付一塊就換不到要的量。
+ * 湊上去的那一點不會白花，會變成多拿的楓幣，所以一起回傳。
  */
-export function roundUpSuggestion(
-  ntd: number,
-  rateW: number,
-  vip: boolean,
-): RoundUp | null {
+export function spend(ntd: number, rateW: number, vip: boolean): Spend | null {
   const exact = fromNtd(ntd, rateW, vip);
   if (!exact) return null;
 
   const target = Math.ceil(ntd - EPS);
-  if (target - ntd < EPS) return null;
-
   const rounded = fromNtd(target, rateW, vip);
   if (!rounded) return null;
 
@@ -113,13 +109,13 @@ export function roundUpSuggestion(
 }
 
 /**
- * 台幣的寫法：無條件進位到小數第 2 位。
- * ★不能四捨五入——付的錢比算出來的少就換不到那麼多楓幣，
- * 而且捨進之後畫面會跟湊整建議打架（顯示「2.00 元」卻建議「付 3 台幣」）。
+ * 台幣填回輸入欄時的寫法：無條件進位到整數。
+ * ★不能四捨五入也不留小數——台幣付不出小數，而少付一塊就換不到要的量。
+ * 這跟 `spend` 回的數字是同一個，畫面上兩處才不會各說各話。
  */
-export function formatNtd(ntd: number): string {
-  if (!Number.isFinite(ntd)) return "—";
-  return (Math.ceil(ntd * 100 - EPS) / 100).toFixed(2);
+export function ntdToText(ntd: number): string {
+  if (!Number.isFinite(ntd)) return "";
+  return String(Math.ceil(ntd - EPS));
 }
 
 /**
@@ -145,8 +141,8 @@ function groups(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-/** 原始數字，例如 26,600,000。要照著打進遊戲的就是這個 */
-export function formatRaw(meso: number): string {
+/** 原始數字，例如 26,600,000。欄位裡填的就是這個寫法 */
+function formatRaw(meso: number): string {
   if (!Number.isFinite(meso)) return "—";
   const sign = meso < 0 ? "-" : "";
   return sign + groups(String(Math.floor(Math.abs(meso))));

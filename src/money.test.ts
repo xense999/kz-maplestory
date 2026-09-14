@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   formatMeso,
-  formatNtd,
-  formatRaw,
+  ntdToText,
   mesoToText,
   mesoTextInWords,
   parseAmount,
   fromNet,
   fromNtd,
-  roundUpSuggestion,
+  spend,
   W,
 } from "./money";
 
@@ -78,24 +77,26 @@ describe("算不出來的輸入", () => {
   });
 });
 
-describe("湊整建議", () => {
-  it("精確值不是整數時，建議進位到整數台幣並算出多拿多少", () => {
+describe("實際花費", () => {
+  it("一律進位到整數台幣，湊上去的那點變成多拿的楓幣", () => {
     const d = fromNet(5000 * W, RATE, false)!;
-    const s = roundUpSuggestion(d.ntd, RATE, false)!;
+    const s = spend(d.ntd, RATE, false)!;
     expect(s.ntd).toBe(2);
-    // 2 台幣的實收 5320W，比原本的 5000W 多 320W
+    // 2 台幣的實收 5320W，比原本要的 5000W 多 320W
     expect(s.extra).toBeCloseTo(320 * W, 2);
   });
 
-  it("精確值本來就是整數時不建議", () => {
+  it("精確值本來就是整數時沒有多拿", () => {
     const d = fromNtd(3, RATE, false)!;
     const back = fromNet(d.net, RATE, false)!;
-    expect(roundUpSuggestion(back.ntd, RATE, false)).toBeNull();
+    const s = spend(back.ntd, RATE, false)!;
+    expect(s.ntd).toBe(3);
+    expect(s.extra).toBeCloseTo(0, 2);
   });
 
-  it("算不出來時不建議", () => {
-    expect(roundUpSuggestion(1.5, 0, false)).toBeNull();
-    expect(roundUpSuggestion(Number.NaN, RATE, false)).toBeNull();
+  it("算不出來時回 null", () => {
+    expect(spend(1.5, 0, false)).toBeNull();
+    expect(spend(Number.NaN, RATE, false)).toBeNull();
   });
 });
 
@@ -112,23 +113,23 @@ describe("欄位文字轉數字", () => {
 });
 
 describe("台幣的寫法", () => {
-  it("無條件進位到小數第 2 位——付的錢不能比算出來的少", () => {
-    expect(formatNtd(1.8796992481203008)).toBe("1.88");
-    expect(formatNtd(2.001)).toBe("2.01");
+  it("無條件進位到整數——台幣付不出小數，少付一塊就換不到要的量", () => {
+    expect(ntdToText(1.8796992481203008)).toBe("2");
+    expect(ntdToText(2.001)).toBe("3");
   });
 
   it("往返換算留下的浮點尾巴不會把整數推上去", () => {
-    expect(formatNtd(3.0000000000000004)).toBe("3.00");
+    expect(ntdToText(3.0000000000000004)).toBe("3");
   });
 
-  it("顯示成整數時就不該有湊整建議，兩邊不能各說各話", () => {
+  it("欄位填回來的跟實際花費是同一個數字，兩處不能各說各話", () => {
     const back = fromNet(fromNtd(3, RATE, false)!.net, RATE, false)!;
-    expect(formatNtd(back.ntd)).toBe("3.00");
-    expect(roundUpSuggestion(back.ntd, RATE, false)).toBeNull();
+    expect(ntdToText(back.ntd)).toBe("3");
+    expect(spend(back.ntd, RATE, false)!.ntd).toBe(3);
   });
 
-  it("算不出來是破折號", () => {
-    expect(formatNtd(Number.NaN)).toBe("—");
+  it("算不出來就讓欄位空著", () => {
+    expect(ntdToText(Number.NaN)).toBe("");
   });
 });
 
@@ -155,10 +156,6 @@ describe("楓幣的寫法", () => {
 
   it("不到一億的零頭不會被捨進成一億", () => {
     expect(formatMeso(99_999_999)).toBe("9,999.99萬");
-  });
-
-  it("原始數字帶千分位", () => {
-    expect(formatRaw(26_600_000)).toBe("26,600,000");
   });
 
   it("填回欄位的是楓幣本身，帶千分位", () => {

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import { moneyPanel, type MoneySnap } from "../float";
 import {
-  formatNtd,
+  ntdToText,
   fromNet,
   fromNtd,
   mesoToText,
@@ -46,7 +46,7 @@ export const useMoneyStore = defineStore("money", () => {
       if (anchor.value === "ntd") {
         mesoText.value = d ? mesoToText(d.net) : "";
       } else {
-        ntdText.value = d ? formatNtd(d.ntd) : "";
+        ntdText.value = d ? ntdToText(d.ntd) : "";
       }
     },
     { immediate: true },
