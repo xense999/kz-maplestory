@@ -281,7 +281,6 @@ async function copyDiscord() {
           <div class="about-card">
             <span class="about-card-label">申請頁面</span>
             <button class="btn-update" @click="openUrl(NEXON_OPENAPI)">在瀏覽器開啟</button>
-            <span class="url">{{ NEXON_OPENAPI }}</span>
           </div>
         </div>
       </div>
@@ -542,9 +541,9 @@ async function copyDiscord() {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
-/* 說明比「關於」長，給它寬一點 */
+/* 說明比「關於」長得多，給它寬一點，步驟才不會每一條都折行 */
 .about-window.wide {
-  width: 420px;
+  width: 520px;
 }
 .steps {
   margin: 0;
@@ -557,14 +556,6 @@ async function copyDiscord() {
   font-size: 13px;
   color: var(--text-faint);
 }
-/* 網址也寫出來：有人會想自己複製，或在別台電腦上開 */
-.url {
-  font-size: 12px;
-  color: var(--text-faint);
-  word-break: break-all;
-  user-select: text;
-}
-
 .about-card-label {
   font-size: 12px;
   font-weight: 600;
