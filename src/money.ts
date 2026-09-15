@@ -143,11 +143,6 @@ export function ntdToText(ntd: number): string {
   return trimmed(ntd);
 }
 
-/** 台幣顯示。算不出來是破折號，不是 0 */
-export function formatNtd(ntd: number): string {
-  return Number.isFinite(ntd) ? trimmed(ntd) : "—";
-}
-
 /**
  * 楓幣填回輸入欄時的寫法：楓幣本身、帶千分位，捨去方向跟 formatMeso 一致。
  * 千分位進得了欄位也出得來——`parseAmount` 會把逗號拿掉。

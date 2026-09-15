@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, formatNtd, mesoTextInWords } from "../money";
+import { formatMeso, mesoTextInWords } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -40,9 +40,6 @@ const mesoInWords = computed(() => mesoTextInWords(money.mesoText));
 function derived(field: "ntd" | "meso") {
   return money.deal !== null && money.anchor !== field;
 }
-
-/** 實際要掏出來的錢 */
-const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 </script>
 
 <template>
@@ -57,20 +54,6 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 
             <div class="inner">
               <div class="rows fields">
-                <label class="row">
-                  <span class="rlabel">幣值</span>
-                  <input
-                    class="rval"
-                    type="text"
-                    inputmode="decimal"
-                    spellcheck="false"
-                    placeholder="2800"
-                    :value="money.rateText"
-                    @input="money.setRate(value($event))"
-                  />
-                  <span class="rnote unit">萬</span>
-                </label>
-
                 <label class="row">
                   <span class="rlabel">楓幣</span>
                   <input
@@ -111,10 +94,6 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   <span class="rval">{{ r.meso === undefined ? DASH : formatMeso(r.meso) }}</span>
                 </div>
 
-                <div class="row">
-                  <span class="rlabel">實際花費</span>
-                  <span class="rval">{{ money.deal ? `${ntd} 元` : DASH }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -178,6 +157,24 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- 幣值是這一頁的前提，買賣兩張卡都吃它，所以它不屬於任何一張，
+             自己一條放在最下面 -->
+        <section class="card outer rate">
+          <label class="row">
+            <span class="rlabel">幣值</span>
+            <input
+              class="rval"
+              type="text"
+              inputmode="decimal"
+              spellcheck="false"
+              placeholder="2800"
+              :value="money.rateText"
+              @input="money.setRate(value($event))"
+            />
+            <span class="rnote unit">萬 ／ 元</span>
+          </label>
         </section>
       </div>
 
@@ -250,6 +247,16 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .outer {
   padding: var(--sp-4);
 }
+/* 幣值只有一列，不需要跟上面兩張一樣厚 */
+.rate {
+  padding: var(--sp-2) var(--sp-4);
+}
+.rate .rlabel {
+  width: 36px;
+}
+.rate .rnote {
+  color: var(--text-dim);
+}
 /* 標題那張小卡只吃它自己的寬度（auto），其餘平分。stretch 讓每一欄一樣高，
    一邊比另一邊矮會看起來像沒寫完 */
 .split {
@@ -257,10 +264,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: stretch;
-  /* 兩張大卡一樣高。賣幣只有兩列，不撐起來的話下面那張會矮一截，
-     看起來像沒寫完。高度＝三列＋兩段列距＋小卡上下內距＋框線；
-     外卡的內距加寬時這裡要跟著減，大卡的總高才不會變 */
-  min-height: calc(3 * 34px + 2 * var(--sp-3) + 2 * var(--sp-3) + 2px);
+  /* 四張小卡都是兩列，高度自然一致，不必再撐 */
 }
 /* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
 @media (max-width: 900px) {
@@ -335,11 +339,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   justify-content: center;
   gap: var(--sp-3);
 }
-/* 賣幣只有兩列，卻要撐到買幣那張的高度。置中會在上下各留一段空白，
-   改成把多出來的高度平均分掉，兩列才不會擠在中間 */
-.sell .rows {
-  justify-content: space-evenly;
-}
+
 
 .row {
   display: flex;
