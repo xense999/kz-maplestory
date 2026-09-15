@@ -33,7 +33,8 @@ export const useMoneyStore = defineStore("money", () => {
    * 商城那套是另一個遊戲的交易系統，跟上面的幣值各算各的——
    * 它只把自己那個報價換算成幣值給你看，不會去動當前幣值。
    */
-  const shopRateText = ref(load(SHOP_KEY));
+  // 預設 5 億：那是常見的報價，開起來就看得到換算長什麼樣，不必先猜要填什麼
+  const shopRateText = ref(load(SHOP_KEY) || "5");
   const shopRate = computed(() => convertRate(parseAmount(shopRateText.value)));
   const ntdText = ref("");
   /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
