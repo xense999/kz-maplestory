@@ -345,9 +345,11 @@ function derived(field: "ntd" | "meso") {
 .rate .rlabel {
   width: 64px;
 }
-/* 分隔線：它只是把兩件事分開，不該比任何一邊顯眼 */
+/* 分隔線：它只是把兩件事分開，不該比任何一邊顯眼。
+   左右各留一段，貼著兩邊的字會看起來像黏在一起 */
 .sep {
   flex: none;
+  margin: 0 var(--sp-3);
   color: var(--text-faint);
   opacity: 0.6;
 }
