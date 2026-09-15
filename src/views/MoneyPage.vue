@@ -248,7 +248,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 
 /* 外卡只負責標題與外框，內容全在兩張小卡裡 */
 .outer {
-  padding: var(--sp-3);
+  padding: var(--sp-4);
 }
 /* 標題那張小卡只吃它自己的寬度（auto），其餘平分。stretch 讓每一欄一樣高，
    一邊比另一邊矮會看起來像沒寫完 */
@@ -258,8 +258,9 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   gap: var(--sp-3);
   align-items: stretch;
   /* 兩張大卡一樣高。賣幣只有兩列，不撐起來的話下面那張會矮一截，
-     看起來像沒寫完。高度＝三列＋兩段列距＋小卡上下內距＋框線 */
-  min-height: calc(3 * 34px + 2 * var(--sp-3) + 2 * var(--sp-4) + 2px);
+     看起來像沒寫完。高度＝三列＋兩段列距＋小卡上下內距＋框線；
+     外卡的內距加寬時這裡要跟著減，大卡的總高才不會變 */
+  min-height: calc(3 * 34px + 2 * var(--sp-3) + 2 * var(--sp-3) + 2px);
 }
 /* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
 @media (max-width: 900px) {
@@ -273,7 +274,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .inner {
   display: flex;
   flex-direction: column;
-  padding: var(--sp-4);
+  padding: var(--sp-3);
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -362,9 +363,12 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .results .rlabel {
   width: 84px;
 }
+/* 190px 是想要的寬度，不是硬性的：欄位窄的時候讓它縮，
+   不然固定寬度會把內容推出卡片外面 */
 .rval {
   width: 190px;
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: 17px;
   font-weight: 700;
   color: var(--text-strong);
