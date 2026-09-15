@@ -7,7 +7,7 @@ const appWin = getCurrentWindow();
 const snaps = ref<TimerSnap[]>([]);
 const now = ref(Date.now());
 const opacity = ref(0.5);
-/** 文字描邊：底色調很淡時，沒有描邊會吃到遊戲背景 */
+/** 文字陰影：底色調很淡時，沒有陰影會吃到遊戲背景 */
 const outline = ref(false);
 
 let tick: number | null = null;
@@ -89,7 +89,7 @@ function state(s: TimerSnap) {
   /* 尺寸全用 em，字級綁視窗寬度（300px 寬＝16px 字）＝拖大拖小是等比縮放 */
   font-size: calc(100vw / 300 * 16);
 }
-/* 描邊：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
+/* 陰影：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
    加在整塊上而不是逐個元素，之後新增的文字自動吃得到 */
 .float.outline {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);

@@ -45,8 +45,8 @@ const opacityOpen = ref(false);
 
         <span class="divider"></span>
 
-        <!-- 底色調很淡時字會吃到遊戲背景，描邊是那時候救回可讀性的開關 -->
-        <span class="olabel">文字描邊</span>
+        <!-- 底色調很淡時字會吃到遊戲背景，陰影是那時候救回可讀性的開關 -->
+        <span class="olabel">文字陰影</span>
         <button
           class="switch"
           role="switch"

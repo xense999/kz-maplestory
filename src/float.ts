@@ -24,7 +24,7 @@ const DEFAULT_OPACITY = 0.5;
 export interface PanelLook {
   /** 底色濃度 0~1 */
   opacity: number;
-  /** 文字描邊：底色調得很淡時，沒有描邊會吃到遊戲背景 */
+  /** 文字陰影：底色調得很淡時，沒有陰影會吃到遊戲背景 */
   outline: boolean;
 }
 
@@ -34,7 +34,7 @@ export interface FloatPanel<T, I = never> {
   open: Ref<boolean>;
   /** 底色濃度 0~1 */
   opacity: Ref<number>;
-  /** 文字要不要描邊 */
+  /** 文字要不要加陰影 */
   outline: Ref<boolean>;
   toggle(): Promise<void>;
   setOpacity(v: number): void;

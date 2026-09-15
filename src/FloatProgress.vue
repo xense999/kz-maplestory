@@ -6,7 +6,7 @@ import { progressPanel, type CharacterSnap } from "./float";
 const appWin = getCurrentWindow();
 const rows = ref<CharacterSnap[]>([]);
 const opacity = ref(0.5);
-/** 文字描邊：底色調很淡時，沒有描邊會吃到遊戲背景 */
+/** 文字陰影：底色調很淡時，沒有陰影會吃到遊戲背景 */
 const outline = ref(false);
 
 let stopData: (() => void) | null = null;
@@ -74,7 +74,7 @@ function gain(v: number | null) {
   flex-direction: column;
   font-size: calc(100vw / 392 * 16);
 }
-/* 描邊：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
+/* 陰影：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
    加在整塊上而不是逐個元素，之後新增的文字自動吃得到 */
 .float.outline {
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
