@@ -190,14 +190,14 @@ function derived(field: "ntd" | "meso") {
                 ></button>
                 <span class="rnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
               </div>
+            </div>
 
-              <div class="row">
-                <div class="spacer"></div>
-                <FloatButton
-                  :panel="moneyPanel"
-                  hint="開一個永遠置頂的小視窗，交易中也看得到換算"
-                />
-              </div>
+            <!-- 面板開關不是一個設定值，所以不跟幣值、VIP 擠在同一張小卡裡 -->
+            <div class="inner floatcell">
+              <FloatButton
+                :panel="moneyPanel"
+                hint="開一個永遠置頂的小視窗，交易中也看得到換算"
+              />
             </div>
           </div>
         </section>
@@ -239,7 +239,12 @@ function derived(field: "ntd" | "meso") {
   padding: var(--sp-4);
 }
 .ratesplit {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+/* 面板開關自己一格，貼在整張卡的最右邊 */
+.floatcell {
+  justify-content: center;
+  align-items: center;
 }
 .rate .rnote {
   color: var(--text-dim);
