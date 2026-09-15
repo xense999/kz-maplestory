@@ -5,6 +5,8 @@ import { moneyPanel, type MoneySnap } from "./float";
 
 const appWin = getCurrentWindow();
 const opacity = ref(0.5);
+/** 文字描邊：底色調很淡時，沒有描邊會吃到遊戲背景 */
+const outline = ref(false);
 
 /**
  * 欄位的文字自己留一份，但那不是另一份狀態：主視窗才是唯一的來源，這裡只是它的回音。
@@ -32,7 +34,7 @@ function derived(field: "ntd" | "meso") {
 /** 最後一份快照。離開欄位時要拿它把正在打字時擋下來的更新補上 */
 let last: MoneySnap | null = null;
 let stopData: (() => void) | null = null;
-let stopOpacity: (() => void) | null = null;
+let stopLook: (() => void) | null = null;
 
 function apply(snap: MoneySnap) {
   last = snap;
@@ -73,11 +75,14 @@ function setMode(next: MoneySnap["mode"]) {
 
 onMounted(async () => {
   stopData = await moneyPanel.connect(apply);
-  stopOpacity = await moneyPanel.onOpacity((v) => (opacity.value = v));
+  stopLook = await moneyPanel.onLook((look) => {
+    opacity.value = look.opacity;
+    outline.value = look.outline;
+  });
 });
 onUnmounted(() => {
   stopData?.();
-  stopOpacity?.();
+  stopLook?.();
 });
 
 function onDown(e: MouseEvent) {
@@ -92,7 +97,7 @@ function onDown(e: MouseEvent) {
 </script>
 
 <template>
-  <div class="float" @mousedown="onDown">
+  <div class="float" :class="{ outline }" @mousedown="onDown">
     <!-- 透明度只吃這一層底：整塊調的話字會跟著淡，蓋在遊戲上就看不清了 -->
     <div class="bg" :style="{ opacity }"></div>
 
@@ -171,6 +176,11 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   font-size: calc(min(100vw / 392, 100vh / 166) * 19);
+}
+/* 描邊：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
+   加在整塊上而不是逐個元素，之後新增的文字自動吃得到 */
+.float.outline {
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .bg {
   position: absolute;

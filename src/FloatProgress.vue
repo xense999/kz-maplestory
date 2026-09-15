@@ -6,17 +6,22 @@ import { progressPanel, type CharacterSnap } from "./float";
 const appWin = getCurrentWindow();
 const rows = ref<CharacterSnap[]>([]);
 const opacity = ref(0.5);
+/** 文字描邊：底色調很淡時，沒有描邊會吃到遊戲背景 */
+const outline = ref(false);
 
 let stopData: (() => void) | null = null;
-let stopOpacity: (() => void) | null = null;
+let stopLook: (() => void) | null = null;
 
 onMounted(async () => {
   stopData = await progressPanel.connect((r) => (rows.value = r));
-  stopOpacity = await progressPanel.onOpacity((v) => (opacity.value = v));
+  stopLook = await progressPanel.onLook((look) => {
+    opacity.value = look.opacity;
+    outline.value = look.outline;
+  });
 });
 onUnmounted(() => {
   stopData?.();
-  stopOpacity?.();
+  stopLook?.();
 });
 
 function onDown(e: MouseEvent) {
@@ -36,7 +41,7 @@ function gain(v: number | null) {
 
 <template>
   <!-- 沒有標題列也沒有關閉鈕：開關只在主視窗那顆按鈕上，所以整塊都是拖曳區 -->
-  <div class="float" @mousedown="onDown" title="拖曳可移動；開關與透明度在主頁的「浮動視窗」按鈕">
+  <div class="float" :class="{ outline }" @mousedown="onDown" title="拖曳可移動；開關與透明度在主頁的「浮動視窗」按鈕">
     <!-- 透明度只吃這一層底：整塊調的話字會跟著淡，蓋在遊戲上就看不清了 -->
     <div class="bg" :style="{ opacity }"></div>
 
@@ -68,6 +73,11 @@ function gain(v: number | null) {
   display: flex;
   flex-direction: column;
   font-size: calc(100vw / 392 * 16);
+}
+/* 描邊：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
+   加在整塊上而不是逐個元素，之後新增的文字自動吃得到 */
+.float.outline {
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .bg {
   position: absolute;

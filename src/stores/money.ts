@@ -181,7 +181,7 @@ export const useMoneyStore = defineStore("money", () => {
 
     await moneyPanel.onHello(() => {
       publish();
-      moneyPanel.pushOpacity();
+      moneyPanel.pushLook();
     });
 
     // 面板上的欄位也能打字。改的是這一份狀態，不是面板自己的副本——
@@ -196,7 +196,7 @@ export const useMoneyStore = defineStore("money", () => {
       else setMeso(value);
     });
     publish();
-    moneyPanel.pushOpacity();
+    moneyPanel.pushLook();
   }
 
   return {

@@ -7,19 +7,24 @@ const appWin = getCurrentWindow();
 const snaps = ref<TimerSnap[]>([]);
 const now = ref(Date.now());
 const opacity = ref(0.5);
+/** 文字描邊：底色調很淡時，沒有描邊會吃到遊戲背景 */
+const outline = ref(false);
 
 let tick: number | null = null;
 let stopSync: (() => void) | null = null;
-let stopOpacity: (() => void) | null = null;
+let stopLook: (() => void) | null = null;
 
 onMounted(async () => {
   stopSync = await burnPanel.connect((s) => (snaps.value = s));
-  stopOpacity = await burnPanel.onOpacity((v) => (opacity.value = v));
+  stopLook = await burnPanel.onLook((look) => {
+    opacity.value = look.opacity;
+    outline.value = look.outline;
+  });
   tick = window.setInterval(() => (now.value = Date.now()), 250);
 });
 onUnmounted(() => {
   stopSync?.();
-  stopOpacity?.();
+  stopLook?.();
   if (tick !== null) clearInterval(tick);
 });
 
@@ -57,6 +62,7 @@ function state(s: TimerSnap) {
        所以整塊都是拖曳區 -->
   <div
     class="float"
+    :class="{ outline }"
     @mousedown="onDown"
     title="拖曳可移動；開關與透明度在主視窗的「浮動視窗」按鈕"
   >
@@ -82,6 +88,11 @@ function state(s: TimerSnap) {
   flex-direction: column;
   /* 尺寸全用 em，字級綁視窗寬度（300px 寬＝16px 字）＝拖大拖小是等比縮放 */
   font-size: calc(100vw / 300 * 16);
+}
+/* 描邊：底色調很淡時字會吃到遊戲背景，開起來就讀得回來。
+   加在整塊上而不是逐個元素，之後新增的文字自動吃得到 */
+.float.outline {
+  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .bg {
   position: absolute;

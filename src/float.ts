@@ -20,20 +20,31 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 /** 預設半透明——疊在遊戲上，一開始就實心會擋掉太多畫面 */
 const DEFAULT_OPACITY = 0.5;
 
+/** 面板的外觀設定。兩個都是「看起來怎樣」，所以同一條通道送 */
+export interface PanelLook {
+  /** 底色濃度 0~1 */
+  opacity: number;
+  /** 文字描邊：底色調得很淡時，沒有描邊會吃到遊戲背景 */
+  outline: boolean;
+}
+
 export interface FloatPanel<T, I = never> {
   label: string;
   /** 目前開著沒有（主視窗的按鈕靠它標狀態） */
   open: Ref<boolean>;
-  /** 底色濃度 0~0.5 */
+  /** 底色濃度 0~1 */
   opacity: Ref<number>;
+  /** 文字要不要描邊 */
+  outline: Ref<boolean>;
   toggle(): Promise<void>;
   setOpacity(v: number): void;
+  setOutline(v: boolean): void;
   /** 依列數調整視窗高度（寬度不動，內容是等比縮放的） */
   fitRows(rows: number, rowEm?: number): Promise<void>;
   /** 主視窗：廣播目前狀態 */
   push(data: T): void;
-  /** 主視窗：把目前透明度送過去（改動時、以及面板剛開起來時） */
-  pushOpacity(): void;
+  /** 主視窗：把目前外觀送過去（改動時、以及面板剛開起來時） */
+  pushLook(): void;
   /** 主視窗：面板開起來時會喊一聲，收到就補送一份 */
   onHello(cb: () => void): Promise<UnlistenFn>;
   /**
@@ -44,8 +55,8 @@ export interface FloatPanel<T, I = never> {
    * 回傳的函式把監聽與招呼一起收掉。
    */
   connect(cb: (data: T) => void): Promise<() => void>;
-  /** 面板：收透明度 */
-  onOpacity(cb: (v: number) => void): Promise<UnlistenFn>;
+  /** 面板：收外觀 */
+  onLook(cb: (look: PanelLook) => void): Promise<UnlistenFn>;
   /** 面板：把使用者在面板上改的東西送回主視窗（只有可以打字的面板用得到） */
   sendInput(data: I): void;
   /** 主視窗：收面板送回來的修改 */
@@ -55,15 +66,16 @@ export interface FloatPanel<T, I = never> {
 /** 開關按鈕用得到的那幾支。型別的 owner 在這裡，按鈕不自己抄一份 */
 export type FloatPanelControls = Pick<
   FloatPanel<unknown>,
-  "open" | "opacity" | "toggle" | "setOpacity"
+  "open" | "opacity" | "outline" | "toggle" | "setOpacity" | "setOutline"
 >;
 
 export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> {
   const DATA = `${label}:data`;
   const HELLO = `${label}:hello`;
-  const OPACITY = `${label}:opacity`;
+  const LOOK = `${label}:look`;
   const INPUT = `${label}:input`;
   const OPACITY_KEY = `kz-maplestory:float-opacity:${label}`;
+  const OUTLINE_KEY = `kz-maplestory:float-outline:${label}`;
 
   function loadOpacity() {
     try {
@@ -80,15 +92,17 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
 
   const open = ref(false);
   const opacity = ref(loadOpacity());
+  const outline = ref(load(OUTLINE_KEY) === "1");
 
-  function pushOpacity() {
-    void emit(OPACITY, opacity.value);
+  function pushLook() {
+    void emit(LOOK, { opacity: opacity.value, outline: outline.value } satisfies PanelLook);
   }
 
   return {
     label,
     open,
     opacity,
+    outline,
     async toggle() {
       const win = await WebviewWindow.getByLabel(label);
       if (!win) return;
@@ -106,12 +120,13 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
     },
     setOpacity(v: number) {
       opacity.value = Math.min(1, Math.max(0, v));
-      try {
-        localStorage.setItem(OPACITY_KEY, String(opacity.value));
-      } catch {
-        /* 存不了就只在這次執行有效 */
-      }
-      pushOpacity();
+      save(OPACITY_KEY, String(opacity.value));
+      pushLook();
+    },
+    setOutline(v: boolean) {
+      outline.value = v;
+      save(OUTLINE_KEY, v ? "1" : "0");
+      pushLook();
     },
     push(data: T) {
       void emit(DATA, data);
@@ -131,7 +146,7 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
       const height = Math.round(Math.max(1, rows) * rowPx + 14);
       await win.setSize(new LogicalSize(Math.round(w), height));
     },
-    pushOpacity,
+    pushLook,
     onHello: (cb) => listen(HELLO, cb),
     async connect(cb) {
       // ★判斷「有人回應」而不是「有資料」：內容本來就可能是空的，
@@ -156,12 +171,28 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
         clearInterval(asking);
       };
     },
-    onOpacity: (cb) => listen<number>(OPACITY, (e) => cb(e.payload)),
+    onLook: (cb) => listen<PanelLook>(LOOK, (e) => cb(e.payload)),
     sendInput(data: I) {
       void emit(INPUT, data);
     },
     onInput: (cb) => listen<I>(INPUT, (e) => cb(e.payload)),
   };
+}
+
+function load(key: string): string {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function save(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* 存不了就只在這次執行有效 */
+  }
 }
 
 /**

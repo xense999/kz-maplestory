@@ -42,6 +42,18 @@ const opacityOpen = ref(false);
           @input="panel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
         />
         <span class="oval">{{ Math.round(panel.opacity.value * 100) }}%</span>
+
+        <span class="divider"></span>
+
+        <!-- 底色調很淡時字會吃到遊戲背景，描邊是那時候救回可讀性的開關 -->
+        <span class="olabel">文字描邊</span>
+        <button
+          class="switch"
+          role="switch"
+          :class="{ on: panel.outline.value }"
+          :aria-checked="panel.outline.value"
+          @click="panel.setOutline(!panel.outline.value)"
+        ></button>
       </div>
     </div>
   </div>
@@ -72,6 +84,11 @@ const opacityOpen = ref(false);
 }
 .opacity input[type="range"] {
   width: 116px;
+}
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-strong);
 }
 .olabel {
   font-size: 14px;

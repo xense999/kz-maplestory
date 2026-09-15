@@ -237,10 +237,10 @@ export const useRosterStore = defineStore("roster", () => {
     // 它就是因為可能沒收到第一筆才在問，被去重擋掉的話會永遠問下去。
     await progressPanel.onHello(() => {
       publish(true);
-      progressPanel.pushOpacity();
+      progressPanel.pushLook();
     });
     publish(true);
-    progressPanel.pushOpacity();
+    progressPanel.pushLook();
 
     refreshAll();
     setInterval(refreshAll, REFRESH_MS);

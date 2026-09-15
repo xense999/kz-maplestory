@@ -437,11 +437,11 @@ export const useBurnStore = defineStore("burn", () => {
     // 浮動視窗開起來時會喊一聲，補一份現況給它
     await burnPanel.onHello(() => {
       pushPanel();
-      burnPanel.pushOpacity();
+      burnPanel.pushLook();
     });
     // 也主動送一次：浮動視窗可能在監聽器掛好之前就喊過了
     pushPanel();
-    burnPanel.pushOpacity();
+    burnPanel.pushLook();
     for (const s of specs.value) {
       if (!s.hotkeyable) {
         // 這張卡以前可能綁過鍵，把後端的登記與存檔一起清乾淨
