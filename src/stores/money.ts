@@ -130,16 +130,32 @@ export const useMoneyStore = defineStore("money", () => {
       sellMeso(parseAmount(sellNtdText.value), rate.value) !== null,
   );
 
-  /** 面板一次只顯示一邊，所以送過去的是「現在這個模式的那三個數字」 */
+  /**
+   * 面板一次只顯示一邊，所以送過去的是「現在這個模式的那三個數字」。
+   *
+   * ★賣幣送的是**實際成交**的那一組（可販售楓幣／可獲得現金），不是精確值。
+   * 面板只有三列、裝不下結果卡，而交易當下要看的就是真的賣得掉的量。
+   * 主頁不受影響——它直接讀 store 的欄位，不經過這裡。
+   */
   function snapshot(): MoneySnap {
-    const selling = mode.value === "sell";
+    if (mode.value === "sell") {
+      const settled = sellResult.value;
+      return {
+        ntd: settled ? String(settled.cash) : "",
+        meso: settled ? mesoToText(settled.meso) : "",
+        rate: rateText.value,
+        mode: mode.value,
+        anchor: sellAnchor.value,
+        ok: sellOk.value,
+      };
+    }
     return {
-      ntd: selling ? sellNtdText.value : ntdText.value,
-      meso: selling ? sellMesoText.value : mesoText.value,
+      ntd: ntdText.value,
+      meso: mesoText.value,
       rate: rateText.value,
       mode: mode.value,
-      anchor: selling ? sellAnchor.value : anchor.value,
-      ok: selling ? sellOk.value : deal.value !== null,
+      anchor: anchor.value,
+      ok: deal.value !== null,
     };
   }
 

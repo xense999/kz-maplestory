@@ -29,10 +29,13 @@ function derived(field: "ntd" | "meso") {
   return ok.value && anchor.value !== field;
 }
 
+/** 最後一份快照。離開欄位時要拿它把正在打字時擋下來的更新補上 */
+let last: MoneySnap | null = null;
 let stopData: (() => void) | null = null;
 let stopOpacity: (() => void) | null = null;
 
 function apply(snap: MoneySnap) {
+  last = snap;
   anchor.value = snap.anchor;
   mode.value = snap.mode;
   ok.value = snap.ok;
@@ -44,6 +47,16 @@ function apply(snap: MoneySnap) {
   for (const field of ["ntd", "meso", "rate"] as const) {
     if (field !== focused.value) text.value[field] = incoming[field];
   }
+}
+
+/**
+ * 打完字離開欄位：把打字期間擋下來的那份快照補套上去。
+ * 賣幣時主視窗送的是實際成交的數字，所以這一刻欄位才會從「你打的量」
+ * 變成「真的賣得掉的量」。
+ */
+function blur() {
+  focused.value = null;
+  if (last) apply(last);
 }
 
 function edit(field: Field, e: Event) {
@@ -99,7 +112,7 @@ function onDown(e: MouseEvent) {
             placeholder="2800"
             :value="text.rate"
             @focus="focused = 'rate'"
-            @blur="focused = null"
+            @blur="blur()"
             @input="edit('rate', $event)"
           />
           <span class="unit">萬</span>
@@ -115,7 +128,7 @@ function onDown(e: MouseEvent) {
             :class="{ derived: derived('meso') }"
             :value="text.meso"
             @focus="focused = 'meso'"
-            @blur="focused = null"
+            @blur="blur()"
             @input="edit('meso', $event)"
           />
           <span class="unit">元</span>
@@ -131,7 +144,7 @@ function onDown(e: MouseEvent) {
             :class="{ derived: derived('ntd') }"
             :value="text.ntd"
             @focus="focused = 'ntd'"
-            @blur="focused = null"
+            @blur="blur()"
             @input="edit('ntd', $event)"
           />
           <span class="unit">元</span>
