@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
 import { formatMeso, mesoTextInWords } from "../money";
@@ -10,9 +10,6 @@ import { useMoneyStore } from "../stores/money";
  * 算式與寫法都在 money 模組，這一頁只負責欄位與版面。
  */
 const money = useMoneyStore();
-
-/** 設定模式：VIP 是「我是誰」的設定，不是每筆交易要動的東西，所以收在設定裡 */
-const editMode = ref(false);
 
 function value(e: Event) {
   return (e.target as HTMLInputElement).value;
@@ -55,7 +52,7 @@ function derived(field: "ntd" | "meso") {
             <div class="inner">
               <div class="rows fields">
                 <label class="row">
-                  <span class="rlabel">楓幣</span>
+                  <span class="rlabel">需求楓幣</span>
                   <input
                     class="rval"
                     :class="{ derived: derived('meso') }"
@@ -72,7 +69,7 @@ function derived(field: "ntd" | "meso") {
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">現金</span>
+                  <span class="rlabel">約當現金</span>
                   <input
                     class="rval"
                     :class="{ derived: derived('ntd') }"
@@ -161,22 +158,40 @@ function derived(field: "ntd" | "meso") {
           </div>
         </section>
 
-        <!-- 幣值是這一頁的前提，買賣兩張卡都吃它，所以它不屬於任何一張，
-             自己一條放在最下面 -->
+        <!-- 幣值與 VIP 都是這一頁的前提，買賣兩張卡都吃它們，
+             所以不屬於任何一張，自己一條放在最下面 -->
         <section class="card outer rate">
-          <label class="row">
-            <span class="rlabel">幣值</span>
-            <input
-              class="rval"
-              type="text"
-              inputmode="decimal"
-              spellcheck="false"
-              placeholder="2800"
-              :value="money.rateText"
-              @input="money.setRate(value($event))"
-            />
-            <span class="rnote unit">萬 ／ 元</span>
-          </label>
+          <div class="split ratesplit">
+            <div class="inner title">設定</div>
+
+            <div class="inner">
+              <div class="row">
+                <span class="rlabel">幣值</span>
+                <input
+                  class="rval"
+                  type="text"
+                  inputmode="decimal"
+                  spellcheck="false"
+                  placeholder="2800"
+                  :value="money.rateText"
+                  @input="money.setRate(value($event))"
+                />
+                <span class="rnote unit">萬</span>
+
+                <div class="spacer"></div>
+                <span class="viplabel">VIP</span>
+                <button
+                  class="switch"
+                  role="switch"
+                  :class="{ on: money.vip }"
+                  :aria-checked="money.vip"
+                  :title="money.vip ? '手續費 3%' : '手續費 5%'"
+                  @click="money.vip = !money.vip"
+                ></button>
+                <span class="rnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 
@@ -184,29 +199,6 @@ function derived(field: "ntd" | "meso") {
         <div class="spacer"></div>
         <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
 
-        <!-- VIP 短期內不會變，平常不該被誤觸，收在設定鈕上方的小浮層裡 -->
-        <div class="gearctl">
-          <div v-if="editMode" class="pop">
-            <span class="poplabel">VIP</span>
-            <button
-              class="switch"
-              role="switch"
-              :class="{ on: money.vip }"
-              :aria-checked="money.vip"
-              @click="money.vip = !money.vip"
-            ></button>
-            <span class="popnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
-          </div>
-
-          <button
-            class="gear"
-            :class="{ primary: editMode }"
-            :title="editMode ? '完成' : '設定是不是 VIP'"
-            @click="editMode = !editMode"
-          >
-            {{ editMode ? "完成" : "設定" }}
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -249,14 +241,25 @@ function derived(field: "ntd" | "meso") {
 .outer {
   padding: var(--sp-4);
 }
-/* 幣值只有一列，不需要跟上面兩張一樣厚 */
+/* 設定只有一列，不需要跟上面兩張一樣厚 */
 .rate {
-  padding: var(--sp-2) var(--sp-4);
+  padding: var(--sp-2);
+}
+.ratesplit {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.rate .inner {
+  padding: var(--sp-2) var(--sp-3);
 }
 .rate .rlabel {
   width: 36px;
 }
 .rate .rnote {
+  color: var(--text-dim);
+}
+.viplabel {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-dim);
 }
 /* 標題那張小卡只吃它自己的寬度（auto），其餘平分。stretch 讓每一欄一樣高，
@@ -299,40 +302,46 @@ function derived(field: "ntd" | "meso") {
   color: var(--text-strong);
   background: var(--wash);
 }
-.gear {
-  flex: none;
+/* 標題那張小卡只吃它自己的寬度（auto），其餘平分。stretch 讓每一欄一樣高，
+   一邊比另一邊矮會看起來像沒寫完 */
+.split {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: stretch;
+  /* 四張小卡都是兩列，高度自然一致，不必再撐 */
 }
-/* 浮層貼著按鈕上緣，跟浮動視窗那顆的透明度拉桿同一套長相 */
-.gearctl {
-  position: relative;
-  flex: none;
+/* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .title {
+    grid-row: 1 / -1;
+  }
 }
-.pop {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  z-index: 30;
-  margin-bottom: 6px;
+.inner {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 8px 12px;
-  background: var(--popover);
-  border: 1px solid var(--control-border);
+  flex-direction: column;
+  padding: var(--sp-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  backdrop-filter: blur(28px) saturate(1.8);
-  white-space: nowrap;
 }
-.poplabel {
-  font-size: 14px;
-  font-weight: 600;
+/* 標題直排：兩個字上下疊，小卡就只要一個字寬，橫向全留給數字。
+   ★用 grid 置中而不是沿用 .inner 的 flex：直書時 flex 的主軸會跟著轉向，
+   column 會變成橫的。 */
+.title {
+  display: grid;
+  place-items: center;
+  writing-mode: vertical-rl;
+  padding: var(--sp-3) 6px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   color: var(--text-strong);
+  background: var(--wash);
 }
-.popnote {
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
 /* 兩張卡的內容用同一組規則：列高、欄寬、字級都一致，左右才對得起來 */
 .rows {
   flex: 1;
@@ -356,12 +365,9 @@ function derived(field: "ntd" | "meso") {
   font-weight: 600;
   color: var(--text-dim);
 }
-/* 標籤欄各自貼合自己的字數：輸入那側是兩三個字，結果那側到五個字
-   （可販售楓幣）。共用一個寬度的話，不是短的那邊空一大段，就是長的那邊擠出來。
+/* 結果那側的標籤到五個字（可販售楓幣），輸入那側四個字。
+   共用一個寬度的話，不是短的那邊空一大段，就是長的那邊擠出來。
    列高與字級仍然一致，所以兩側的列還是對齊的。 */
-.fields .rlabel {
-  width: 36px;
-}
 .results .rlabel {
   width: 84px;
 }
