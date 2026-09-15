@@ -12,6 +12,7 @@ import {
   sellMeso,
   sellNtd,
   rateToText,
+  convertRate,
   W_PER_YI,
   W,
 } from "./money";
@@ -159,13 +160,19 @@ describe("幣值的兩種單位", () => {
     expect(W_PER_YI).toBe(10_000);
   });
 
-  it("商城報價 5 億／元 換算成 50,000 萬／元", () => {
-    expect(rateToText(5 * W_PER_YI)).toBe("50000");
+  it("商城報 5（一億要 5 元）＝ 幣值 2,000 萬", () => {
+    expect(convertRate(5)).toBe(2000);
   });
 
-  it("來回換算不掉精度", () => {
-    expect(rateToText(2800 / W_PER_YI)).toBe("0.28");
-    expect(rateToText(0.28 * W_PER_YI)).toBe("2800");
+  it("倒數關係，所以同一支函式來回都對", () => {
+    expect(convertRate(convertRate(2800)!)).toBeCloseTo(2800, 9);
+    expect(convertRate(2000)).toBe(5);
+  });
+
+  it("0 與負數算不出來", () => {
+    expect(convertRate(0)).toBeNull();
+    expect(convertRate(-5)).toBeNull();
+    expect(convertRate(Number.NaN)).toBeNull();
   });
 
   it("不帶千分位——那欄一直在被打字", () => {

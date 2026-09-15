@@ -26,11 +26,19 @@ export const W = 10_000;
 /** 1 億楓幣 */
 export const YI = 100_000_000;
 
-/**
- * 幣值的兩種講法：每台幣多少「萬」（跟其他玩家談價用的）、
- * 每台幣多少「億」（商城報價用的）。同一個數字，差 10,000 倍。
- */
+/** 一億等於幾萬 */
 export const W_PER_YI = YI / W;
+
+/**
+ * 商城的報價與幣值互換。
+ *
+ * ★兩邊講的是相反的事：幣值是「一台幣換多少萬」，商城報的是「一億要多少台幣」。
+ * 所以它們是倒數關係，不是換單位——填 5 是幣值 2,000 萬，不是 50,000 萬。
+ * 也因為是倒數，同一支函式兩個方向都能用。
+ */
+export function convertRate(value: number): number | null {
+  return Number.isFinite(value) && value > 0 ? W_PER_YI / value : null;
+}
 
 /**
  * 幣值填回欄位用：最多六位小數、不帶千分位。

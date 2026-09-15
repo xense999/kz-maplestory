@@ -7,8 +7,8 @@ import {
   fromWanted,
   mesoToText,
   parseAmount,
+  convertRate,
   rateToText,
-  W_PER_YI,
   sellDeal,
   sellMeso,
   sellNtd,
@@ -102,11 +102,11 @@ export const useMoneyStore = defineStore("money", () => {
   watch(
     [rateText, shopRateText, rateAnchor],
     () => {
-      if (rateAnchor.value === "rate") {
-        shopRateText.value = rateToText(parseAmount(rateText.value) / W_PER_YI);
-      } else {
-        rateText.value = rateToText(parseAmount(shopRateText.value) * W_PER_YI);
-      }
+      // 兩邊是倒數關係，所以兩個方向呼叫的是同一支
+      const from = rateAnchor.value === "rate" ? rateText : shopRateText;
+      const to = rateAnchor.value === "rate" ? shopRateText : rateText;
+      const converted = convertRate(parseAmount(from.value));
+      to.value = converted === null ? "" : rateToText(converted);
     },
     { immediate: true },
   );

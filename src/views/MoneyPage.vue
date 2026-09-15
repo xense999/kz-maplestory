@@ -191,7 +191,7 @@ function derived(field: "ntd" | "meso") {
               </div>
             </div>
 
-            <!-- 商城報價是用「億」講的，跟左邊是同一個幣值換個單位，改哪一個另一個就跟著動 -->
+            <!-- 商城報的是「一億要多少台幣」，跟左邊的幣值是倒數關係，不是換單位 -->
             <div class="inner">
               <div class="row">
                 <span class="rlabel">商城幣值</span>
@@ -201,7 +201,7 @@ function derived(field: "ntd" | "meso") {
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
-                  placeholder="0.28"
+                  placeholder="5"
                   :value="money.shopRateText"
                   @input="money.setShopRate(value($event))"
                 />
