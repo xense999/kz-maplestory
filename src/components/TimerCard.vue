@@ -160,6 +160,19 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
     <div class="head">
       <span class="name">{{ store.spec(id).label }}</span>
       <span v-if="store.spec(id).hint" class="hint">{{ store.spec(id).hint }}</span>
+      <!-- 時長檔位跟在標題後面：它是這張卡的設定，不是內容，不值得自己佔一列 -->
+      <div v-if="store.spec(id).presets" class="chips">
+        <button
+          v-for="p in store.spec(id).presets"
+          :key="p"
+          class="chip"
+          :class="{ on: store.timers[id].durationMs === p }"
+          @click="store.setDuration(id, p)"
+        >
+          {{ span(p) }}
+        </button>
+      </div>
+
       <div class="spacer"></div>
       <!-- 這張卡片自己沒有的東西（浮動視窗、試聽…）由外面塞進來 -->
       <slot name="head" />
@@ -193,22 +206,6 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
       </div>
     </div>
 
-    <!-- 時長可選的卡片（出租輪迴）才有這一列 -->
-    <div v-if="store.spec(id).presets" class="spans">
-      <div class="chips">
-        <button
-          v-for="p in store.spec(id).presets"
-          :key="p"
-          class="chip"
-          :class="{ on: store.timers[id].durationMs === p }"
-          @click="store.setDuration(id, p)"
-        >
-          {{ span(p) }}
-        </button>
-      </div>
-
-    </div>
-
     <div class="main">
       <!-- 設定模式：大數字本身就是欄位，改的就是眼前這個時間 -->
       <div v-if="editing && !store.spec(id).presets" class="digits edit">
@@ -236,8 +233,12 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
           @keydown.enter="commitSkillDuration()"
         />
       </div>
-      <!-- 出租沒有另外的「自訂」入口：還沒起算時，眼前這個數字本身就是欄位 -->
-      <div v-else-if="store.spec(id).presets && state() === 'idle'" class="digits edit">
+      <!-- 出租沒有另外的「自訂」入口：設定模式下，眼前這個數字本身就是欄位。
+           已經在跑的時段不給改——那是客戶付過錢的時間 -->
+      <div
+        v-else-if="editing && store.spec(id).presets && state() === 'idle'"
+        class="digits edit"
+      >
         <input
           v-model.number="rentalH"
           type="number"
@@ -351,19 +352,14 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
   border-color: var(--accent);
   box-shadow: var(--ring);
 }
-/* 固定一列不換行：換行等於卡片高度會跳動 */
-.spans {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  min-height: 32px;
-}
 /* 時長是「幾個平行的選擇」而不是一個值的幾個檔位，所以不共用 segmented 軌道：
    各自獨立的圓角矩形，選中的那顆才填強調色 */
 .chips {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  /* 不換行：換行等於卡片高度會跳動 */
+  flex: none;
 }
 .chip {
   height: 32px;
