@@ -49,6 +49,8 @@ function gain(v: number | null) {
         <div class="text">
           <span class="name">{{ r.name || "未設定" }}</span>
           <span class="sub">Lv.{{ r.level ?? "—" }} · {{ pct(r.expPercent) }}</span>
+          <!-- 疊在遊戲上時，一條長條比百分比數字更快讀得懂「快滿了沒」 -->
+          <div class="bar"><i :style="{ width: (r.expPercent ?? 0) + '%' }"></i></div>
         </div>
         <span class="today">{{ gain(r.today) }}</span>
       </div>
@@ -138,6 +140,23 @@ function gain(v: number | null) {
   font-variant-numeric: tabular-nums;
   text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
+/* 底色可以淡到 0，所以軌道要自己夠深，填色才看得出來停在哪 */
+.bar {
+  height: 0.3em;
+  margin-top: 0.18em;
+  border-radius: 0.15em;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+.bar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
 .today {
   font-size: 1.2em;
   font-weight: 700;
