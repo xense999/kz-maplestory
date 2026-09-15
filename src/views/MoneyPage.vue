@@ -231,17 +231,24 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
 .outer {
   padding: var(--sp-3);
 }
-/* 兩張小卡等寬，且 stretch 成一樣高——一邊比另一邊矮會看起來像沒寫完 */
+/* 標題那張小卡只吃它自己的寬度（auto），其餘平分。stretch 讓每一欄一樣高，
+   一邊比另一邊矮會看起來像沒寫完 */
 .split {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: stretch;
 }
-/* 視窗窄到兩欄各自塞不下時就疊成上下 */
+.split.sell {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+/* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
 @media (max-width: 900px) {
   .split {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .title {
+    grid-row: 1 / -1;
   }
 }
 .inner {
@@ -251,6 +258,20 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+/* 標題直排：兩個字上下疊，小卡就只要一個字寬，橫向全留給數字。
+   ★用 grid 置中而不是沿用 .inner 的 flex：直書時 flex 的主軸會跟著轉向，
+   column 會變成橫的。 */
+.title {
+  display: grid;
+  place-items: center;
+  writing-mode: vertical-rl;
+  padding: var(--sp-3) 6px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text-strong);
+  background: var(--wash);
 }
 .gear {
   flex: none;
