@@ -198,6 +198,9 @@ function trimmed(value: number): string {
 /**
  * 談價時講的寫法：不到一億就寫「萬」（`2,660 萬`），滿一億才進位成
  * `1,400 億`，有零頭寫成 `1,400 億 2,660 萬`。
+ *
+ * ★一律無條件捨去到整數萬：談價不會講到萬以下，而捨去的方向保證不會
+ * 顯示成比實際拿得到的多。
  */
 export function formatMeso(meso: number): string {
   if (!Number.isFinite(meso)) return "—";
@@ -207,9 +210,9 @@ export function formatMeso(meso: number): string {
   const yi = Math.floor(m / YI);
   const restW = (m - yi * YI) / W;
 
-  if (yi === 0) return `${sign}${trimmed(restW)} 萬`;
+  if (yi === 0) return `${sign}${groups(String(Math.floor(restW)))} 萬`;
 
   const head = `${sign}${groups(String(yi))} 億`;
-  // 零頭不到 0.01 萬就不寫——寫出來是「1,400 億 0 萬」這種沒意義的尾巴
-  return restW >= 0.01 ? `${head} ${trimmed(restW)} 萬` : head;
+  // 零頭不到一萬就不寫——寫出來是「1,400 億 0 萬」這種沒意義的尾巴
+  return restW >= 1 ? `${head} ${groups(String(Math.floor(restW)))} 萬` : head;
 }

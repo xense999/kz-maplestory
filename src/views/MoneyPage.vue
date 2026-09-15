@@ -208,7 +208,7 @@ function derived(field: "ntd" | "meso") {
                 <span class="sep">|</span>
                 <!-- 商城那個報價換算成幣值是多少：跟商城買，一元實際拿多少楓幣 -->
                 <span class="rnote shoprate">
-                  {{ money.shopRate === null ? "—" : formatMeso(Math.floor(money.shopRate) * W) }}
+                  {{ money.shopRate === null ? "—" : formatMeso(money.shopRate * W) }}
                 </span>
               </div>
             </div>
@@ -351,7 +351,7 @@ function derived(field: "ntd" | "meso") {
   flex: none;
   margin: 0 var(--sp-3);
   color: var(--text-faint);
-  opacity: 0.6;
+  opacity: 0.35;
 }
 /* 換算結果是算出來的，用跟其他算出來的數字同一個顏色。
    左邊用一條分隔線跟單位隔開 */
