@@ -257,6 +257,9 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-3);
   align-items: stretch;
+  /* 兩張大卡一樣高。賣幣只有兩列，不撐起來的話下面那張會矮一截，
+     看起來像沒寫完。高度＝三列＋兩段列距＋小卡上下內距＋框線 */
+  min-height: calc(3 * 34px + 2 * var(--sp-3) + 2 * var(--sp-4) + 2px);
 }
 /* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
 @media (max-width: 900px) {
