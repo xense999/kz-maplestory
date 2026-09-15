@@ -202,7 +202,7 @@ async function placeInsideMainOnce(win: WebviewWindow) {
   }
 }
 
-/** 輪燒面板送的東西：每個計時器叫什麼、什麼時候到期 */
+/** 計時器面板送的東西：每個計時器叫什麼、什麼時候到期 */
 export interface TimerSnap {
   id: string;
   label: string;

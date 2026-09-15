@@ -24,8 +24,8 @@ export const NAV: NavItem[] = [
   },
   {
     id: "burn",
-    label: "輪燒計時器",
-    hint: "輪迴與燃燒的場次計時",
+    label: "計時器",
+    hint: "出租、加持、輪迴與燃燒的計時",
     view: BurnTimer,
   },
   {

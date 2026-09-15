@@ -47,29 +47,38 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
   <div class="page">
     <div class="body">
       <div class="scroller">
-        <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列；兩顆技能是它底下的操作 -->
-      <TimerCard
-        id="rental"
-        :editing="editMode"
-        :recording="recording === 'rental'"
-        @record="onRecord"
-      />
+        <!-- 上排：出租（客戶的錢）與加持；下排是出租要用的那兩顆技能 -->
+        <div class="pair">
+          <TimerCard
+            id="rental"
+            :editing="editMode"
+            :recording="recording === 'rental'"
+            @record="onRecord"
+          />
+          <TimerCard
+            id="blessing"
+            compact
+            :editing="editMode"
+            :recording="recording === 'blessing'"
+            @record="onRecord"
+          />
+        </div>
 
-      <div class="pair">
-        <TimerCard
-          id="reincarnation"
-          compact
-          :editing="editMode"
-          :recording="recording === 'reincarnation'"
-          @record="onRecord"
-        />
-        <TimerCard
-          id="burning"
-          compact
-          :editing="editMode"
-          :recording="recording === 'burning'"
-          @record="onRecord"
-        />
+        <div class="pair">
+          <TimerCard
+            id="reincarnation"
+            compact
+            :editing="editMode"
+            :recording="recording === 'reincarnation'"
+            @record="onRecord"
+          />
+          <TimerCard
+            id="burning"
+            compact
+            :editing="editMode"
+            :recording="recording === 'burning'"
+            @record="onRecord"
+          />
         </div>
       </div>
 

@@ -5,13 +5,13 @@ import { onHotkey, unwatchKey, watchKey, type Hotkey } from "../hotkey";
 import { burnPanel } from "../float";
 
 /**
- * 輪燒計時器：輪迴、燃燒、出租輪迴各一組。
+ * 計時器：出租、加持、輪迴、燃燒各一組。
  *
  * 時間存「到期時刻」（epoch ms）而不是「還剩幾秒」：睡眠喚醒、視窗最小化、
  * setInterval 漂移都不會讓倒數失準——差幾秒在這裡就是差一次技能。
  */
 
-export type TimerId = "reincarnation" | "burning" | "rental";
+export type TimerId = "reincarnation" | "burning" | "rental" | "blessing";
 
 interface Spec {
   id: TimerId;
@@ -23,9 +23,14 @@ interface Spec {
   presets?: number[];
   /**
    * 這張卡有沒有自己的按鍵。
-   * 出租沒有：它跟著下面兩張技能卡的第一次觸發起算，不必另外綁一顆鍵。
+   * 出租沒有：它跟著輪迴／燃燒的第一次觸發起算，不必另外綁一顆鍵。
    */
   hotkeyable: boolean;
+  /**
+   * 按這張卡的鍵時，要不要順便把出租的計時起算掉。
+   * 只有出租賣的那兩顆技能算數；加持是自己在用的，不該動到客戶的時段。
+   */
+  startsRental?: boolean;
 }
 
 const MIN = 60_000;
@@ -36,7 +41,7 @@ function snapDuration(ms: number) {
   return Math.max(STEP, Math.round(ms / STEP) * STEP);
 }
 
-// 順序＝畫面上的順序（浮動視窗也吃這張表），出租在最上面
+// 順序＝畫面上的順序（浮動視窗也吃這張表）
 export const SPECS: Spec[] = [
   {
     id: "rental",
@@ -47,11 +52,19 @@ export const SPECS: Spec[] = [
     presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 180 * MIN],
   },
   {
+    id: "blessing",
+    label: "加持計時器",
+    hint: "每按一次重算；基本時間在設定裡改",
+    durationMs: 30 * MIN,
+    hotkeyable: true,
+  },
+  {
     id: "reincarnation",
     label: "輪迴計時器",
     hint: "起算後 9 分 50 秒提醒，每按一次重算",
     durationMs: 9 * MIN + 50_000,
     hotkeyable: true,
+    startsRental: true,
   },
   {
     id: "burning",
@@ -59,6 +72,7 @@ export const SPECS: Spec[] = [
     hint: "起算後 14 分 50 秒提醒，每按一次重算",
     durationMs: 14 * MIN + 50_000,
     hotkeyable: true,
+    startsRental: true,
   },
 ];
 
@@ -208,7 +222,7 @@ export const useBurnStore = defineStore("burn", () => {
     // 那種事件一律不理，否則每按一次技能鍵都會把客戶的時間打掉重算。
     if (!spec(id).hotkeyable) return;
     start(id);
-    if (timers.rental.endAt === null) start("rental");
+    if (spec(id).startsRental && timers.rental.endAt === null) start("rental");
   }
 
   function reset(id: TimerId) {
