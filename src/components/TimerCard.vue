@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
 
 const props = defineProps<{
@@ -13,6 +13,23 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ record: [TimerId] }>();
+
+/** 改名中的那張卡就是這一張。只有自己加的卡片可以改名 */
+const renaming = ref(false);
+const nameEl = ref<HTMLInputElement | null>(null);
+
+async function beginRename() {
+  if (!store.spec(props.id).removable) return;
+  renaming.value = true;
+  await nextTick();
+  nameEl.value?.focus();
+  nameEl.value?.select();
+}
+
+function commitRename(value: string) {
+  renaming.value = false;
+  store.renameBlessing(props.id, value);
+}
 
 const store = useBurnStore();
 
@@ -158,7 +175,25 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
 <template>
   <article class="card timer" :class="[state(), { compact }]">
     <div class="head">
-      <span class="name">{{ store.spec(id).label }}</span>
+      <!-- 自己加的卡片：雙擊標題改名。固定的三張不給改 -->
+      <input
+        v-if="renaming"
+        ref="nameEl"
+        class="name-edit"
+        type="text"
+        :value="store.spec(id).label"
+        spellcheck="false"
+        @keydown.enter="commitRename(($event.target as HTMLInputElement).value)"
+        @blur="commitRename(($event.target as HTMLInputElement).value)"
+      />
+      <span
+        v-else
+        class="name"
+        :title="store.spec(id).removable ? '雙擊改名' : ''"
+        @dblclick="beginRename()"
+      >
+        {{ store.spec(id).label }}
+      </span>
       <span v-if="store.spec(id).hint" class="hint">{{ store.spec(id).hint }}</span>
       <!-- 時長檔位跟在標題後面：它是這張卡的設定，不是內容，不值得自己佔一列 -->
       <div v-if="store.spec(id).presets" class="chips">
@@ -204,6 +239,19 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
           @click="store.setHotkeyEnabled(id, !store.timers[id].hotkeyOn)"
         ></button>
       </div>
+
+      <!-- 刪除只在設定模式出現：平常這張卡是拿來按的，不該一碰就消失 -->
+      <button
+        v-if="editing && store.spec(id).removable"
+        class="plain x"
+        title="移除這張卡片"
+        @click="store.removeBlessing(id)"
+      >
+        <svg viewBox="0 0 12 12" width="11" height="11">
+          <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.4"
+                stroke-linecap="round" />
+        </svg>
+      </button>
     </div>
 
     <div class="main">
@@ -354,6 +402,21 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
 }
 /* 時長是「幾個平行的選擇」而不是一個值的幾個檔位，所以不共用 segmented 軌道：
    各自獨立的圓角矩形，選中的那顆才填強調色 */
+/* 改名中的標題：看起來還是標題，只是可以打字 */
+.name-edit {
+  width: 140px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  flex: none;
+}
+.x {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  flex: none;
+}
 .chips {
   display: flex;
   align-items: center;

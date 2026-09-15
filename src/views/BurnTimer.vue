@@ -47,22 +47,13 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
   <div class="page">
     <div class="body">
       <div class="scroller">
-        <!-- 上排：出租（客戶的錢）與加持；下排是出租要用的那兩顆技能 -->
-        <div class="pair">
-          <TimerCard
-            id="rental"
-            :editing="editMode"
-            :recording="recording === 'rental'"
-            @record="onRecord"
-          />
-          <TimerCard
-            id="blessing"
-            compact
-            :editing="editMode"
-            :recording="recording === 'blessing'"
-            @record="onRecord"
-          />
-        </div>
+        <!-- 出租是這一頁的主軸（客戶的錢），佔滿一整列 -->
+        <TimerCard
+          id="rental"
+          :editing="editMode"
+          :recording="recording === 'rental'"
+          @record="onRecord"
+        />
 
         <div class="pair">
           <TimerCard
@@ -80,10 +71,24 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
             @record="onRecord"
           />
         </div>
+
+        <!-- 加持是同一個模板生出來的，要幾張就開幾張 -->
+        <div v-if="store.blessings.length" class="pair">
+          <TimerCard
+            v-for="b in store.blessings"
+            :key="b.id"
+            :id="b.id"
+            compact
+            :editing="editMode"
+            :recording="recording === b.id"
+            @record="onRecord"
+          />
+        </div>
       </div>
 
       <div class="pagebar">
         <button v-if="ringing" class="primary" @click="store.acknowledge()">停止提醒</button>
+        <button @click="store.addBlessing()">＋ 新增加持</button>
         <div class="spacer"></div>
         <FloatButton :panel="burnPanel" hint="開一個永遠置頂的小視窗，遊戲中也看得到倒數" />
 

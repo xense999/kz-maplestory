@@ -11,7 +11,8 @@ import { burnPanel } from "../float";
  * setInterval 漂移都不會讓倒數失準——差幾秒在這裡就是差一次技能。
  */
 
-export type TimerId = "reincarnation" | "burning" | "rental" | "blessing";
+/** 固定三張卡的代號是寫死的；加持是動態的，代號在新增時才生出來 */
+export type TimerId = string;
 
 interface Spec {
   id: TimerId;
@@ -31,6 +32,8 @@ interface Spec {
    * 只有出租賣的那兩顆技能算數；加持是自己在用的，不該動到客戶的時段。
    */
   startsRental?: boolean;
+  /** 使用者自己加的卡片：可以改名、可以刪掉 */
+  removable?: boolean;
 }
 
 const MIN = 60_000;
@@ -41,8 +44,8 @@ function snapDuration(ms: number) {
   return Math.max(STEP, Math.round(ms / STEP) * STEP);
 }
 
-// 順序＝畫面上的順序（浮動視窗也吃這張表）
-export const SPECS: Spec[] = [
+// 固定的三張。加持是動態的，接在這串後面（見 specs）
+const FIXED: Spec[] = [
   {
     id: "rental",
     label: "出租計時",
@@ -50,13 +53,6 @@ export const SPECS: Spec[] = [
     durationMs: 30 * MIN,
     hotkeyable: false,
     presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN],
-  },
-  {
-    id: "blessing",
-    label: "加持計時器",
-    hint: "每按一次重算；基本時間在設定裡改",
-    durationMs: 30 * MIN,
-    hotkeyable: true,
   },
   {
     id: "reincarnation",
@@ -91,6 +87,26 @@ interface TimerState {
 }
 
 const SETTINGS_KEY = "kz-maplestory:burn";
+const BLESSING_KEY = "kz-maplestory:burn:blessings";
+
+/** 加持計時器的預設時長（新增一張時用的） */
+const BLESSING_MS = 30 * MIN;
+
+/** 使用者自己加的加持卡：只有「叫什麼」要存在自己這份，其餘跟固定卡走同一套 */
+interface Blessing {
+  id: TimerId;
+  label: string;
+}
+
+function loadBlessings(): Blessing[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BLESSING_KEY) ?? "null");
+    if (!Array.isArray(raw)) return [{ id: "blessing", label: "加持計時器" }];
+    return raw.filter((b) => b && typeof b.id === "string" && typeof b.label === "string");
+  } catch {
+    return [{ id: "blessing", label: "加持計時器" }];
+  }
+}
 
 interface Saved {
   hotkey?: Hotkey | null;
@@ -120,22 +136,54 @@ export const useBurnStore = defineStore("burn", () => {
     return s.presets ? snapDuration(stored) : Math.max(1000, Math.round(stored));
   }
 
-  const timers = reactive(
-    Object.fromEntries(
-      SPECS.map((s) => [
-        s.id,
-        {
-          endAt: null,
-          runMs: initialDuration(s),
-          durationMs: initialDuration(s),
-          fired: false,
-          hotkey: saved[s.id]?.hotkey ?? null,
-          hotkeyOn: false,
-          error: "",
-        } as TimerState,
-      ]),
-    ),
-  ) as Record<TimerId, TimerState>;
+  const blessings = ref<Blessing[]>(loadBlessings());
+
+  /**
+   * 畫面上的卡片 ＝ 固定三張 ＋ 使用者自己加的加持卡。
+   * 加持卡都是同一個模板生出來的，差別只有代號與名字。
+   */
+  const specs = computed<Spec[]>(() => [
+    ...FIXED,
+    ...blessings.value.map((b) => ({
+      id: b.id,
+      label: b.label,
+      hint: "每按一次重算；基本時間在設定裡改",
+      durationMs: BLESSING_MS,
+      hotkeyable: true,
+      removable: true,
+    })),
+  ]);
+
+  const timers = reactive({}) as Record<TimerId, TimerState>;
+
+  function makeTimer(s: Spec): TimerState {
+    return {
+      endAt: null,
+      runMs: initialDuration(s),
+      durationMs: initialDuration(s),
+      fired: false,
+      hotkey: saved[s.id]?.hotkey ?? null,
+      hotkeyOn: false,
+      error: "",
+    };
+  }
+
+  /** 卡片增減時補上／收掉對應的計時狀態。刪掉的那張要一起把按鍵登記解除 */
+  watch(
+    specs,
+    (list) => {
+      const live = new Set(list.map((s) => s.id));
+      for (const s of list) {
+        if (!timers[s.id]) timers[s.id] = makeTimer(s);
+      }
+      for (const id of Object.keys(timers)) {
+        if (live.has(id)) continue;
+        if (timers[id].hotkeyOn) void unwatchKey(id);
+        delete timers[id];
+      }
+    },
+    { immediate: true },
+  );
 
   /**
    * 目前正在為「哪幾張卡」響鈴。
@@ -159,7 +207,7 @@ export const useBurnStore = defineStore("burn", () => {
   const now = ref(Date.now());
   setInterval(() => {
     now.value = Date.now();
-    for (const s of SPECS) {
+    for (const s of specs.value) {
       const t = timers[s.id];
       if (t.endAt !== null && !t.fired && now.value >= t.endAt) {
         t.fired = true;
@@ -175,7 +223,7 @@ export const useBurnStore = defineStore("burn", () => {
         SETTINGS_KEY,
         JSON.stringify(
           Object.fromEntries(
-            SPECS.map((s) => [
+            specs.value.map((s) => [
               s.id,
               {
                 hotkey: timers[s.id].hotkey,
@@ -188,13 +236,45 @@ export const useBurnStore = defineStore("burn", () => {
           ),
         ),
       );
+      localStorage.setItem(
+        BLESSING_KEY,
+        JSON.stringify(blessings.value.map(({ id, label }) => ({ id, label }))),
+      );
     } catch {
       /* 存不了就只在這次執行有效 */
     }
   }
 
+  function addBlessing() {
+    const id = `blessing-${Date.now().toString(36)}`;
+    blessings.value.push({ id, label: "加持計時器" });
+    persist();
+  }
+
+  function removeBlessing(id: TimerId) {
+    blessings.value = blessings.value.filter((b) => b.id !== id);
+    persist();
+  }
+
+  /** 雙擊標題改名。空白名字沒有意義，留著原本的 */
+  function renameBlessing(id: TimerId, label: string) {
+    const b = blessings.value.find((x) => x.id === id);
+    if (!b) return;
+    const next = label.trim();
+    if (next) b.label = next;
+    persist();
+  }
+
+  /**
+   * 會出現在浮動面板上的卡片：有開關的就看開關（沒開＝那顆鍵根本不會起算，
+   * 列出來只是佔位），沒有開關的（出租）一律顯示。
+   */
+  const onPanel = computed(() =>
+    specs.value.filter((s) => !s.hotkeyable || timers[s.id]?.hotkeyOn),
+  );
+
   function spec(id: TimerId) {
-    return SPECS.find((s) => s.id === id)!;
+    return specs.value.find((s) => s.id === id)!;
   }
 
   /** 執行中回剩餘毫秒（可為負＝已超時）；沒起算回 null */
@@ -239,7 +319,7 @@ export const useBurnStore = defineStore("burn", () => {
    * 付過錢的時間——為了調技能秒數就把它清掉，是這個程式最不該犯的錯。
    */
   function resetEditable() {
-    for (const s of SPECS) {
+    for (const s of specs.value) {
       if (!s.presets) reset(s.id);
     }
   }
@@ -250,7 +330,7 @@ export const useBurnStore = defineStore("burn", () => {
    * 跟著開新的一輪，等於下一位客戶要自己再按一次卡片上的按鈕。
    */
   function acknowledge() {
-    for (const s of SPECS) {
+    for (const s of specs.value) {
       const t = timers[s.id];
       if (t.endAt !== null && t.endAt <= Date.now()) {
         t.endAt = null;
@@ -310,7 +390,7 @@ export const useBurnStore = defineStore("burn", () => {
 
   /** 浮動視窗只需要「叫什麼、什麼時候到期」，其他狀態不必過去 */
   function snapshot() {
-    return SPECS.map((s) => ({
+    return onPanel.value.map((s) => ({
       id: s.id,
       label: s.label,
       endAt: timers[s.id].endAt,
@@ -319,9 +399,19 @@ export const useBurnStore = defineStore("burn", () => {
   }
   // 每 250ms 的 tick 不會動 endAt，所以這裡只在真的起算／歸零／改時長時送
   watch(
-    () => SPECS.map((s) => `${timers[s.id].endAt}:${timers[s.id].durationMs}`).join(","),
-    () => burnPanel.push(snapshot()),
+    () =>
+      onPanel.value
+        .map((s) => `${s.id}:${timers[s.id].endAt}:${timers[s.id].durationMs}`)
+        .join(","),
+    () => pushPanel(),
   );
+
+  /** 面板的高度跟著列數走：開幾張就多高 */
+  function pushPanel() {
+    const rows = snapshot();
+    burnPanel.push(rows);
+    void burnPanel.fitRows(Math.max(1, rows.length)).catch(() => {});
+  }
 
   let wired = false;
   /** 接後端事件、把上次開著的監聽接回去。整個 app 只做一次 */
@@ -329,17 +419,17 @@ export const useBurnStore = defineStore("burn", () => {
     if (wired) return;
     wired = true;
     await onHotkey((id) => {
-      if (SPECS.some((s) => s.id === id)) pressKey(id as TimerId);
+      if (specs.value.some((s) => s.id === id)) pressKey(id);
     });
     // 浮動視窗開起來時會喊一聲，補一份現況給它
     await burnPanel.onHello(() => {
-      burnPanel.push(snapshot());
+      pushPanel();
       burnPanel.pushOpacity();
     });
     // 也主動送一次：浮動視窗可能在監聽器掛好之前就喊過了
-    burnPanel.push(snapshot());
+    pushPanel();
     burnPanel.pushOpacity();
-    for (const s of SPECS) {
+    for (const s of specs.value) {
       if (!s.hotkeyable) {
         // 這張卡以前可能綁過鍵，把後端的登記與存檔一起清乾淨
         await unwatchKey(s.id).catch(() => {});
@@ -354,7 +444,7 @@ export const useBurnStore = defineStore("burn", () => {
     }
   }
 
-  const anyRunning = computed(() => SPECS.some((s) => timers[s.id].endAt !== null));
+  const anyRunning = computed(() => specs.value.some((s) => timers[s.id].endAt !== null));
 
   return {
     timers,
@@ -363,6 +453,11 @@ export const useBurnStore = defineStore("burn", () => {
     spec,
     remaining,
     start,
+    specs,
+    blessings,
+    addBlessing,
+    removeBlessing,
+    renameBlessing,
     pressKey,
     reset,
     resetEditable,
