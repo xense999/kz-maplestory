@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
-import { apiKey } from "../apikey";
 import { progressPanel, type CharacterSnap } from "../float";
 import {
   fetchCharacter,
@@ -153,15 +152,11 @@ export const useRosterStore = defineStore("roster", () => {
       t.error = "";
       return;
     }
-    if (!apiKey.value) {
-      t.error = "設定頁還沒填 API 金鑰";
-      return;
-    }
     t.loading = true;
     try {
       // 抓失敗時刻意不清掉舊的 info：暫時斷網不該讓畫面變空白
-      t.info = await fetchCharacter(t.name, apiKey.value);
-      const hist = await fetchHistory(t.name, apiKey.value, t.info.level, t.info.expPercent);
+      t.info = await fetchCharacter(t.name);
+      const hist = await fetchHistory(t.name, t.info.level, t.info.expPercent);
       t.growth = hist.growth;
       t.error = "";
     } catch (e) {

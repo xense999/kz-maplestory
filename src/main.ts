@@ -28,7 +28,7 @@ if (view) {
 }
 
 // 桌面程式不該跳出瀏覽器的右鍵選單（重新整理、檢視原始碼那一套）。
-// 但輸入框要留著——右鍵貼上是那裡唯一的貼上方式（金鑰欄位的提示就是叫人貼上）。
+// 但輸入框要留著——右鍵貼上是那裡唯一的貼上方式（角色名稱、幣值那些欄位都會用到）。
 // 元件自己的 contextmenu handler 照常運作，這裡只擋預設選單。
 document.addEventListener("contextmenu", (e) => {
   const el = e.target as HTMLElement | null;

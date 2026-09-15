@@ -7,7 +7,6 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { disable as disableAutostart, enable as enableAutostart, isEnabled } from "@tauri-apps/plugin-autostart";
 import { setTheme, themePref, type ThemePref } from "../theme";
 import { setVolume, testBeep, volume } from "../alarm";
-import { apiKey, setApiKey } from "../apikey";
 
 const AUTHOR_DISCORD = "xense999";
 const GITHUB_URL = "https://github.com/xense999";
@@ -18,14 +17,6 @@ const THEMES: { id: ThemePref; label: string }[] = [
   { id: "light", label: "淺色" },
   { id: "dark", label: "深色" },
 ];
-
-/** 金鑰預設遮起來：這東西會被截圖、也會被旁邊的人看到 */
-const revealKey = ref(false);
-/** 「怎麼拿到金鑰」的說明，點問號才展開 */
-const keyHelp = ref(false);
-
-/** 台版角色資訊 API 的頁面。從這裡登入、建立應用程式、拿金鑰 */
-const NEXON_OPENAPI = "https://openapi.nexon.com/game/maplestorytw/?id=49";
 
 /** 開機自動啟動。狀態的真實來源是系統本身，所以開頁時去問它，不自己記一份 */
 const autostart = ref(false);
@@ -177,45 +168,6 @@ async function copyDiscord() {
 
       <section class="card">
         <div class="row">
-          <span class="row-title">
-            API 金鑰
-            <button class="info" title="怎麼取得金鑰" @click="keyHelp = !keyHelp">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
-                <circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.8" />
-                <path d="M12 11v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                <circle cx="12" cy="7.75" r="1.05" fill="currentColor" />
-              </svg>
-            </button>
-          </span>
-          <div class="keyfield">
-            <input
-              type="text"
-              :class="{ masked: !revealKey }"
-              :value="apiKey"
-              placeholder="貼上你自己的 API 金鑰"
-              spellcheck="false"
-              autocomplete="off"
-              @input="setApiKey(($event.target as HTMLInputElement).value)"
-            />
-            <button
-              class="eye"
-              :title="revealKey ? '隱藏金鑰' : '顯示金鑰'"
-              @click="revealKey = !revealKey"
-            >
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor"
-                   stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z" />
-                <circle cx="12" cy="12" r="3.1" />
-                <path v-if="!revealKey" d="M4 20 20 4" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-      </section>
-
-      <section class="card">
-        <div class="row">
           <span class="row-title">通報音效</span>
           <div class="ctrl">
             <input
@@ -248,43 +200,6 @@ async function copyDiscord() {
           <circle cx="12" cy="7.75" r="1.05" fill="currentColor" />
         </svg>
       </button>
-    </div>
-
-    <!-- 金鑰說明：跟「關於」同一種內視窗，不是攤在設定列底下的一段字 -->
-    <div v-if="keyHelp" class="about-overlay" @click.self="keyHelp = false">
-      <div class="about-window wide">
-        <div class="about-titlebar">
-          <span class="about-title">如何取得 API 金鑰</span>
-          <button class="about-close" title="關閉" @click="keyHelp = false">
-            <svg viewBox="0 0 12 12" width="11" height="11">
-              <path d="M3 3 9 9M9 3 3 9" fill="none" stroke="currentColor" stroke-width="1.5"
-                    stroke-linecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="about-body">
-          <div class="about-card">
-            <span class="about-card-label">步驟</span>
-            <ol class="steps">
-              <li>進入網站，從上方 My Page 進入 Register Application。</li>
-              <li>讀完上述兩組資料（滑到最下方打勾）。</li>
-              <li>選擇遊戲 MapleStory Taiwan。</li>
-              <li>選擇屬性 Development phase。</li>
-              <li>命名這個服務的名稱（隨意打）。</li>
-              <li>創立後從左方 Application List 進入，點選剛剛命名的 Service name。</li>
-              <li>上方的 API key details 就是你的 API 金鑰。</li>
-            </ol>
-          </div>
-
-          <!-- 標籤與入口同一行：只有一顆按鈕，沒必要佔掉兩行 -->
-          <div class="about-card row-card">
-            <span class="about-card-label">申請頁面</span>
-            <div class="spacer"></div>
-            <button class="btn-update" @click="openUrl(NEXON_OPENAPI)">申請入口</button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- 關於：自成一個小視窗（標題列＋內嵌小卡），不是一張攤平的大卡片 -->
@@ -380,21 +295,6 @@ async function copyDiscord() {
   font-weight: 600;
   color: var(--text-strong);
 }
-.info {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  flex: none;
-  border: none;
-  background: transparent;
-  color: var(--text-faint);
-  border-radius: var(--radius-pill);
-}
-.info:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--hover);
-}
-
 /* 這一列的控制項字重跟左邊的標題對齊，整列讀起來才是一件事 */
 .row button {
   font-weight: 600;
@@ -413,43 +313,6 @@ async function copyDiscord() {
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
   text-align: right;
-}
-
-/* 眼睛長在輸入格裡面的右緣，不是旁邊另一顆按鈕 */
-.keyfield {
-  position: relative;
-  width: 340px;
-}
-.keyfield input {
-  width: 100%;
-  height: 32px;
-  padding-right: 40px;
-  font-size: 16px;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-}
-/* ★遮罩不用 type=password：那種欄位瀏覽器會自己塞東西進去（顯示密碼鈕、
-   密碼管理員圖示、另一套畫圓點的字型），於是遮起來與看得到的樣子對不齊。
-   這裡永遠是一般文字欄位，只是把字換成圓點。 */
-.keyfield input.masked {
-  -webkit-text-security: disc;
-}
-.eye {
-  position: absolute;
-  top: 50%;
-  right: 3px;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-faint);
-  border-radius: var(--radius-xs);
-}
-.eye:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--hover);
 }
 
 .bottom-bar {
@@ -541,23 +404,6 @@ async function copyDiscord() {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-}
-/* 說明比「關於」長得多，給它寬一點，步驟才不會每一條都折行 */
-.about-window.wide {
-  width: 550px;
-}
-.steps {
-  margin: 0;
-  padding-left: 1.3em;
-  font-size: 15px;
-  line-height: 1.9;
-  /* 跟按鈕同一組中性深灰：這段是要人照著做的，不該退成背景資訊 */
-  color: var(--btn-text);
-}
-/* 只有一行內容的卡片：標籤在左、動作在右 */
-.row-card {
-  flex-direction: row;
-  align-items: center;
 }
 .about-card-label {
   font-size: 14px;

@@ -37,6 +37,10 @@ const ADMIN_MANIFEST: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 </assembly>"#;
 
 fn main() {
+    // 金鑰是 build 時編進去的（見 maple.rs 的 api_key）。cargo 預設不知道這個變數，
+    // 換了 secret 卻沿用舊的編譯快取就會發出舊金鑰。
+    println!("cargo:rerun-if-env-changed=MAPLE_API_KEY");
+
     let mut attrs = tauri_build::Attributes::new();
 
     if std::env::var("PROFILE").as_deref() == Ok("release") {

@@ -30,6 +30,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 官方 API 金鑰在 build 時編進執行檔（見 src-tauri/src/maple.rs 的 api_key）。
+          # 少了這個 secret 照樣 build 得過，但發出去的版本抓不到角色資料。
+          MAPLE_API_KEY: ${{ secrets.MAPLE_API_KEY }}
 
       - name: Locate installer
         id: installer

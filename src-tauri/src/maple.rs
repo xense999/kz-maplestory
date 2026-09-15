@@ -1,7 +1,7 @@
 //! NEXON Open API（台版新楓之谷）的角色查詢。
 //!
 //! 為什麼走後端而不是在網頁層 fetch：這支 API 不會給跨來源的回應標頭，
-//! webview 直接打會被擋掉；順便也讓金鑰不必出現在網頁的請求裡。
+//! webview 直接打會被擋掉；順便也讓金鑰完全不經過網頁層。
 //!
 //! 兩段式：角色名先換成 `ocid`（帳號內的角色識別碼），再拿 ocid 查資料。
 
@@ -13,6 +13,21 @@ use tauri::http::header;
 
 const BASE: &str = "https://open.api.nexon.com/maplestorytw/v1";
 const KEY_HEADER: &str = "x-nxopen-api-key";
+
+/// 內建的 API 金鑰：build 時由環境變數 `MAPLE_API_KEY` 編進執行檔（CI 從 repo secret 帶進來），
+/// 使用者不必自己申請，設定頁也沒有這個欄位了。
+///
+/// ★這不是「藏起來」：金鑰是二進位檔裡的明文字串，`strings` 就撈得出來。要的是省掉使用者
+/// 申請的步驟，不是保密。也因此所有使用者共用官方的同一份請求額度。
+///
+/// 沒帶環境變數就 build（例如本機跑 dev）會編得起來但查不到資料，錯誤訊息會說清楚是這個原因——
+/// 編不過比較安全，但那樣任何人 clone 下來都動不了。
+fn api_key() -> Result<&'static str, String> {
+    match option_env!("MAPLE_API_KEY") {
+        Some(k) if !k.trim().is_empty() => Ok(k.trim()),
+        _ => Err("這份程式沒有內建 API 金鑰（build 時少了 MAPLE_API_KEY）".into()),
+    }
+}
 
 #[derive(Debug, Serialize)]
 pub struct CharacterInfo {
@@ -127,7 +142,6 @@ pub struct History {
 pub async fn fetch_history(
     app: tauri::AppHandle,
     name: String,
-    api_key: String,
     dates: Vec<String>,
     today: String,
     latest_level: i64,
@@ -137,9 +151,7 @@ pub async fn fetch_history(
     if name.is_empty() {
         return Err("角色名稱是空的".into());
     }
-    if api_key.trim().is_empty() {
-        return Err("設定頁還沒填 API 金鑰".into());
-    }
+    let api_key = api_key()?;
 
     // 已經知道的日期不再問。過去某天的數字不會變，而官方對請求數有限制——
     // 被擋掉的那次會讓基準消失，畫面上的成長量就會忽有忽無。
@@ -164,7 +176,7 @@ pub async fn fetch_history(
         let id = match &ocid {
             Some(v) => v.clone(),
             None => {
-                let v = resolve_ocid(name, &api_key).await?;
+                let v = resolve_ocid(name, api_key).await?;
                 ocid = Some(v.clone());
                 v
             }
@@ -175,7 +187,7 @@ pub async fn fetch_history(
             urlencoding(&id),
             urlencoding(&date)
         );
-        let Ok(body) = get(&url, &api_key).await else {
+        let Ok(body) = get(&url, api_key).await else {
             continue;
         };
         let Ok(basic) = serde_json::from_str::<BasicResp>(&body) else {
@@ -211,19 +223,17 @@ pub async fn fetch_history(
 }
 
 #[tauri::command]
-pub async fn fetch_character(name: String, api_key: String) -> Result<CharacterInfo, String> {
+pub async fn fetch_character(name: String) -> Result<CharacterInfo, String> {
     let name = name.trim();
     if name.is_empty() {
         return Err("角色名稱是空的".into());
     }
-    if api_key.trim().is_empty() {
-        return Err("設定頁還沒填 API 金鑰".into());
-    }
+    let api_key = api_key()?;
 
-    let ocid = resolve_ocid(name, &api_key).await?;
+    let ocid = resolve_ocid(name, api_key).await?;
 
     let basic_url = format!("{BASE}/character/basic?ocid={}", urlencoding(&ocid));
-    let basic: BasicResp = serde_json::from_str(&get(&basic_url, &api_key).await?)
+    let basic: BasicResp = serde_json::from_str(&get(&basic_url, api_key).await?)
         .map_err(|e| format!("讀角色資料失敗：{e}"))?;
 
     Ok(CharacterInfo {

@@ -86,14 +86,12 @@ function recentDates(n: number) {
  */
 export async function fetchHistory(
   name: string,
-  apiKey: string,
   latestLevel: number,
   latestExp: number,
   days = 1,
 ): Promise<History> {
   return invoke<History>("fetch_history", {
     name,
-    apiKey,
     dates: recentDates(days),
     today: ymd(new Date()),
     latestLevel,
@@ -101,8 +99,8 @@ export async function fetchHistory(
   });
 }
 
-export async function fetchCharacter(name: string, apiKey: string): Promise<CharacterInfo> {
-  const r = await invoke<RawCharacter>("fetch_character", { name, apiKey });
+export async function fetchCharacter(name: string): Promise<CharacterInfo> {
+  const r = await invoke<RawCharacter>("fetch_character", { name });
   return {
     name: r.name,
     job: r.job,
