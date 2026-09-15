@@ -8,6 +8,8 @@ import {
   fromNet,
   fromNtd,
   fromWanted,
+  sellMeso,
+  sellNtd,
   W,
 } from "./money";
 
@@ -74,6 +76,29 @@ describe("算不出來的輸入", () => {
     const d = fromNtd(0, RATE, false)!;
     expect(d.face).toBe(0);
     expect(d.net).toBe(0);
+  });
+});
+
+describe("賣幣", () => {
+  it("轉出去多少就照多少算錢，手續費不參與", () => {
+    expect(sellNtd(5600 * W, RATE)).toBeCloseTo(2, 9);
+    // 非 VIP 與 VIP 都一樣，因為費率根本沒進算式
+    expect(sellNtd(5000 * W, RATE)).toBeCloseTo(1.7857, 4);
+  });
+
+  it("反過來：要拿這麼多錢，得轉出去多少", () => {
+    expect(sellMeso(2, RATE)).toBe(5600 * W);
+  });
+
+  it("兩邊互算回得去", () => {
+    const ntd = sellNtd(5000 * W, RATE)!;
+    expect(sellMeso(ntd, RATE)).toBeCloseTo(5000 * W, 6);
+  });
+
+  it("幣值不合法或金額是負的就回 null", () => {
+    expect(sellNtd(5600 * W, 0)).toBeNull();
+    expect(sellNtd(-1, RATE)).toBeNull();
+    expect(sellMeso(Number.NaN, RATE)).toBeNull();
   });
 });
 

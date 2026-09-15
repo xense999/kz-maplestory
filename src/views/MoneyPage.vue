@@ -49,10 +49,12 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   <div class="page">
     <div class="body">
       <div class="scroller">
-        <!-- 外面一張大卡片，裡面左右兩張小卡：它們是同一筆交易的兩面，所以收在同一張卡裡，
-             但「談好的條件」與「算出來的結果」各自要有邊界，不然會糊成一片 -->
+        <!-- 買與賣各自一張大卡。最左邊那張只寫標題的小卡是用來分辨的——
+             兩張卡的欄位長得很像，光看數字分不出在算哪一邊 -->
         <section class="card outer">
           <div class="split">
+            <div class="inner title">買幣</div>
+
             <div class="inner">
               <div class="rows fields">
                 <label class="row">
@@ -99,7 +101,6 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   />
                   <span class="rnote unit">元</span>
                 </label>
-
               </div>
             </div>
 
@@ -114,6 +115,47 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   <span class="rlabel">實際花費</span>
                   <span class="rval">{{ money.deal ? `${ntd} 元` : DASH }}</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 賣幣不牽涉手續費：價格照轉出去的量談，費用是對方吃的。
+             所以這張卡沒有 VIP、沒有取整，就是兩格互算 -->
+        <section class="card outer">
+          <div class="split sell">
+            <div class="inner title">賣幣</div>
+
+            <div class="inner">
+              <div class="rows sellrows">
+                <label class="row">
+                  <span class="rlabel">楓幣</span>
+                  <input
+                    class="rval"
+                    :class="{ derived: money.sellAnchor === 'ntd' }"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="0"
+                    :value="money.sellMesoText"
+                    @input="money.setSellMeso(value($event))"
+                  />
+                </label>
+
+                <label class="row">
+                  <span class="rlabel">台幣</span>
+                  <input
+                    class="rval"
+                    :class="{ derived: money.sellAnchor === 'meso' }"
+                    type="text"
+                    inputmode="decimal"
+                    spellcheck="false"
+                    placeholder="0"
+                    :value="money.sellNtdText"
+                    @input="money.setSellNtd(value($event))"
+                  />
+                  <span class="rnote unit">元</span>
+                </label>
               </div>
             </div>
           </div>
@@ -175,6 +217,9 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   overflow-y: auto;
   /* 捲軸走在這段留白上，所以它在卡片外面的右邊 */
   padding-right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 .pagebar {
   display: flex;
@@ -248,6 +293,21 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   flex-direction: column;
   justify-content: center;
   gap: var(--sp-3);
+}
+/* 賣幣只有兩格，左右並排比上下疊更配它的高度 */
+.sellrows {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-5);
+}
+.sellrows .row {
+  flex: 1;
+  min-width: 0;
+}
+.sellrows .rval {
+  flex: 1;
+  width: auto;
+  min-width: 0;
 }
 .row {
   display: flex;

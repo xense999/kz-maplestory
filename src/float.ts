@@ -119,6 +119,7 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
     /**
      * 高度跟著列數走。列高按目前的視窗寬度換算——面板的內容是等比縮放的，
      * 所以拉寬之後每一列也會變高。
+     * ★392／16 這組數字要跟面板自己的字級基準一致，不然算出來的高度會差一截。
      */
     async fitRows(rows: number, rowEm = 3.25) {
       const win = await WebviewWindow.getByLabel(label);
@@ -126,7 +127,7 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
       const scale = await win.scaleFactor();
       const size = await win.innerSize();
       const w = size.width / scale;
-      const rowPx = (w / 360) * 16 * rowEm;
+      const rowPx = (w / 392) * 16 * rowEm;
       const height = Math.round(Math.max(1, rows) * rowPx + 14);
       await win.setSize(new LogicalSize(Math.round(w), height));
     },
@@ -229,15 +230,18 @@ export interface MoneySnap {
   ntd: string;
   meso: string;
   rate: string;
-  /** 目前是從哪一欄算的。面板用一支箭頭表示方向 */
+  /** 買幣還是賣幣。面板右邊那條窄欄就是在切這個 */
+  mode: "buy" | "sell";
+  /** 目前是從哪一欄算的 */
   anchor: "ntd" | "meso";
   /** 算得出來沒有——算不出來時箭頭不點亮 */
   ok: boolean;
 }
 
-/** 幣值換算面板送回來的東西：使用者改了哪一欄、改成什麼 */
+/** 幣值換算面板送回來的東西：使用者改了哪一欄、改成什麼。
+    切買／賣也走這條——它一樣是「使用者動了某個東西」，不值得另開一條通道。 */
 export interface MoneyInput {
-  field: "ntd" | "meso" | "rate";
+  field: "ntd" | "meso" | "rate" | "mode";
   value: string;
 }
 

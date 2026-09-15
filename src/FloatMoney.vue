@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { moneyPanel, type MoneyInput, type MoneySnap } from "./float";
+import { moneyPanel, type MoneySnap } from "./float";
 
 const appWin = getCurrentWindow();
 const opacity = ref(0.5);
@@ -11,10 +11,13 @@ const opacity = ref(0.5);
  * 之所以不直接綁快照，是因為正在打字的那一欄不能被回來的快照覆寫——
  * 打到一半被蓋掉的話游標會跳回去。
  */
-const text = ref<Record<MoneyInput["field"], string>>({ ntd: "", meso: "", rate: "" });
-const focused = ref<MoneyInput["field"] | null>(null);
+type Field = "ntd" | "meso" | "rate";
+
+const text = ref<Record<Field, string>>({ ntd: "", meso: "", rate: "" });
+const focused = ref<Field | null>(null);
 
 const anchor = ref<MoneySnap["anchor"]>("ntd");
+const mode = ref<MoneySnap["mode"]>("buy");
 const ok = ref(false);
 
 /**
@@ -31,8 +34,9 @@ let stopOpacity: (() => void) | null = null;
 
 function apply(snap: MoneySnap) {
   anchor.value = snap.anchor;
+  mode.value = snap.mode;
   ok.value = snap.ok;
-  const incoming: Record<MoneyInput["field"], string> = {
+  const incoming: Record<Field, string> = {
     ntd: snap.ntd,
     meso: snap.meso,
     rate: snap.rate,
@@ -42,10 +46,16 @@ function apply(snap: MoneySnap) {
   }
 }
 
-function edit(field: MoneyInput["field"], e: Event) {
+function edit(field: Field, e: Event) {
   const value = (e.target as HTMLInputElement).value;
   text.value[field] = value;
   moneyPanel.sendInput({ field, value });
+}
+
+/** 買賣切換也走同一條回向通道，狀態一樣是主視窗那一份 */
+function setMode(next: MoneySnap["mode"]) {
+  mode.value = next;
+  moneyPanel.sendInput({ field: "mode", value: next });
 }
 
 onMounted(async () => {
@@ -76,53 +86,61 @@ function onDown(e: MouseEvent) {
       <i></i>
     </div>
 
-    <div class="rows">
-      <label class="row">
-        <span class="label">幣值</span>
-        <input
-          type="text"
-          inputmode="decimal"
-          spellcheck="false"
-          placeholder="2800"
-          :value="text.rate"
-          @focus="focused = 'rate'"
-          @blur="focused = null"
-          @input="edit('rate', $event)"
-        />
-        <span class="unit">萬</span>
-      </label>
+    <div class="body">
+      <div class="rows">
+        <label class="row">
+          <span class="label">幣值</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            spellcheck="false"
+            placeholder="2800"
+            :value="text.rate"
+            @focus="focused = 'rate'"
+            @blur="focused = null"
+            @input="edit('rate', $event)"
+          />
+          <span class="unit">萬</span>
+        </label>
 
-      <label class="row">
-        <span class="label">楓幣</span>
-        <input
-          type="text"
-          inputmode="decimal"
-          spellcheck="false"
-          placeholder="0"
-          :class="{ derived: derived('meso') }"
-          :value="text.meso"
-          @focus="focused = 'meso'"
-          @blur="focused = null"
-          @input="edit('meso', $event)"
-        />
-        <span class="unit">元</span>
-      </label>
+        <label class="row">
+          <span class="label">楓幣</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            spellcheck="false"
+            placeholder="0"
+            :class="{ derived: derived('meso') }"
+            :value="text.meso"
+            @focus="focused = 'meso'"
+            @blur="focused = null"
+            @input="edit('meso', $event)"
+          />
+          <span class="unit">元</span>
+        </label>
 
-      <label class="row">
-        <span class="label">台幣</span>
-        <input
-          type="text"
-          inputmode="decimal"
-          spellcheck="false"
-          placeholder="0"
-          :class="{ derived: derived('ntd') }"
-          :value="text.ntd"
-          @focus="focused = 'ntd'"
-          @blur="focused = null"
-          @input="edit('ntd', $event)"
-        />
-        <span class="unit">元</span>
-      </label>
+        <label class="row">
+          <span class="label">台幣</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            spellcheck="false"
+            placeholder="0"
+            :class="{ derived: derived('ntd') }"
+            :value="text.ntd"
+            @focus="focused = 'ntd'"
+            @blur="focused = null"
+            @input="edit('ntd', $event)"
+          />
+          <span class="unit">元</span>
+          </label>
+        </div>
+
+      <!-- 買／賣在右邊自己一條：三列的內容意思不同，不能只靠數字分辨 -->
+      <div class="modes" role="group" aria-label="買幣或賣幣">
+        <button :class="{ on: mode === 'buy' }" @click="setMode('buy')">買</button>
+        <button :class="{ on: mode === 'sell' }" @click="setMode('sell')">賣</button>
+      </div>
     </div>
   </div>
 </template>
@@ -130,7 +148,7 @@ function onDown(e: MouseEvent) {
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
    ★整塊的尺寸都是 em，而字級同時綁在視窗的寬與高上、取比較小的那個
-   （360×166 是 19px 字的基準）。只綁寬度的話，單獨拉高會讓內容留一大片空白；
+   （392×166 是 19px 字的基準）。只綁寬度的話，單獨拉高會讓內容留一大片空白；
    取 min 之後不管怎麼拖都是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
@@ -138,7 +156,7 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(min(100vw / 360, 100vh / 166) * 19);
+  font-size: calc(min(100vw / 392, 100vh / 166) * 19);
 }
 .bg {
   position: absolute;
@@ -169,15 +187,50 @@ function onDown(e: MouseEvent) {
   background: var(--text-faint);
 }
 
-.rows {
+.body {
   position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
+  align-items: stretch;
+}
+.rows {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 0.5em;
-  padding: 0.5em 1em;
+  padding: 0.5em 0.6em 0.5em 1em;
+}
+
+/* 右邊一條窄欄：買在上、賣在下，選中的填色。三列的意思隨模式而變，
+   光看數字分不出來，所以這個狀態必須一直在畫面上 */
+.modes {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3em;
+  padding: 0.5em 0.7em 0.5em 0;
+}
+.modes button {
+  width: 1.9em;
+  height: 1.7em;
+  padding: 0;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--wash-strong);
+  border: none;
+  border-radius: 0.4em;
+}
+.modes button:hover:not(.on) {
+  color: var(--text);
+}
+.modes button.on {
+  color: var(--text-on-accent);
+  background: var(--accent);
 }
 .row {
   display: flex;

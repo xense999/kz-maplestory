@@ -7,6 +7,8 @@ import {
   fromWanted,
   mesoToText,
   parseAmount,
+  sellMeso,
+  sellNtd,
   type Deal,
 } from "../money";
 
@@ -20,6 +22,7 @@ import {
  */
 const RATE_KEY = "kz-maplestory:money:rate";
 const VIP_KEY = "kz-maplestory:money:vip";
+const MODE_KEY = "kz-maplestory:money:mode";
 
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
@@ -27,6 +30,18 @@ export const useMoneyStore = defineStore("money", () => {
   /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
   const mesoText = ref("");
   const vip = ref(load(VIP_KEY) === "1");
+
+  /**
+   * 賣幣那張卡：轉出去的楓幣與拿得到的台幣。跟買幣共用幣值，但其餘完全獨立——
+   * 兩邊的欄位意思不一樣（買是「我要收到多少」，賣是「我要轉出去多少」），
+   * 共用欄位只會讓人算錯。
+   */
+  const sellMesoText = ref("");
+  const sellNtdText = ref("");
+  const sellAnchor = ref<"ntd" | "meso">("meso");
+
+  /** 浮動面板現在在算哪一種。面板只有三列，一次只顯示一邊 */
+  const mode = ref<"buy" | "sell">(load(MODE_KEY) === "sell" ? "sell" : "buy");
 
   /** 最後被使用者動過的金額欄位，另一欄由它算出來 */
   const anchor = ref<"ntd" | "meso">("ntd");
@@ -52,16 +67,52 @@ export const useMoneyStore = defineStore("money", () => {
     { immediate: true },
   );
 
+  // 賣幣：算出來的那一欄跟著走，來源欄不動
+  watch(
+    [sellMesoText, sellNtdText, rate, sellAnchor],
+    () => {
+      if (sellAnchor.value === "meso") {
+        const v = sellNtd(parseAmount(sellMesoText.value), rate.value);
+        sellNtdText.value = v === null ? "" : ntdToText(v);
+      } else {
+        const v = sellMeso(parseAmount(sellNtdText.value), rate.value);
+        sellMesoText.value = v === null ? "" : mesoToText(v);
+      }
+    },
+    { immediate: true },
+  );
+
+  function setSellMeso(value: string) {
+    sellAnchor.value = "meso";
+    sellMesoText.value = value;
+  }
+
+  function setSellNtd(value: string) {
+    sellAnchor.value = "ntd";
+    sellNtdText.value = value;
+  }
+
   watch(rateText, (v) => save(RATE_KEY, v));
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
+  watch(mode, (v) => save(MODE_KEY, v));
 
+  /** 賣幣算得出來沒有：幣值合法，而且兩欄至少填了一欄 */
+  const sellOk = computed(
+    () =>
+      sellNtd(parseAmount(sellMesoText.value), rate.value) !== null ||
+      sellMeso(parseAmount(sellNtdText.value), rate.value) !== null,
+  );
+
+  /** 面板一次只顯示一邊，所以送過去的是「現在這個模式的那三個數字」 */
   function snapshot(): MoneySnap {
+    const selling = mode.value === "sell";
     return {
-      ntd: ntdText.value,
-      meso: mesoText.value,
+      ntd: selling ? sellNtdText.value : ntdText.value,
+      meso: selling ? sellMesoText.value : mesoText.value,
       rate: rateText.value,
-      anchor: anchor.value,
-      ok: deal.value !== null,
+      mode: mode.value,
+      anchor: selling ? sellAnchor.value : anchor.value,
+      ok: selling ? sellOk.value : deal.value !== null,
     };
   }
 
@@ -69,7 +120,10 @@ export const useMoneyStore = defineStore("money", () => {
     moneyPanel.push(snapshot());
   }
 
-  watch([ntdText, mesoText, rateText, vip, anchor], publish);
+  watch(
+    [ntdText, mesoText, sellNtdText, sellMesoText, rateText, vip, mode, anchor, sellAnchor],
+    publish,
+  );
 
   function setNtd(value: string) {
     anchor.value = "ntd";
@@ -104,9 +158,13 @@ export const useMoneyStore = defineStore("money", () => {
     // 面板上的欄位也能打字。改的是這一份狀態，不是面板自己的副本——
     // 兩邊各存一份的話，先後順序一顛倒就會互相蓋掉。
     await moneyPanel.onInput(({ field, value }) => {
-      if (field === "ntd") setNtd(value);
-      else if (field === "meso") setMeso(value);
-      else setRate(value);
+      if (field === "mode") mode.value = value === "sell" ? "sell" : "buy";
+      else if (field === "rate") setRate(value);
+      else if (mode.value === "sell") {
+        if (field === "ntd") setSellNtd(value);
+        else setSellMeso(value);
+      } else if (field === "ntd") setNtd(value);
+      else setMeso(value);
     });
     publish();
     moneyPanel.pushOpacity();
@@ -118,12 +176,18 @@ export const useMoneyStore = defineStore("money", () => {
     ntdText,
     mesoText,
     vip,
+    mode,
     rate,
     deal,
     anchor,
+    sellMesoText,
+    sellNtdText,
+    sellAnchor,
     setNtd,
     setMeso,
     setRate,
+    setSellMeso,
+    setSellNtd,
   };
 });
 

@@ -58,7 +58,7 @@ function gain(v: number | null) {
 
 <style scoped>
 /* 這個視窗會蓋在遊戲上面，字要一直看得清楚，所以底與字分成兩層。
-   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（360px 寬＝16px 字），
+   ★整塊的尺寸都是 em，而字級綁在視窗寬度上（392px 寬＝16px 字），
    所以拖大拖小是整體等比縮放，不是版面重排。 */
 .float {
   position: relative;
@@ -66,7 +66,7 @@ function gain(v: number | null) {
   display: flex;
   flex-direction: column;
   user-select: none;
-  font-size: calc(100vw / 360 * 16);
+  font-size: calc(100vw / 392 * 16);
 }
 .bg {
   position: absolute;
