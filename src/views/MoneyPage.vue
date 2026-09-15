@@ -354,10 +354,13 @@ function derived(field: "ntd" | "meso") {
    ★三張標題卡要一樣寬，所以任何針對某一張大卡的 .inner 規則都不能蓋到它。 */
 .title,
 .rate .title {
+  /* 寬度寫死：三張標題卡裝的東西不一樣（兩個字 vs 一個圖示），
+     交給內容決定的話彼此會差幾個像素 */
+  width: 32px;
   display: grid;
   place-items: center;
   writing-mode: vertical-rl;
-  padding: var(--sp-3) 6px;
+  padding: var(--sp-3) 0;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -396,10 +399,13 @@ function derived(field: "ntd" | "meso") {
    ★三張標題卡要一樣寬，所以任何針對某一張大卡的 .inner 規則都不能蓋到它。 */
 .title,
 .rate .title {
+  /* 寬度寫死：三張標題卡裝的東西不一樣（兩個字 vs 一個圖示），
+     交給內容決定的話彼此會差幾個像素 */
+  width: 32px;
   display: grid;
   place-items: center;
   writing-mode: vertical-rl;
-  padding: var(--sp-3) 6px;
+  padding: var(--sp-3) 0;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.14em;
