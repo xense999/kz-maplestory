@@ -66,6 +66,7 @@ function derived(field: "ntd" | "meso") {
                     :value="money.mesoText"
                     @input="money.setMeso(value($event))"
                   />
+                  <span class="rnote unit">元</span>
                   <!-- 同一個數字換成談價會用到的級距，打完就在旁邊 -->
                   <span class="rnote">{{ mesoInWords }}</span>
                 </label>
@@ -119,6 +120,7 @@ function derived(field: "ntd" | "meso") {
                     :value="money.sellMesoText"
                     @input="money.setSellMeso(value($event))"
                   />
+                  <span class="rnote unit">元</span>
                 </label>
 
                 <label class="row">
