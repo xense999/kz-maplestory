@@ -123,7 +123,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
         <!-- 賣幣不牽涉手續費：價格照轉出去的量談，費用是對方吃的。
              所以這張卡沒有 VIP、沒有取整，就是兩格互算 -->
         <section class="card outer">
-          <div class="split">
+          <div class="split sell">
             <div class="inner title">賣幣</div>
 
             <div class="inner">
@@ -333,6 +333,11 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   flex-direction: column;
   justify-content: center;
   gap: var(--sp-3);
+}
+/* 賣幣只有兩列，卻要撐到買幣那張的高度。置中會在上下各留一段空白，
+   改成把多出來的高度平均分掉，兩列才不會擠在中間 */
+.sell .rows {
+  justify-content: space-evenly;
 }
 
 .row {
