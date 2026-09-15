@@ -80,7 +80,6 @@ function gain(v: number | null) {
 .hint {
   font-size: 0.8em;
   color: var(--text-dim);
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9);
   padding: 0.3em 0.2em;
 }
 
@@ -90,7 +89,7 @@ function gain(v: number | null) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0.4em 0.7em;
+  padding: 0.55em 0.8em;
 }
 .row {
   flex: 1;
@@ -124,12 +123,11 @@ function gain(v: number | null) {
   flex-direction: column;
   gap: 0.06em;
 }
-/* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
+/* 底色可以淡到 0，所以要讀得清楚就得把底拉高一點——字本身不加陰影 */
 .name {
   font-size: 0.95em;
   font-weight: 700;
   color: var(--text);
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -138,7 +136,6 @@ function gain(v: number | null) {
   font-size: 0.75em;
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 /* 底色可以淡到 0，所以軌道要自己夠深，填色才看得出來停在哪 */
 .bar {
@@ -163,6 +160,5 @@ function gain(v: number | null) {
   color: var(--text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 </style>

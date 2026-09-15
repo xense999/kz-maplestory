@@ -140,8 +140,8 @@ export const useRosterStore = defineStore("roster", () => {
     if (!force && json === lastSent) return;
     lastSent = json;
     progressPanel.push(rows);
-    // 3.7em：一列裝得下頭像、名字、等級那行，再加下面那條經驗長條
-    void progressPanel.fitRows(rows.length, 3.7).catch(() => {});
+    // 4.1em：頭像、名字、等級那行、經驗長條，外加上下的呼吸空間
+    void progressPanel.fitRows(rows.length, 4.1).catch(() => {});
   }
 
   watch(slots, () => publish(), { deep: true });

@@ -253,11 +253,10 @@ function onDown(e: MouseEvent) {
   height: 1.95em;
   flex: none;
 }
-/* 底色可以淡到 0，所以字得自己站得住：描一圈暗影，疊在任何遊戲畫面上都讀得到 */
+/* 底色可以淡到 0，所以要讀得清楚就得把底拉高一點——字本身不加陰影 */
 .label,
 .unit,
 .row input {
-  text-shadow: 0 0 0.2em rgba(0, 0, 0, 0.9), 0 0.06em 0.12em rgba(0, 0, 0, 0.85);
 }
 .label {
   width: 2.5em;
