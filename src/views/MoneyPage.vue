@@ -196,7 +196,7 @@ function derived(field: "ntd" | "meso") {
               <div class="row">
                 <span class="rlabel">商城幣值</span>
                 <input
-                  class="rval shopinput"
+                  class="rval"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
@@ -206,9 +206,8 @@ function derived(field: "ntd" | "meso") {
                 />
                 <span class="rnote unit">億</span>
                 <span class="sep">|</span>
-                <!-- 這張卡要回答的就是這一句：跟商城買，每花一元實際拿多少楓幣 -->
+                <!-- 商城那個報價換算成幣值是多少：跟商城買，一元實際拿多少楓幣 -->
                 <span class="rnote shoprate">
-                  1 元 ＝
                   {{ money.shopRate === null ? "—" : formatMeso(Math.floor(money.shopRate) * W) }}
                 </span>
               </div>
@@ -345,12 +344,6 @@ function derived(field: "ntd" | "meso") {
 }
 .rate .rlabel {
   width: 64px;
-}
-/* 商城報價通常只有一個位數，欄位不必跟旁邊一樣長。
-   ★寫成 input.shopinput：權重要壓過後面的 .rval，不然 190px 會蓋回來 */
-input.shopinput {
-  width: 72px;
-  margin-left: 30px;
 }
 /* 分隔線：它只是把兩件事分開，不該比任何一邊顯眼 */
 .sep {
