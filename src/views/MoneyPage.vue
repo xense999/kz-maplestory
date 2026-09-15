@@ -166,7 +166,7 @@ function derived(field: "ntd" | "meso") {
 
             <div class="inner">
               <div class="row">
-                <span class="rlabel">幣值</span>
+                <span class="rlabel">當前幣值</span>
                 <input
                   class="rval"
                   type="text"
@@ -190,15 +190,17 @@ function derived(field: "ntd" | "meso") {
                 ></button>
                 <span class="rnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
               </div>
+
+              <div class="row">
+                <div class="spacer"></div>
+                <FloatButton
+                  :panel="moneyPanel"
+                  hint="開一個永遠置頂的小視窗，交易中也看得到換算"
+                />
+              </div>
             </div>
           </div>
         </section>
-      </div>
-
-      <div class="pagebar">
-        <div class="spacer"></div>
-        <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
-
       </div>
     </div>
   </div>
@@ -231,28 +233,13 @@ function derived(field: "ntd" | "meso") {
   flex-direction: column;
   gap: var(--sp-3);
 }
-.pagebar {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-}
 
 /* 外卡只負責標題與外框，內容全在兩張小卡裡 */
 .outer {
   padding: var(--sp-4);
 }
-/* 設定只有一列，不需要跟上面兩張一樣厚 */
-.rate {
-  padding: var(--sp-2);
-}
 .ratesplit {
   grid-template-columns: auto minmax(0, 1fr);
-}
-.rate .inner {
-  padding: var(--sp-2) var(--sp-3);
-}
-.rate .rlabel {
-  width: 36px;
 }
 .rate .rnote {
   color: var(--text-dim);
@@ -290,8 +277,10 @@ function derived(field: "ntd" | "meso") {
 }
 /* 標題直排：兩個字上下疊，小卡就只要一個字寬，橫向全留給數字。
    ★用 grid 置中而不是沿用 .inner 的 flex：直書時 flex 的主軸會跟著轉向，
-   column 會變成橫的。 */
-.title {
+   column 會變成橫的。
+   ★三張標題卡要一樣寬，所以任何針對某一張大卡的 .inner 規則都不能蓋到它。 */
+.title,
+.rate .title {
   display: grid;
   place-items: center;
   writing-mode: vertical-rl;
@@ -330,8 +319,10 @@ function derived(field: "ntd" | "meso") {
 }
 /* 標題直排：兩個字上下疊，小卡就只要一個字寬，橫向全留給數字。
    ★用 grid 置中而不是沿用 .inner 的 flex：直書時 flex 的主軸會跟著轉向，
-   column 會變成橫的。 */
-.title {
+   column 會變成橫的。
+   ★三張標題卡要一樣寬，所以任何針對某一張大卡的 .inner 規則都不能蓋到它。 */
+.title,
+.rate .title {
   display: grid;
   place-items: center;
   writing-mode: vertical-rl;
