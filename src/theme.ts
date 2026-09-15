@@ -4,7 +4,7 @@ import { emit, listen } from "@tauri-apps/api/event";
 /**
  * 外觀：淺色 / 深色。
  * CSS 只認 <html data-theme="light|dark">，所以深色 token 只要寫一份。
- * 沒有「跟隨系統」這個檔位——第一次啟動時拿系統偏好當預設值，之後就聽使用者的。
+ * 沒有「跟隨系統」這個檔位——第一次啟動一律深色，之後就聽使用者的。
  */
 export type ThemePref = "light" | "dark";
 
@@ -16,9 +16,9 @@ function initial(): ThemePref {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === "light" || saved === "dark") return saved;
   } catch {
-    /* 私密模式等情境讀不到就用系統偏好 */
+    /* 私密模式等情境讀不到就走預設 */
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark";
 }
 
 export const themePref = ref<ThemePref>(initial());
