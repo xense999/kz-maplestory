@@ -88,7 +88,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">台幣</span>
+                  <span class="rlabel">現金</span>
                   <input
                     class="rval"
                     :class="{ derived: derived('ntd') }"
@@ -123,11 +123,11 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
         <!-- 賣幣不牽涉手續費：價格照轉出去的量談，費用是對方吃的。
              所以這張卡沒有 VIP、沒有取整，就是兩格互算 -->
         <section class="card outer">
-          <div class="split sell">
+          <div class="split">
             <div class="inner title">賣幣</div>
 
             <div class="inner">
-              <div class="rows sellrows">
+              <div class="rows">
                 <label class="row">
                   <span class="rlabel">持有楓幣</span>
                   <input
@@ -143,7 +143,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">約當台幣</span>
+                  <span class="rlabel">約當現金</span>
                   <input
                     class="rval"
                     :class="{ derived: money.sellAnchor === 'meso' }"
@@ -156,6 +156,25 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                   />
                   <span class="rnote unit">元</span>
                 </label>
+              </div>
+            </div>
+
+            <!-- 現金不能分割，交易談的是整數，所以這裡是「真的賣得掉的那一筆」 -->
+            <div class="inner">
+              <div class="rows">
+                <div class="row" title="為了拿到整數現金，實際要轉出去的量">
+                  <span class="rlabel">可販售楓幣</span>
+                  <span class="rval">
+                    {{ money.sellResult ? formatMeso(money.sellResult.meso) : DASH }}
+                  </span>
+                </div>
+
+                <div class="row" title="賣不掉的零頭留在身上">
+                  <span class="rlabel">可獲得現金</span>
+                  <span class="rval">
+                    {{ money.sellResult ? `${money.sellResult.cash} 元` : DASH }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -239,9 +258,6 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   gap: var(--sp-3);
   align-items: stretch;
 }
-.split.sell {
-  grid-template-columns: auto minmax(0, 1fr);
-}
 /* 視窗窄到各欄塞不下時，標題留在左邊、右邊的內容疊成上下 */
 @media (max-width: 900px) {
   .split {
@@ -315,21 +331,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   justify-content: center;
   gap: var(--sp-3);
 }
-/* 賣幣只有兩格，左右並排比上下疊更配它的高度 */
-.sellrows {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--sp-5);
-}
-.sellrows .row {
-  flex: 1;
-  min-width: 0;
-}
-.sellrows .rval {
-  flex: 1;
-  width: auto;
-  min-width: 0;
-}
+
 .row {
   display: flex;
   align-items: center;

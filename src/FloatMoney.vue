@@ -122,7 +122,7 @@ function onDown(e: MouseEvent) {
         </label>
 
         <label class="row">
-          <span class="label">台幣</span>
+          <span class="label">現金</span>
           <input
             type="text"
             inputmode="decimal"

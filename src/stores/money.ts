@@ -7,6 +7,7 @@ import {
   fromWanted,
   mesoToText,
   parseAmount,
+  sellDeal,
   sellMeso,
   sellNtd,
   type Deal,
@@ -96,6 +97,9 @@ export const useMoneyStore = defineStore("money", () => {
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
   watch(mode, (v) => save(MODE_KEY, v));
 
+  /** 賣幣實際成交的樣子：整數現金，以及為此要轉出去的楓幣 */
+  const sellResult = computed(() => sellDeal(parseAmount(sellMesoText.value), rate.value));
+
   /** 賣幣算得出來沒有：幣值合法，而且兩欄至少填了一欄 */
   const sellOk = computed(
     () =>
@@ -183,6 +187,7 @@ export const useMoneyStore = defineStore("money", () => {
     sellMesoText,
     sellNtdText,
     sellAnchor,
+    sellResult,
     setNtd,
     setMeso,
     setRate,

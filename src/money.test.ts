@@ -8,6 +8,7 @@ import {
   fromNet,
   fromNtd,
   fromWanted,
+  sellDeal,
   sellMeso,
   sellNtd,
   W,
@@ -95,10 +96,30 @@ describe("賣幣", () => {
     expect(sellMeso(ntd, RATE)).toBeCloseTo(5000 * W, 6);
   });
 
+  it("實際成交：現金捨去成整數，楓幣從那個整數算回來", () => {
+    // 5,000 萬精確值 1.7857 元 → 只賣得掉 1 元，實際轉 2,800 萬出去
+    const d = sellDeal(5000 * W, RATE)!;
+    expect(d.cash).toBe(1);
+    expect(d.meso).toBe(2800 * W);
+  });
+
+  it("剛好整數時不會被浮點尾巴砍掉一塊", () => {
+    const d = sellDeal(5600 * W, RATE)!;
+    expect(d.cash).toBe(2);
+    expect(d.meso).toBe(5600 * W);
+  });
+
+  it("不到一元就是賣不掉", () => {
+    const d = sellDeal(100 * W, RATE)!;
+    expect(d.cash).toBe(0);
+    expect(d.meso).toBe(0);
+  });
+
   it("幣值不合法或金額是負的就回 null", () => {
     expect(sellNtd(5600 * W, 0)).toBeNull();
     expect(sellNtd(-1, RATE)).toBeNull();
     expect(sellMeso(Number.NaN, RATE)).toBeNull();
+    expect(sellDeal(5600 * W, 0)).toBeNull();
   });
 });
 

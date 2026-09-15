@@ -100,6 +100,29 @@ export function sellMeso(ntd: number, rateW: number): number | null {
   return per && usable(ntd) ? ntd * per : null;
 }
 
+/** 賣幣實際成交的樣子 */
+export interface SellDeal {
+  /** 拿得到的現金，整數 */
+  cash: number;
+  /** 為了那筆整數現金，實際要轉出去的楓幣 */
+  meso: number;
+}
+
+/**
+ * 手上這些楓幣實際賣得掉多少。
+ *
+ * ★現金不能分割，交易談的是整數，所以先把錢**捨去**成整數，
+ * 能賣的楓幣再從那個整數算回來——賣不掉的零頭留在身上，不會憑空多出錢來。
+ */
+export function sellDeal(sent: number, rateW: number): SellDeal | null {
+  const exact = sellNtd(sent, rateW);
+  if (exact === null) return null;
+
+  const cash = Math.floor(exact + EPS);
+  const meso = sellMeso(cash, rateW);
+  return meso === null ? null : { cash, meso };
+}
+
 /**
  * 我要入手這麼多楓幣，這筆交易實際會長什麼樣。
  *
