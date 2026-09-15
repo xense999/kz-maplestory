@@ -291,6 +291,14 @@ function derived(field: "ntd" | "meso") {
 .outer {
   padding: var(--sp-4);
 }
+/* 只有一列，不需要跟上面兩張一樣厚。
+   ★內距的覆寫一定要排除 .title，不然標題卡會被撐得比上面兩張寬 */
+.rate {
+  padding: var(--sp-2);
+}
+.rate .inner:not(.title) {
+  padding: var(--sp-2) var(--sp-3);
+}
 .ratesplit {
   grid-template-columns: auto minmax(0, 1fr);
 }
