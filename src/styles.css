@@ -131,6 +131,18 @@ body,
 body {
   background: transparent;
   color: var(--text);
+  /* 這是桌面程式不是網頁：改不了的文字不該表現得像可以編輯。
+     滑過去給箭頭而不是 I 字游標，也不會被拖出一片反白。
+     真的要編輯或複製的地方（輸入欄）在下面開回來。 */
+  user-select: none;
+  cursor: default;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text;
+  cursor: text;
 }
 
 :where(h1, h2, h3, h4, p) {

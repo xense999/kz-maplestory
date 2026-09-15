@@ -170,7 +170,6 @@ function onDown(e: MouseEvent) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  user-select: none;
   font-size: calc(min(100vw / 392, 100vh / 166) * 19);
 }
 .bg {
@@ -281,7 +280,6 @@ function onDown(e: MouseEvent) {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 0.35em;
-  user-select: text;
 }
 /* 算出來的那一欄變琥珀色：不必看標籤就知道自己在打的是哪一邊 */
 .row input.derived {

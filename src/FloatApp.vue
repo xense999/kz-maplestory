@@ -80,7 +80,6 @@ function state(s: TimerSnap) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  user-select: none;
   /* 尺寸全用 em，字級綁視窗寬度（300px 寬＝16px 字）＝拖大拖小是等比縮放 */
   font-size: calc(100vw / 300 * 16);
 }

@@ -65,7 +65,6 @@ function gain(v: number | null) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  user-select: none;
   font-size: calc(100vw / 392 * 16);
 }
 .bg {

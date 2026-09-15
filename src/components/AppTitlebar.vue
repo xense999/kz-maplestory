@@ -84,7 +84,6 @@ onUnmounted(() => unlisten?.());
   background: var(--bg-1);
   border-bottom: 0.5px solid var(--border);
   backdrop-filter: blur(24px) saturate(1.8);
-  user-select: none;
 }
 .tb-brand {
   font-size: 16px;
