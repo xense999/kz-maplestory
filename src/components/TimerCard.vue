@@ -454,6 +454,15 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
   align-items: flex-end;
   gap: var(--sp-4);
 }
+/* 出租佔滿一整列，時長檔位又搬到標題那行去了，只剩一列數字的話它會扁成一條。
+   撐開來讓數字站在中間，比例才跟旁邊那幾張窄卡對得上 */
+.timer:not(.compact) {
+  min-height: 196px;
+}
+.timer:not(.compact) .main {
+  flex: 1;
+  align-items: center;
+}
 /* 倒數是這張卡唯一的主角，其他都退成灰 */
 .digits {
   font-size: 60px;
