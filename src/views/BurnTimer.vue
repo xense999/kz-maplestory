@@ -88,7 +88,8 @@ onUnmounted(() => window.removeEventListener("keydown", onKeyDown, true));
 
       <div class="pagebar">
         <button v-if="ringing" class="primary" @click="store.acknowledge()">停止提醒</button>
-        <button @click="store.addBlessing()">＋ 新增加持</button>
+        <button @click="store.addBlessing()">新增計時器</button>
+        <button :disabled="!store.anyRunning" @click="store.resetAll()">重置</button>
         <div class="spacer"></div>
         <FloatButton :panel="burnPanel" hint="開一個永遠置頂的小視窗，遊戲中也看得到倒數" />
 

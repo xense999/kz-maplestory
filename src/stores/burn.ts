@@ -325,6 +325,16 @@ export const useBurnStore = defineStore("burn", () => {
   }
 
   /**
+   * 全部歸零。
+   *
+   * ★這一支連出租也清——它是使用者按下按鈕明確要求的，跟 `resetEditable`
+   * 那種「因為別的操作順便發生」的清除不一樣。
+   */
+  function resetAll() {
+    for (const s of specs.value) reset(s.id);
+  }
+
+  /**
    * 「停止提醒」按下去＝這一輪處理完了，所以除了收鈴，也把已經到期的計時器歸零。
    * 對出租來說這一步是必要的：不歸零的話它的 endAt 還在，下一次按技能鍵不會
    * 跟著開新的一輪，等於下一位客戶要自己再按一次卡片上的按鈕。
@@ -361,6 +371,9 @@ export const useBurnStore = defineStore("burn", () => {
       if (on) await watchKey(id, t.hotkey!);
       else await unwatchKey(id);
       t.hotkeyOn = on;
+      // 關掉監聽＝這張卡不再運作，還在跑的那一輪也就不算數了。
+      // 留著倒數的話它會繼續響，但那顆鍵已經不會再起算，人只能手動去收。
+      if (!on) reset(id);
     } catch (e) {
       t.hotkeyOn = false;
       t.error = "監聽啟用失敗";
@@ -461,6 +474,7 @@ export const useBurnStore = defineStore("burn", () => {
     pressKey,
     reset,
     resetEditable,
+    resetAll,
     acknowledge,
     setDuration,
     setHotkey,
