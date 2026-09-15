@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, mesoTextInWords } from "../money";
+import { formatMeso, formatRate, mesoTextInWords } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -197,15 +197,17 @@ function derived(field: "ntd" | "meso") {
                 <span class="rlabel">商城幣值</span>
                 <input
                   class="rval"
-                  :class="{ derived: money.rateAnchor === 'rate' }"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
                   placeholder="5"
                   :value="money.shopRateText"
-                  @input="money.setShopRate(value($event))"
+                  @input="money.shopRateText = value($event)"
                 />
                 <span class="rnote unit">億</span>
+                <span class="rnote shoprate">
+                  ＝ {{ money.shopRate === null ? "—" : formatRate(money.shopRate) }} 萬
+                </span>
               </div>
             </div>
           </div>
@@ -340,6 +342,11 @@ function derived(field: "ntd" | "meso") {
 }
 .rate .rlabel {
   width: 64px;
+}
+/* 換算結果是算出來的，用跟其他算出來的數字同一個顏色 */
+.shoprate {
+  color: var(--warn);
+  font-weight: 600;
 }
 .viplabel {
   font-size: 14px;

@@ -11,7 +11,6 @@ import {
   sellDeal,
   sellMeso,
   sellNtd,
-  rateToText,
   convertRate,
   W_PER_YI,
   W,
@@ -155,7 +154,7 @@ describe("我要入手這麼多楓幣", () => {
   });
 });
 
-describe("幣值的兩種單位", () => {
+describe("商城報價與幣值", () => {
   it("一億就是一萬個萬", () => {
     expect(W_PER_YI).toBe(10_000);
   });
@@ -173,15 +172,6 @@ describe("幣值的兩種單位", () => {
     expect(convertRate(0)).toBeNull();
     expect(convertRate(-5)).toBeNull();
     expect(convertRate(Number.NaN)).toBeNull();
-  });
-
-  it("不帶千分位——那欄一直在被打字", () => {
-    expect(rateToText(50000)).toBe("50000");
-  });
-
-  it("算不出來就讓欄位空著", () => {
-    expect(rateToText(Number.NaN)).toBe("");
-    expect(rateToText(-1)).toBe("");
   });
 });
 

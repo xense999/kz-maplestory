@@ -41,16 +41,6 @@ export function convertRate(value: number): number | null {
 }
 
 /**
- * 幣值填回欄位用：最多六位小數、不帶千分位。
- * ★不帶千分位——那是一直被人打字的欄位，逗號會一直跳出來礙事。
- * 留到六位小數是為了讓兩個單位來回換算不掉精度。
- */
-export function rateToText(value: number): string {
-  if (!Number.isFinite(value) || value < 0) return "";
-  return String(Math.round(value * 1e6) / 1e6);
-}
-
-/**
  * 手續費率寫成整數百分比而不是 0.05。
  * 浮點數的 0.05 不是精確值，乘完會冒出 26600000.000000004 這種尾巴；
  * 先乘百分比再除 100，常見的金額都落在整數上。
@@ -183,6 +173,11 @@ export function mesoToText(meso: number): string {
 export function mesoTextInWords(text: string): string {
   const meso = parseAmount(text);
   return Number.isFinite(meso) && meso >= 0 ? formatMeso(meso) : "";
+}
+
+/** 幣值顯示用：帶千分位、最多兩位小數。算不出來是破折號 */
+export function formatRate(rateW: number): string {
+  return Number.isFinite(rateW) && rateW > 0 ? trimmed(rateW) : "—";
 }
 
 /** 千分位。自己分組而不是 toLocaleString：那個會跟著系統地區變 */

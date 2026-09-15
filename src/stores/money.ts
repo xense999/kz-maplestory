@@ -8,7 +8,6 @@ import {
   mesoToText,
   parseAmount,
   convertRate,
-  rateToText,
   sellDeal,
   sellMeso,
   sellNtd,
@@ -26,12 +25,16 @@ import {
 const RATE_KEY = "kz-maplestory:money:rate";
 const VIP_KEY = "kz-maplestory:money:vip";
 const MODE_KEY = "kz-maplestory:money:mode";
+const SHOP_KEY = "kz-maplestory:money:shop";
 
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
-  /** 同一個幣值的另一種講法：商城報價是每台幣多少億 */
-  const shopRateText = ref("");
-  const rateAnchor = ref<"rate" | "shop">("rate");
+  /**
+   * 商城那套是另一個遊戲的交易系統，跟上面的幣值各算各的——
+   * 它只把自己那個報價換算成幣值給你看，不會去動當前幣值。
+   */
+  const shopRateText = ref(load(SHOP_KEY));
+  const shopRate = computed(() => convertRate(parseAmount(shopRateText.value)));
   const ntdText = ref("");
   /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
   const mesoText = ref("");
@@ -98,25 +101,8 @@ export const useMoneyStore = defineStore("money", () => {
     sellNtdText.value = value;
   }
 
-  // 兩個幣值欄位是同一個數字的兩種單位，改哪一個另一個就跟著換算
-  watch(
-    [rateText, shopRateText, rateAnchor],
-    () => {
-      // 兩邊是倒數關係，所以兩個方向呼叫的是同一支
-      const from = rateAnchor.value === "rate" ? rateText : shopRateText;
-      const to = rateAnchor.value === "rate" ? shopRateText : rateText;
-      const converted = convertRate(parseAmount(from.value));
-      to.value = converted === null ? "" : rateToText(converted);
-    },
-    { immediate: true },
-  );
-
-  function setShopRate(value: string) {
-    rateAnchor.value = "shop";
-    shopRateText.value = value;
-  }
-
   watch(rateText, (v) => save(RATE_KEY, v));
+  watch(shopRateText, (v) => save(SHOP_KEY, v));
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
   watch(mode, (v) => save(MODE_KEY, v));
 
@@ -184,7 +170,6 @@ export const useMoneyStore = defineStore("money", () => {
    * 標記就跑到你自己打的那一欄上，等於在說謊。
    */
   function setRate(value: string) {
-    rateAnchor.value = "rate";
     rateText.value = value;
   }
 
@@ -218,7 +203,7 @@ export const useMoneyStore = defineStore("money", () => {
     init,
     rateText,
     shopRateText,
-    rateAnchor,
+    shopRate,
     ntdText,
     mesoText,
     vip,
@@ -233,7 +218,6 @@ export const useMoneyStore = defineStore("money", () => {
     setNtd,
     setMeso,
     setRate,
-    setShopRate,
     setSellMeso,
     setSellNtd,
   };
