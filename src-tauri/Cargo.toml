@@ -1,6 +1,6 @@
 [package]
 name = "kz-maplestory"
-version = "1.0.0"
+version = "1.0.1"
 description = "久世管理器"
 authors = ["scorp"]
 edition = "2021"
