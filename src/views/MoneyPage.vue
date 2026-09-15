@@ -345,8 +345,9 @@ function derived(field: "ntd" | "meso") {
 .rate .rlabel {
   width: 64px;
 }
-/* 商城報價通常只有一個位數，欄位不必跟旁邊一樣長 */
-.shopinput {
+/* 商城報價通常只有一個位數，欄位不必跟旁邊一樣長。
+   ★寫成 input.shopinput：權重要壓過後面的 .rval，不然 190px 會蓋回來 */
+input.shopinput {
   width: 72px;
 }
 /* 換算結果是算出來的，用跟其他算出來的數字同一個顏色。
