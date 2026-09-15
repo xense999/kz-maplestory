@@ -247,6 +247,9 @@ function derived(field: "ntd" | "meso") {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  /* 跟上面那層一樣留 12px：那段留白是給捲軸的，沒有的話按鈕的右邊界
+     會比卡片多凸出 12px */
+  padding-right: 12px;
 }
 .gear {
   flex: none;
