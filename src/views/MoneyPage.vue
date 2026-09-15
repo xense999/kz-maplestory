@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, formatRate, mesoTextInWords } from "../money";
+import { formatMeso, mesoTextInWords, W } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -205,8 +205,9 @@ function derived(field: "ntd" | "meso") {
                   @input="money.shopRateText = value($event)"
                 />
                 <span class="rnote unit">億</span>
+                <!-- 這張卡要回答的就是這一句：跟商城買，每花一元實際拿多少楓幣 -->
                 <span class="rnote shoprate">
-                  ＝ {{ money.shopRate === null ? "—" : formatRate(money.shopRate) }} 萬
+                  1 元 ＝ {{ money.shopRate === null ? "—" : formatMeso(money.shopRate * W) }}
                 </span>
               </div>
             </div>

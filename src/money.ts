@@ -175,11 +175,6 @@ export function mesoTextInWords(text: string): string {
   return Number.isFinite(meso) && meso >= 0 ? formatMeso(meso) : "";
 }
 
-/** 幣值顯示用：帶千分位、最多兩位小數。算不出來是破折號 */
-export function formatRate(rateW: number): string {
-  return Number.isFinite(rateW) && rateW > 0 ? trimmed(rateW) : "—";
-}
-
 /** 千分位。自己分組而不是 toLocaleString：那個會跟著系統地區變 */
 function groups(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
