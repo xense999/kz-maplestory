@@ -11,6 +11,8 @@ import {
   sellDeal,
   sellMeso,
   sellNtd,
+  rateToText,
+  W_PER_YI,
   W,
 } from "./money";
 
@@ -149,6 +151,30 @@ describe("我要入手這麼多楓幣", () => {
   it("算不出來時回 null", () => {
     expect(fromWanted(5000 * W, 0, false)).toBeNull();
     expect(fromWanted(Number.NaN, RATE, false)).toBeNull();
+  });
+});
+
+describe("幣值的兩種單位", () => {
+  it("一億就是一萬個萬", () => {
+    expect(W_PER_YI).toBe(10_000);
+  });
+
+  it("商城報價 5 億／元 換算成 50,000 萬／元", () => {
+    expect(rateToText(5 * W_PER_YI)).toBe("50000");
+  });
+
+  it("來回換算不掉精度", () => {
+    expect(rateToText(2800 / W_PER_YI)).toBe("0.28");
+    expect(rateToText(0.28 * W_PER_YI)).toBe("2800");
+  });
+
+  it("不帶千分位——那欄一直在被打字", () => {
+    expect(rateToText(50000)).toBe("50000");
+  });
+
+  it("算不出來就讓欄位空著", () => {
+    expect(rateToText(Number.NaN)).toBe("");
+    expect(rateToText(-1)).toBe("");
   });
 });
 

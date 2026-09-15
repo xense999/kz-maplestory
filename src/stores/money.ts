@@ -7,6 +7,8 @@ import {
   fromWanted,
   mesoToText,
   parseAmount,
+  rateToText,
+  W_PER_YI,
   sellDeal,
   sellMeso,
   sellNtd,
@@ -27,6 +29,9 @@ const MODE_KEY = "kz-maplestory:money:mode";
 
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
+  /** 同一個幣值的另一種講法：商城報價是每台幣多少億 */
+  const shopRateText = ref("");
+  const rateAnchor = ref<"rate" | "shop">("rate");
   const ntdText = ref("");
   /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
   const mesoText = ref("");
@@ -93,6 +98,24 @@ export const useMoneyStore = defineStore("money", () => {
     sellNtdText.value = value;
   }
 
+  // 兩個幣值欄位是同一個數字的兩種單位，改哪一個另一個就跟著換算
+  watch(
+    [rateText, shopRateText, rateAnchor],
+    () => {
+      if (rateAnchor.value === "rate") {
+        shopRateText.value = rateToText(parseAmount(rateText.value) / W_PER_YI);
+      } else {
+        rateText.value = rateToText(parseAmount(shopRateText.value) * W_PER_YI);
+      }
+    },
+    { immediate: true },
+  );
+
+  function setShopRate(value: string) {
+    rateAnchor.value = "shop";
+    shopRateText.value = value;
+  }
+
   watch(rateText, (v) => save(RATE_KEY, v));
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
   watch(mode, (v) => save(MODE_KEY, v));
@@ -145,6 +168,7 @@ export const useMoneyStore = defineStore("money", () => {
    * 標記就跑到你自己打的那一欄上，等於在說謊。
    */
   function setRate(value: string) {
+    rateAnchor.value = "rate";
     rateText.value = value;
   }
 
@@ -177,6 +201,8 @@ export const useMoneyStore = defineStore("money", () => {
   return {
     init,
     rateText,
+    shopRateText,
+    rateAnchor,
     ntdText,
     mesoText,
     vip,
@@ -191,6 +217,7 @@ export const useMoneyStore = defineStore("money", () => {
     setNtd,
     setMeso,
     setRate,
+    setShopRate,
     setSellMeso,
     setSellNtd,
   };

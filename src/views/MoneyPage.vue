@@ -190,6 +190,24 @@ function derived(field: "ntd" | "meso") {
                 <span class="rnote unit">萬</span>
               </div>
             </div>
+
+            <!-- 商城報價是用「億」講的，跟左邊是同一個幣值換個單位，改哪一個另一個就跟著動 -->
+            <div class="inner">
+              <div class="row">
+                <span class="rlabel">商城幣值</span>
+                <input
+                  class="rval"
+                  :class="{ derived: money.rateAnchor === 'rate' }"
+                  type="text"
+                  inputmode="decimal"
+                  spellcheck="false"
+                  placeholder="0.28"
+                  :value="money.shopRateText"
+                  @input="money.setShopRate(value($event))"
+                />
+                <span class="rnote unit">億</span>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -305,7 +323,7 @@ function derived(field: "ntd" | "meso") {
   padding: var(--sp-2) var(--sp-3);
 }
 .ratesplit {
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
 }
 /* 這張卡的標題是一個圖示，不是字：直書對它沒有意義，也不需要字距。
    svg 預設是 inline，會帶基線留白而看起來偏下，改成 block 才真的置中 */
@@ -319,6 +337,9 @@ function derived(field: "ntd" | "meso") {
 }
 .rate .rnote {
   color: var(--text-dim);
+}
+.rate .rlabel {
+  width: 64px;
 }
 .viplabel {
   font-size: 14px;

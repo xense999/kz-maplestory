@@ -27,6 +27,22 @@ export const W = 10_000;
 export const YI = 100_000_000;
 
 /**
+ * 幣值的兩種講法：每台幣多少「萬」（跟其他玩家談價用的）、
+ * 每台幣多少「億」（商城報價用的）。同一個數字，差 10,000 倍。
+ */
+export const W_PER_YI = YI / W;
+
+/**
+ * 幣值填回欄位用：最多六位小數、不帶千分位。
+ * ★不帶千分位——那是一直被人打字的欄位，逗號會一直跳出來礙事。
+ * 留到六位小數是為了讓兩個單位來回換算不掉精度。
+ */
+export function rateToText(value: number): string {
+  if (!Number.isFinite(value) || value < 0) return "";
+  return String(Math.round(value * 1e6) / 1e6);
+}
+
+/**
  * 手續費率寫成整數百分比而不是 0.05。
  * 浮點數的 0.05 不是精確值，乘完會冒出 26600000.000000004 這種尾巴；
  * 先乘百分比再除 100，常見的金額都落在整數上。
