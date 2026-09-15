@@ -30,12 +30,12 @@
   /* 色票：亮色是藍灰（slate），暗色是深藍。中性面走同一條藍灰軸，
      彩度只留給狀態色與強調色——這個工具的主體是數字，UI 不該搶戲。 */
 
-  --bg-0: #f2f4f9;
-  --bg-1: #ffffff;
-  --bg-2: #f2f4f9;
-  --sidebar: rgba(255, 255, 255, 0.76);
-  --toolbar: rgba(244, 246, 250, 0.85);
-  --glass: #ffffff;
+  --bg-0: #e1e5ee;
+  --bg-1: #f1f3f8;
+  --bg-2: #e6eaf2;
+  --sidebar: rgba(238, 241, 247, 0.8);
+  --toolbar: rgba(231, 235, 243, 0.85);
+  --glass: #f1f3f8;
   --glass-2: rgba(20, 40, 80, 0.045);
 
   /* hairlines — 分隔線是「不該被看見」，控制項的框是「必須看得見」，濃度差一級 */
@@ -45,8 +45,8 @@
 
   /* text：主／次／弱三階 */
   --text: rgba(10, 20, 40, 0.9);
-  --text-dim: rgba(10, 20, 40, 0.7);
-  --text-faint: rgba(10, 20, 40, 0.54);
+  --text-dim: rgba(10, 20, 40, 0.72);
+  --text-faint: rgba(10, 20, 40, 0.58);
   --text-on-accent: #ffffff;
   /* 卡片標題：實心近黑，跟內文的半透明藍黑拉開一階 */
   --text-strong: #16181d;
@@ -73,9 +73,9 @@
   --pressed: rgba(20, 40, 80, 0.1);
 
   /* 浮起在內容之上的兩種面：畫布上的控制鈕、以及選單／浮層 */
-  --overlay: rgba(255, 255, 255, 0.86);
-  --overlay-hover: #ffffff;
-  --popover: rgba(248, 249, 252, 0.95);
+  --overlay: rgba(240, 242, 248, 0.88);
+  --overlay-hover: #f7f8fb;
+  --popover: rgba(237, 240, 246, 0.95);
   --knob: #ffffff;
   /* 疊在表面上的極淺一層（斑馬紋、chip hover 之類） */
   --wash: rgba(20, 40, 80, 0.03);
@@ -89,7 +89,7 @@
   /* 視窗外緣：無邊框透明視窗貼在桌面上時，只有這條線在界定「App 到哪裡為止」。
      外圈一條壓暗的細線，內側頂端一道白色高光，合起來才有厚度感。 */
   --window-edge: rgba(20, 40, 80, 0.22);
-  --window-highlight: rgba(255, 255, 255, 0.6);
+  --window-highlight: rgba(255, 255, 255, 0.45);
 
   /* 層次一律用線與底色差，不用投影：三個 shadow token 保留名稱但都是 none，
      這樣沿用舊 token 的地方不會突然壞掉，也不會有人再把陰影加回來。 */
