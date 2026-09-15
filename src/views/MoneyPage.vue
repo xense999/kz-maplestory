@@ -196,7 +196,7 @@ function derived(field: "ntd" | "meso") {
               <div class="row">
                 <span class="rlabel">商城幣值</span>
                 <input
-                  class="rval"
+                  class="rval shopinput"
                   type="text"
                   inputmode="decimal"
                   spellcheck="false"
@@ -207,7 +207,8 @@ function derived(field: "ntd" | "meso") {
                 <span class="rnote unit">億</span>
                 <!-- 這張卡要回答的就是這一句：跟商城買，每花一元實際拿多少楓幣 -->
                 <span class="rnote shoprate">
-                  1 元 ＝ {{ money.shopRate === null ? "—" : formatMeso(money.shopRate * W) }}
+                  1 元 ＝
+                  {{ money.shopRate === null ? "—" : formatMeso(Math.floor(money.shopRate) * W) }}
                 </span>
               </div>
             </div>
@@ -344,8 +345,14 @@ function derived(field: "ntd" | "meso") {
 .rate .rlabel {
   width: 64px;
 }
-/* 換算結果是算出來的，用跟其他算出來的數字同一個顏色 */
+/* 商城報價通常只有一個位數，欄位不必跟旁邊一樣長 */
+.shopinput {
+  width: 72px;
+}
+/* 換算結果是算出來的，用跟其他算出來的數字同一個顏色。
+   跟單位之間拉開一段，不然「億」跟「1 元 ＝」會黏成一串讀不開 */
 .shoprate {
+  margin-left: var(--sp-4);
   color: var(--warn);
   font-weight: 600;
 }
