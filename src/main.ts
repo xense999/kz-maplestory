@@ -6,6 +6,7 @@ import FloatApp from "./FloatApp.vue";
 import FloatProgress from "./FloatProgress.vue";
 import FloatMoney from "./FloatMoney.vue";
 import { initTheme } from "./theme";
+import { lockScale } from "./scale";
 
 // 四個進入點共用同一份前端，靠 query 分辨：主視窗與三個浮動面板
 const view = new URLSearchParams(location.search).get("view");
@@ -36,3 +37,6 @@ document.addEventListener("contextmenu", (e) => {
 });
 
 createApp(root).use(createPinia()).mount("#app");
+
+// 主視窗與每個面板都要：文字放大是整個 WebView2 的設定，不是某一個視窗的
+void lockScale();

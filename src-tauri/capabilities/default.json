@@ -2,7 +2,12 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "主視窗與各浮動面板的權限。★新增面板視窗時這裡一定要跟著加標籤——漏了的話那個 webview 連事件與拖曳都被擋掉，畫面是空的也拖不動。",
-  "windows": ["main", "float", "float-progress", "float-money"],
+  "windows": [
+    "main",
+    "float",
+    "float-progress",
+    "float-money"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-minimize",
@@ -20,6 +25,7 @@
     "autostart:default",
     "core:window:allow-set-position",
     "core:window:allow-outer-position",
-    "core:window:allow-outer-size"
+    "core:window:allow-outer-size",
+    "core:webview:allow-set-webview-zoom"
   ]
 }
