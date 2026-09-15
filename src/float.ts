@@ -110,9 +110,7 @@ export function createFloatPanel<T, I = never>(label: string): FloatPanel<T, I> 
         await win.hide();
         open.value = false;
       } else {
-        // 第一次開啟時落在主視窗框內：面板預設位置是螢幕左上角，
-        // 使用者會以為按了沒反應。之後他自己拖到哪就是哪，不再干涉。
-        await placeInsideMainOnce(win);
+        await centreInMain(win);
         await win.show();
         await win.setFocus();
         open.value = true;
@@ -196,19 +194,12 @@ function save(key: string, value: string) {
 }
 
 /**
- * 把面板挪進主視窗的範圍內，只做一次。
+ * 每次開啟都把面板擺回主視窗的正中間。
  *
- * 面板是在設定檔裡宣告的，Windows 給它的預設位置在主視窗外面（多半是螢幕左上角）；
- * 第一次開啟時如果出現在那裡，使用者會以為按鈕壞了。
+ * 位置與大小刻意不存：存了就要處理「上次那個螢幕不在了」「主視窗搬過位置了」
+ * 這些情況，而每次回到正中間本來就找得到，也不會卡在畫面外面。
  */
-async function placeInsideMainOnce(win: WebviewWindow) {
-  const key = `kz-maplestory:float-placed:${win.label}`;
-  try {
-    if (localStorage.getItem(key)) return;
-  } catch {
-    /* 讀不到就當作沒放過，最多是多挪一次 */
-  }
-
+async function centreInMain(win: WebviewWindow) {
   const main = await WebviewWindow.getByLabel("main");
   if (!main) return;
 
@@ -217,20 +208,12 @@ async function placeInsideMainOnce(win: WebviewWindow) {
   const mSize = (await main.outerSize()).toLogical(scale);
   const pSize = (await win.outerSize()).toLogical(scale);
 
-  // 貼在主視窗內側的右下角，留一點邊距
-  const margin = 24;
   await win.setPosition(
     new LogicalPosition(
-      Math.round(mPos.x + mSize.width - pSize.width - margin),
-      Math.round(mPos.y + mSize.height - pSize.height - margin),
+      Math.round(mPos.x + (mSize.width - pSize.width) / 2),
+      Math.round(mPos.y + (mSize.height - pSize.height) / 2),
     ),
   );
-
-  try {
-    localStorage.setItem(key, "1");
-  } catch {
-    /* 存不了就下次再挪一次，無害 */
-  }
 }
 
 /** 計時器面板送的東西：每個計時器叫什麼、什麼時候到期 */

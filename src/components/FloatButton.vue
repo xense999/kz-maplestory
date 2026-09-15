@@ -31,29 +31,32 @@ const opacityOpen = ref(false);
 
     <div v-if="opacityOpen" class="opacity-wrap">
       <div class="opacity">
-        <span class="olabel">透明度</span>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="5"
-          :value="Math.round(panel.opacity.value * 100)"
-          aria-label="透明度"
-          @input="panel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
-        />
-        <span class="oval">{{ Math.round(panel.opacity.value * 100) }}%</span>
-
-        <span class="divider"></span>
-
         <!-- 底色調很淡時字會吃到遊戲背景，陰影是那時候救回可讀性的開關 -->
-        <span class="olabel">文字陰影</span>
-        <button
-          class="switch"
-          role="switch"
-          :class="{ on: panel.outline.value }"
-          :aria-checked="panel.outline.value"
-          @click="panel.setOutline(!panel.outline.value)"
-        ></button>
+        <div class="line">
+          <span class="olabel">文字陰影</span>
+          <div class="spacer"></div>
+          <button
+            class="switch"
+            role="switch"
+            :class="{ on: panel.outline.value }"
+            :aria-checked="panel.outline.value"
+            @click="panel.setOutline(!panel.outline.value)"
+          ></button>
+        </div>
+
+        <div class="line">
+          <span class="olabel">透明度</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            :value="Math.round(panel.opacity.value * 100)"
+            aria-label="透明度"
+            @input="panel.setOpacity(Number(($event.target as HTMLInputElement).value) / 100)"
+          />
+          <span class="oval">{{ Math.round(panel.opacity.value * 100) }}%</span>
+        </div>
       </div>
     </div>
   </div>
@@ -74,7 +77,7 @@ const opacityOpen = ref(false);
 }
 .opacity {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--sp-2);
   padding: 8px 12px;
   background: var(--popover);
@@ -85,10 +88,11 @@ const opacityOpen = ref(false);
 .opacity input[type="range"] {
   width: 116px;
 }
-.divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border-strong);
+/* 每一項自己一列：兩項擠成一排會變成一條很長的浮層 */
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
 }
 .olabel {
   font-size: 14px;
