@@ -7,6 +7,8 @@ import { NAV } from "./nav";
 import { useBurnStore } from "./stores/burn";
 import { useRosterStore } from "./stores/roster";
 import { useMoneyStore } from "./stores/money";
+import { LogicalPosition } from "@tauri-apps/api/dpi";
+import { currentMonitor, getCurrentWindow } from "@tauri-apps/api/window";
 
 const TAB_KEY = "kz-maplestory:tab";
 
@@ -16,7 +18,33 @@ onMounted(() => {
   void useBurnStore().init();
   void useRosterStore().init();
   void useMoneyStore().init();
+  void toBottomLeft();
 });
+
+/**
+ * 開起來就貼在螢幕左下角。
+ *
+ * 用工作區而不是螢幕尺寸——螢幕尺寸含工作列，照它算的話視窗會有一截壓在工作列底下。
+ */
+async function toBottomLeft() {
+  const win = getCurrentWindow();
+  const monitor = await currentMonitor();
+  if (!monitor) return;
+
+  const scale = monitor.scaleFactor;
+  const area = {
+    pos: monitor.workArea.position.toLogical(scale),
+    size: monitor.workArea.size.toLogical(scale),
+  };
+  const self = (await win.outerSize()).toLogical(await win.scaleFactor());
+
+  await win.setPosition(
+    new LogicalPosition(
+      Math.round(area.pos.x),
+      Math.round(area.pos.y + area.size.height - self.height),
+    ),
+  );
+}
 
 const maximized = ref(false);
 const showSettings = ref(false);

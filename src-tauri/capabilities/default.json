@@ -26,6 +26,7 @@
     "core:window:allow-set-position",
     "core:window:allow-outer-position",
     "core:window:allow-outer-size",
-    "core:webview:allow-set-webview-zoom"
+    "core:webview:allow-set-webview-zoom",
+    "core:window:allow-current-monitor"
   ]
 }
