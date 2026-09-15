@@ -205,6 +205,7 @@ function derived(field: "ntd" | "meso") {
                   @input="money.shopRateText = value($event)"
                 />
                 <span class="rnote unit">億</span>
+                <span class="sep">|</span>
                 <!-- 這張卡要回答的就是這一句：跟商城買，每花一元實際拿多少楓幣 -->
                 <span class="rnote shoprate">
                   1 元 ＝
@@ -349,11 +350,17 @@ function derived(field: "ntd" | "meso") {
    ★寫成 input.shopinput：權重要壓過後面的 .rval，不然 190px 會蓋回來 */
 input.shopinput {
   width: 72px;
+  margin-left: 30px;
+}
+/* 分隔線：它只是把兩件事分開，不該比任何一邊顯眼 */
+.sep {
+  flex: none;
+  color: var(--text-faint);
+  opacity: 0.6;
 }
 /* 換算結果是算出來的，用跟其他算出來的數字同一個顏色。
-   跟單位之間拉開一段，不然「億」跟「1 元 ＝」會黏成一串讀不開 */
+   左邊用一條分隔線跟單位隔開 */
 .shoprate {
-  margin-left: var(--sp-4);
   color: var(--warn);
   font-weight: 600;
 }
