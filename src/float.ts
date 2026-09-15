@@ -229,9 +229,7 @@ export interface MoneySnap {
   ntd: string;
   meso: string;
   rate: string;
-  /** 買幣還是賣幣——面板上的數字意思不同，要標出來 */
-  mode: "buy" | "sell";
-  /** 目前是從哪一欄算的 */
+  /** 目前是從哪一欄算的。面板用一支箭頭表示方向 */
   anchor: "ntd" | "meso";
   /** 算得出來沒有——算不出來時箭頭不點亮 */
   ok: boolean;

@@ -4,7 +4,6 @@ import { moneyPanel, type MoneySnap } from "../float";
 import {
   ntdToText,
   fromNtd,
-  fromSent,
   fromWanted,
   mesoToText,
   parseAmount,
@@ -21,7 +20,6 @@ import {
  */
 const RATE_KEY = "kz-maplestory:money:rate";
 const VIP_KEY = "kz-maplestory:money:vip";
-const MODE_KEY = "kz-maplestory:money:mode";
 
 export const useMoneyStore = defineStore("money", () => {
   const rateText = ref(load(RATE_KEY));
@@ -29,37 +27,24 @@ export const useMoneyStore = defineStore("money", () => {
   /** 楓幣欄位填的是楓幣本身，旁邊另外顯示換算後的級距 */
   const mesoText = ref("");
   const vip = ref(load(VIP_KEY) === "1");
-  /** 買幣還是賣幣。同三個欄位，差別只在手續費算在誰頭上 */
-  const mode = ref<"buy" | "sell">(load(MODE_KEY) === "sell" ? "sell" : "buy");
 
   /** 最後被使用者動過的金額欄位，另一欄由它算出來 */
   const anchor = ref<"ntd" | "meso">("ntd");
 
   const rate = computed(() => parseAmount(rateText.value));
 
-  /**
-   * 台幣那一欄兩種模式共用同一支：買是「我付這麼多」、賣是「對方付這麼多」，
-   * 算出來的三個數字完全一樣，差別只在怎麼稱呼它們。
-   * 楓幣那一欄就不同了——買的是「我要收到多少」，賣的是「我要轉出去多少」。
-   */
-  const deal = computed<Deal | null>(() => {
-    if (anchor.value === "ntd") {
-      return fromNtd(parseAmount(ntdText.value), rate.value, vip.value);
-    }
-    const meso = parseAmount(mesoText.value);
-    return mode.value === "sell"
-      ? fromSent(meso, rate.value, vip.value)
-      : fromWanted(meso, rate.value, vip.value);
-  });
+  const deal = computed<Deal | null>(() =>
+    anchor.value === "ntd"
+      ? fromNtd(parseAmount(ntdText.value), rate.value, vip.value)
+      : fromWanted(parseAmount(mesoText.value), rate.value, vip.value),
+  );
 
   // 算出來的那一欄跟著走。來源欄不動——使用者正在上面打字。
   watch(
     deal,
     (d) => {
       if (anchor.value === "ntd") {
-        // 買的時候關心「我收到多少」，賣的時候關心「我要轉出去多少」
-        const amount = d ? (mode.value === "sell" ? d.face : d.net) : Number.NaN;
-        mesoText.value = mesoToText(amount);
+        mesoText.value = d ? mesoToText(d.net) : "";
       } else {
         ntdText.value = d ? ntdToText(d.ntd) : "";
       }
@@ -69,14 +54,12 @@ export const useMoneyStore = defineStore("money", () => {
 
   watch(rateText, (v) => save(RATE_KEY, v));
   watch(vip, (v) => save(VIP_KEY, v ? "1" : "0"));
-  watch(mode, (v) => save(MODE_KEY, v));
 
   function snapshot(): MoneySnap {
     return {
       ntd: ntdText.value,
       meso: mesoText.value,
       rate: rateText.value,
-      mode: mode.value,
       anchor: anchor.value,
       ok: deal.value !== null,
     };
@@ -86,7 +69,7 @@ export const useMoneyStore = defineStore("money", () => {
     moneyPanel.push(snapshot());
   }
 
-  watch([ntdText, mesoText, rateText, vip, mode, anchor], publish);
+  watch([ntdText, mesoText, rateText, vip, anchor], publish);
 
   function setNtd(value: string) {
     anchor.value = "ntd";
@@ -135,7 +118,6 @@ export const useMoneyStore = defineStore("money", () => {
     ntdText,
     mesoText,
     vip,
-    mode,
     rate,
     deal,
     anchor,

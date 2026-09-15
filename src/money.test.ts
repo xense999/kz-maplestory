@@ -7,7 +7,6 @@ import {
   parseAmount,
   fromNet,
   fromNtd,
-  fromSent,
   fromWanted,
   W,
 } from "./money";
@@ -78,34 +77,7 @@ describe("算不出來的輸入", () => {
   });
 });
 
-describe("賣幣：我要轉出去這麼多楓幣", () => {
-  it("價格照轉出去的量談，所以手續費不影響我拿到的錢", () => {
-    const d = fromSent(5600 * W, RATE, false)!;
-    expect(d.ntd).toBe(2);
-    expect(d.face).toBe(5600 * W);
-  });
-
-  it("手續費決定的是對方收到多少", () => {
-    const d = fromSent(5600 * W, RATE, false)!;
-    expect(d.net).toBe(5320 * W);
-    const vip = fromSent(5600 * W, RATE, true)!;
-    expect(vip.net).toBe(5432 * W);
-    // VIP 與否不影響賣方拿到的錢
-    expect(vip.ntd).toBe(d.ntd);
-  });
-
-  it("不進位——付錢的是對方，不該自己把價碼往上湊", () => {
-    const d = fromSent(5000 * W, RATE, false)!;
-    expect(d.ntd).toBeCloseTo(1.7857, 4);
-  });
-
-  it("算不出來時回 null", () => {
-    expect(fromSent(5600 * W, 0, false)).toBeNull();
-    expect(fromSent(Number.NaN, RATE, false)).toBeNull();
-  });
-});
-
-describe("買幣：我要入手這麼多楓幣", () => {
+describe("我要入手這麼多楓幣", () => {
   it("台幣進位成整數，其他數字從那個整數重算", () => {
     const d = fromWanted(5000 * W, RATE, false)!;
     // 精確要 1.88 台幣，付不出小數所以付 2
