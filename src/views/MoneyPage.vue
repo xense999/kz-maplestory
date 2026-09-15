@@ -165,12 +165,13 @@ function derived(field: "ntd" | "meso") {
              所以不屬於任何一張，自己一條放在最下面 -->
         <section class="card outer rate">
           <div class="split ratesplit">
-            <div class="inner title icon" title="設定">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
-                   stroke="currentColor" stroke-width="1.6"
+            <div class="inner title icon" title="幣值與手續費">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+                   stroke="currentColor" stroke-width="1.8"
                    stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3.2" />
-                <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" />
+                <path d="M12 2.5v19" />
+                <path d="M16.5 7.2c0-1.9-2-3.2-4.5-3.2S7.5 5.3 7.5 7.2s1.7 2.9 4.5 3.5
+                         c2.8.6 4.5 1.6 4.5 3.6 0 2-2 3.3-4.5 3.3s-4.5-1.3-4.5-3.3" />
               </svg>
             </div>
 
@@ -302,11 +303,15 @@ function derived(field: "ntd" | "meso") {
 .ratesplit {
   grid-template-columns: auto minmax(0, 1fr);
 }
-/* 這張卡的標題是一個齒輪，不是字：直書對它沒有意義，也不需要字距 */
+/* 這張卡的標題是一個圖示，不是字：直書對它沒有意義，也不需要字距。
+   svg 預設是 inline，會帶基線留白而看起來偏下，改成 block 才真的置中 */
 .title.icon {
   writing-mode: horizontal-tb;
   letter-spacing: normal;
   color: var(--text-dim);
+}
+.title.icon svg {
+  display: block;
 }
 .rate .rnote {
   color: var(--text-dim);
