@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
 import { formatMeso, mesoTextInWords } from "../money";
@@ -10,6 +10,9 @@ import { useMoneyStore } from "../stores/money";
  * 算式與寫法都在 money 模組，這一頁只負責欄位與版面。
  */
 const money = useMoneyStore();
+
+/** 設定模式：VIP 是「我是誰」的設定，不是每筆交易要動的東西，所以收在設定裡 */
+const editMode = ref(false);
 
 function value(e: Event) {
   return (e.target as HTMLInputElement).value;
@@ -162,7 +165,14 @@ function derived(field: "ntd" | "meso") {
              所以不屬於任何一張，自己一條放在最下面 -->
         <section class="card outer rate">
           <div class="split ratesplit">
-            <div class="inner title">設定</div>
+            <div class="inner title icon" title="設定">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none"
+                   stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3.2" />
+                <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" />
+              </svg>
+            </div>
 
             <div class="inner">
               <div class="row">
@@ -179,28 +189,37 @@ function derived(field: "ntd" | "meso") {
                 <span class="rnote unit">萬</span>
               </div>
             </div>
-
-            <div class="inner floatcell">
-              <div class="row">
-                <span class="viplabel">VIP</span>
-                <button
-                  class="switch"
-                  role="switch"
-                  :class="{ on: money.vip }"
-                  :aria-checked="money.vip"
-                  :title="money.vip ? '手續費 3%' : '手續費 5%'"
-                  @click="money.vip = !money.vip"
-                ></button>
-                <span class="rnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
-
-                <FloatButton
-                  :panel="moneyPanel"
-                  hint="開一個永遠置頂的小視窗，交易中也看得到換算"
-                />
-              </div>
-            </div>
           </div>
         </section>
+      </div>
+
+      <div class="pagebar">
+        <div class="spacer"></div>
+        <FloatButton :panel="moneyPanel" hint="開一個永遠置頂的小視窗，交易中也看得到換算" />
+
+        <!-- VIP 短期內不會變，平常不該被誤觸，收在設定鈕上方的小浮層裡 -->
+        <div class="gearctl">
+          <div v-if="editMode" class="pop">
+            <span class="viplabel">VIP</span>
+            <button
+              class="switch"
+              role="switch"
+              :class="{ on: money.vip }"
+              :aria-checked="money.vip"
+              @click="money.vip = !money.vip"
+            ></button>
+            <span class="popnote">手續費 {{ money.vip ? "3%" : "5%" }}</span>
+          </div>
+
+          <button
+            class="gear"
+            :class="{ primary: editMode }"
+            :title="editMode ? '完成' : '設定是不是 VIP'"
+            @click="editMode = !editMode"
+          >
+            {{ editMode ? "完成" : "設定" }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -223,6 +242,40 @@ function derived(field: "ntd" | "meso") {
   flex-direction: column;
   gap: var(--sp-3);
 }
+.pagebar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.gear {
+  flex: none;
+}
+/* 浮層貼著按鈕上緣，跟浮動視窗那顆的透明度拉桿同一套長相 */
+.gearctl {
+  position: relative;
+  flex: none;
+}
+.pop {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  z-index: 30;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 8px 12px;
+  background: var(--popover);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(28px) saturate(1.8);
+  white-space: nowrap;
+}
+.popnote {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
 .scroller {
   flex: 1;
   min-height: 0;
@@ -239,14 +292,13 @@ function derived(field: "ntd" | "meso") {
   padding: var(--sp-4);
 }
 .ratesplit {
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
 }
-/* VIP 與面板開關都不是「填一個數字」，所以跟幣值分開，收在整張卡的最右邊 */
-.floatcell {
-  justify-content: center;
-}
-.floatcell .row {
-  gap: var(--sp-3);
+/* 這張卡的標題是一個齒輪，不是字：直書對它沒有意義，也不需要字距 */
+.title.icon {
+  writing-mode: horizontal-tb;
+  letter-spacing: normal;
+  color: var(--text-dim);
 }
 .rate .rnote {
   color: var(--text-dim);
