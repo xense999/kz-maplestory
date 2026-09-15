@@ -104,7 +104,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
               </div>
             </div>
 
-            <div class="inner">
+            <div class="inner results">
               <div class="rows">
                 <div v-for="r in rows" :key="r.key" class="row" :title="r.hint">
                   <span class="rlabel">{{ r.label }}</span>
@@ -160,7 +160,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
             </div>
 
             <!-- 現金不能分割，交易談的是整數，所以這裡是「真的賣得掉的那一筆」 -->
-            <div class="inner">
+            <div class="inner results">
               <div class="rows">
                 <div class="row" title="為了拿到整數現金，實際要轉出去的量">
                   <span class="rlabel">可販售楓幣</span>
@@ -345,10 +345,14 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
   font-weight: 600;
   color: var(--text-dim);
 }
-/* 左卡的標籤只有兩三個字，跟右卡共用一個寬度的話欄位前面會空一大段。
-   兩張卡的列高與字級仍然一致，只有這一欄各自貼合自己的標籤。 */
+/* 標籤欄各自貼合自己的字數：輸入那側是兩三個字，結果那側到五個字
+   （可販售楓幣）。共用一個寬度的話，不是短的那邊空一大段，就是長的那邊擠出來。
+   列高與字級仍然一致，所以兩側的列還是對齊的。 */
 .fields .rlabel {
   width: 36px;
+}
+.results .rlabel {
+  width: 84px;
 }
 .rval {
   width: 190px;
