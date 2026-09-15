@@ -49,7 +49,7 @@ export const SPECS: Spec[] = [
     hint: "",
     durationMs: 30 * MIN,
     hotkeyable: false,
-    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN, 180 * MIN],
+    presets: [30 * MIN, 60 * MIN, 90 * MIN, 120 * MIN],
   },
   {
     id: "blessing",

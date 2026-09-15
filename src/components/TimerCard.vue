@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { useBurnStore, type TimerId } from "../stores/burn";
 
 const props = defineProps<{
@@ -16,10 +16,6 @@ const emit = defineEmits<{ record: [TimerId] }>();
 
 const store = useBurnStore();
 
-const customOpen = ref(false);
-const customH = ref(1);
-const customM = ref(0);
-const customEl = ref<HTMLElement | null>(null);
 
 /** 到期就停在 00:00：往上加的秒數只會讓人分不清「還剩」跟「超過」 */
 function clock(ms: number) {
@@ -61,25 +57,37 @@ function display() {
   return clock(left === null ? store.timers[props.id].durationMs : left);
 }
 
-/** 自訂＝目前時長不在任何一檔上 */
-function isCustom() {
-  return !store.spec(props.id).presets?.includes(store.timers[props.id].durationMs);
-}
-
-/** 把欄位裡的數字收下來（對齊 15 分鐘是 store 的規則，這裡只把結果寫回欄位） */
-/** 技能卡的基本時間：分與秒兩格，跟自訂時長同一種操作（可左右拖） */
+/**
+ * 大數字本身就是欄位。技能卡分成分／秒兩格，出租分成小時／分兩格——
+ * 沒有另外一個「自訂」入口，要改就在眼前這個數字上改。
+ */
 const skillM = ref(0);
 const skillS = ref(0);
+const rentalH = ref(0);
+const rentalM = ref(0);
 
 watch(
   () => [props.editing, store.timers[props.id].durationMs] as const,
   ([on, ms]) => {
-    if (!on) return;
-    skillM.value = Math.floor(ms / 60_000);
-    skillS.value = Math.round((ms % 60_000) / 1000);
+    if (on) {
+      skillM.value = Math.floor(ms / 60_000);
+      skillS.value = Math.round((ms % 60_000) / 1000);
+    }
+    rentalH.value = Math.floor(ms / 3_600_000);
+    rentalM.value = Math.round((ms % 3_600_000) / 60_000);
   },
   { immediate: true },
 );
+
+/** 出租按時段賣，對齊 15 分鐘是 store 的規則，這裡只把收下來的結果寫回欄位 */
+function commitRentalDuration() {
+  const ms = (Number(rentalH.value) || 0) * 3_600_000 + (Number(rentalM.value) || 0) * 60_000;
+  if (ms <= 0) return;
+  store.setDuration(props.id, ms);
+  const snapped = store.timers[props.id].durationMs;
+  rentalH.value = Math.floor(snapped / 3_600_000);
+  rentalM.value = Math.round((snapped % 3_600_000) / 60_000);
+}
 
 function commitSkillDuration() {
   const ms = (Number(skillM.value) || 0) * 60_000 + (Number(skillS.value) || 0) * 1000;
@@ -114,32 +122,14 @@ function startSkillDrag(e: PointerEvent, which: "m" | "s") {
   window.addEventListener("pointerup", up);
 }
 
-function applyCustom() {
-  const raw = (Number(customH.value) || 0) * 3_600_000 + (Number(customM.value) || 0) * 60_000;
-  if (raw <= 0) return;
-  store.setDuration(props.id, raw);
-  const ms = store.timers[props.id].durationMs;
-  customH.value = Math.floor(ms / 3_600_000);
-  customM.value = (ms % 3_600_000) / 60_000;
-}
-
-/** 沒有「套用」按鈕：焦點離開這一區（點別的地方、按 Enter）就收下並收起 */
-function commitCustom() {
-  applyCustom();
-  customOpen.value = false;
-}
-
-/** 拖曳調整中。拖曳會讓欄位失焦，不擋住的話這一區會在拖到一半時收起來 */
-const dragging = ref(false);
-
 /**
- * 左右拖曳欄位就能加減數字——比點兩下再打字快，尤其這兩格的值都很規律
- * （小時 1 格、分鐘 15 分一格）。移動不到 4px 當作單純的點擊，編輯照舊。
+ * 左右拖曳欄位就能加減數字——比點兩下再打字快，尤其出租的值很規律（15 分一格）。
+ * 移動不到 4px 當作單純的點擊，打字編輯照舊。
  */
-function startDrag(e: PointerEvent, which: "h" | "m") {
+function startRentalDrag(e: PointerEvent, which: "h" | "m") {
   const input = e.currentTarget as HTMLInputElement;
   const startX = e.clientX;
-  const startV = which === "h" ? Number(customH.value) || 0 : Number(customM.value) || 0;
+  const startV = which === "h" ? Number(rentalH.value) || 0 : Number(rentalM.value) || 0;
   const step = which === "h" ? 1 : 15;
   const max = which === "h" ? 24 : 45;
   let live = false;
@@ -149,37 +139,19 @@ function startDrag(e: PointerEvent, which: "h" | "m") {
     if (!live) {
       if (Math.abs(dx) < 4) return;
       live = true;
-      dragging.value = true;
       input.blur();
     }
     const next = Math.min(max, Math.max(0, startV + Math.round(dx / 14) * step));
-    if (which === "h") customH.value = next;
-    else customM.value = next;
+    if (which === "h") rentalH.value = next;
+    else rentalM.value = next;
   };
   const up = () => {
     window.removeEventListener("pointermove", move);
     window.removeEventListener("pointerup", up);
-    if (!live) return;
-    applyCustom();
-    dragging.value = false;
+    if (live) commitRentalDuration();
   };
   window.addEventListener("pointermove", move);
   window.addEventListener("pointerup", up);
-}
-
-// 展開就把游標送進小時欄位：沒有焦點在裡面的話，點別處也不會觸發 focusout
-watch(customOpen, async (open) => {
-  if (!open) return;
-  await nextTick();
-  customEl.value?.querySelector("input")?.focus();
-});
-
-/** 焦點還在這一區裡面（小時→分鐘）就不算離開 */
-function onCustomFocusOut(e: FocusEvent) {
-  if (dragging.value) return;
-  const next = e.relatedTarget as Node | null;
-  if (next && customEl.value?.contains(next)) return;
-  commitCustom();
 }
 </script>
 
@@ -228,46 +200,13 @@ function onCustomFocusOut(e: FocusEvent) {
           v-for="p in store.spec(id).presets"
           :key="p"
           class="chip"
-          :class="{ on: !customOpen && !isCustom() && store.timers[id].durationMs === p }"
-          @click="((customOpen = false), store.setDuration(id, p))"
+          :class="{ on: store.timers[id].durationMs === p }"
+          @click="store.setDuration(id, p)"
         >
           {{ span(p) }}
         </button>
-        <button class="chip" :class="{ on: isCustom() || customOpen }" @click="customOpen = true">
-          自訂
-        </button>
       </div>
 
-      <!-- 自訂就接在檔位後面同一列。欄位高度跟膠囊對齊，展開不會把卡片撐高 -->
-      <div v-if="customOpen" ref="customEl" class="custom" @focusout="onCustomFocusOut">
-        <input
-          v-model.number="customH"
-          type="number"
-          min="0"
-          max="24"
-          aria-label="小時"
-          title="可以左右拖曳調整"
-          @pointerdown="startDrag($event, 'h')"
-          @keydown.enter="commitCustom()"
-        />
-        <span class="unit">小時</span>
-        <input
-          v-model.number="customM"
-          type="number"
-          min="0"
-          max="45"
-          step="15"
-          aria-label="分鐘"
-          title="可以左右拖曳調整"
-          @pointerdown="startDrag($event, 'm')"
-          @keydown.enter="commitCustom()"
-        />
-        <span class="unit">分</span>
-      </div>
-
-      <span v-if="!customOpen && isCustom()" class="custom-now">
-        目前：{{ span(store.timers[id].durationMs) }}
-      </span>
     </div>
 
     <div class="main">
@@ -295,6 +234,33 @@ function onCustomFocusOut(e: FocusEvent) {
           @pointerdown="startSkillDrag($event, 's')"
           @change="commitSkillDuration()"
           @keydown.enter="commitSkillDuration()"
+        />
+      </div>
+      <!-- 出租沒有另外的「自訂」入口：還沒起算時，眼前這個數字本身就是欄位 -->
+      <div v-else-if="store.spec(id).presets && state() === 'idle'" class="digits edit">
+        <input
+          v-model.number="rentalH"
+          type="number"
+          min="0"
+          max="24"
+          aria-label="小時"
+          title="可以左右拖曳調整"
+          @pointerdown="startRentalDrag($event, 'h')"
+          @change="commitRentalDuration()"
+          @keydown.enter="commitRentalDuration()"
+        />
+        <span class="colon">:</span>
+        <input
+          v-model.number="rentalM"
+          type="number"
+          min="0"
+          max="45"
+          step="15"
+          aria-label="分"
+          title="可以左右拖曳調整"
+          @pointerdown="startRentalDrag($event, 'm')"
+          @change="commitRentalDuration()"
+          @keydown.enter="commitRentalDuration()"
         />
       </div>
       <div v-else class="digits">{{ display() }}</div>
@@ -422,26 +388,6 @@ function onCustomFocusOut(e: FocusEvent) {
 }
 .chip.on:hover {
   background: var(--accent);
-}
-.custom {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.custom input {
-  width: 74px;
-  /* 跟時長膠囊同高，展開時這一列的高度才不會跳 */
-  height: 32px;
-  /* 游標明講「這格可以左右拖」 */
-  cursor: ew-resize;
-}
-.unit {
-  font-size: 15px;
-  color: var(--text-dim);
-}
-.custom-now {
-  font-size: 15px;
-  color: var(--text-dim);
 }
 
 .main {
