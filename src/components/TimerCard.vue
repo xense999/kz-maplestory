@@ -96,7 +96,7 @@ watch(
   { immediate: true },
 );
 
-/** 出租按時段賣，對齊 10 分鐘是 store 的規則，這裡只把收下來的結果寫回欄位 */
+/** 出租按時段賣，對齊 5 分鐘是 store 的規則，這裡只把收下來的結果寫回欄位 */
 function commitRentalDuration() {
   const ms = (Number(rentalH.value) || 0) * 3_600_000 + (Number(rentalM.value) || 0) * 60_000;
   if (ms <= 0) return;
@@ -140,15 +140,15 @@ function startSkillDrag(e: PointerEvent, which: "m" | "s") {
 }
 
 /**
- * 左右拖曳欄位就能加減數字——比點兩下再打字快，尤其出租的值很規律（10 分一格）。
+ * 左右拖曳欄位就能加減數字——比點兩下再打字快，尤其出租的值很規律（5 分一格）。
  * 移動不到 4px 當作單純的點擊，打字編輯照舊。
  */
 function startRentalDrag(e: PointerEvent, which: "h" | "m") {
   const input = e.currentTarget as HTMLInputElement;
   const startX = e.clientX;
   const startV = which === "h" ? Number(rentalH.value) || 0 : Number(rentalM.value) || 0;
-  const step = which === "h" ? 1 : 10;
-  const max = which === "h" ? 24 : 50;
+  const step = which === "h" ? 1 : 5;
+  const max = which === "h" ? 24 : 55;
   let live = false;
 
   const move = (ev: PointerEvent) => {
@@ -303,8 +303,8 @@ function startRentalDrag(e: PointerEvent, which: "h" | "m") {
           v-model.number="rentalM"
           type="number"
           min="0"
-          max="50"
-          step="10"
+          max="55"
+          step="5"
           aria-label="分"
           title="可以左右拖曳調整"
           @pointerdown="startRentalDrag($event, 'm')"

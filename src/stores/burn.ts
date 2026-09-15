@@ -37,8 +37,8 @@ interface Spec {
 }
 
 const MIN = 60_000;
-/** 出租是按時段賣的，時長一律對齊 10 分鐘——存檔裡的舊值讀進來時也一起對齊 */
-const STEP = 10 * MIN;
+/** 出租是按時段賣的，時長一律對齊 5 分鐘——存檔裡的舊值讀進來時也一起對齊 */
+const STEP = 5 * MIN;
 
 function snapDuration(ms: number) {
   return Math.max(STEP, Math.round(ms / STEP) * STEP);
@@ -127,7 +127,7 @@ export const useBurnStore = defineStore("burn", () => {
   const saved = loadSaved();
 
   /**
-   * 存檔裡有就用存檔的。出租的時長對齊 10 分鐘（它是按時段賣的）；
+   * 存檔裡有就用存檔的。出租的時長對齊 5 分鐘（它是按時段賣的）；
    * 技能的時長是使用者自己量出來的秒數，不做任何對齊。
    */
   function initialDuration(s: Spec) {
@@ -354,7 +354,7 @@ export const useBurnStore = defineStore("burn", () => {
   /** 改時長：正在跑的那一輪不動，避免手滑點到就把客戶的時間洗掉 */
   function setDuration(id: TimerId, ms: number) {
     const t = timers[id];
-    // 出租是按時段賣的所以對齊 10 分鐘；技能是量出來的秒數，照原值收下
+    // 出租是按時段賣的所以對齊 5 分鐘；技能是量出來的秒數，照原值收下
     t.durationMs = spec(id).presets ? snapDuration(ms) : Math.max(1000, Math.round(ms));
     if (t.endAt === null) t.runMs = t.durationMs;
     persist();
