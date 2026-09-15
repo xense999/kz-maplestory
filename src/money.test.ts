@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatMeso,
+  formatRate,
   ntdToText,
   mesoToText,
   mesoTextInWords,
@@ -166,6 +167,16 @@ describe("商城報價與幣值", () => {
   it("倒數關係，所以同一支函式來回都對", () => {
     expect(convertRate(convertRate(2800)!)).toBeCloseTo(2800, 9);
     expect(convertRate(2000)).toBe(5);
+  });
+
+  it("幣值顯示成整數、帶千分位", () => {
+    expect(formatRate(2000)).toBe("2,000");
+    expect(formatRate(3333.33)).toBe("3,333");
+  });
+
+  it("填不出來就空著，讓單位留在原位", () => {
+    expect(formatRate(null)).toBe("");
+    expect(formatRate(Number.NaN)).toBe("");
   });
 
   it("0 與負數算不出來", () => {

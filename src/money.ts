@@ -175,6 +175,14 @@ export function mesoTextInWords(text: string): string {
   return Number.isFinite(meso) && meso >= 0 ? formatMeso(meso) : "";
 }
 
+/**
+ * 幣值顯示：整數、帶千分位。
+ * 填不出來時回空字串而不是破折號——單位的字要留在原位，位置才不會跳。
+ */
+export function formatRate(rateW: number | null): string {
+  return rateW === null || !Number.isFinite(rateW) ? "" : groups(String(Math.floor(rateW)));
+}
+
 /** 千分位。自己分組而不是 toLocaleString：那個會跟著系統地區變 */
 function groups(digits: string): string {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ",");

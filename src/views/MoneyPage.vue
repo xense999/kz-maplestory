@@ -2,7 +2,7 @@
 import { computed, ref } from "vue";
 import { moneyPanel } from "../float";
 import FloatButton from "../components/FloatButton.vue";
-import { formatMeso, mesoTextInWords, W } from "../money";
+import { formatMeso, formatRate, mesoTextInWords } from "../money";
 import { useMoneyStore } from "../stores/money";
 
 /**
@@ -206,10 +206,10 @@ function derived(field: "ntd" | "meso") {
                 />
                 <span class="rnote unit">億</span>
                 <span class="sep">|</span>
-                <!-- 商城那個報價換算成幣值是多少：跟商城買，一元實際拿多少楓幣 -->
-                <span class="rnote shoprate">
-                  {{ money.shopRate === null ? "—" : formatMeso(money.shopRate * W) }}
-                </span>
+                <!-- 商城那個報價換算成幣值是多少：跟商城買，一元實際拿多少楓幣。
+                     數字欄寬固定，單位才不會跟著數字長短前後跳 -->
+                <span class="rnote shoprate">{{ formatRate(money.shopRate) }}</span>
+                <span class="rnote unit">萬</span>
               </div>
             </div>
           </div>
@@ -354,8 +354,11 @@ function derived(field: "ntd" | "meso") {
   opacity: 0.35;
 }
 /* 換算結果是算出來的，用跟其他算出來的數字同一個顏色。
-   左邊用一條分隔線跟單位隔開 */
+   左邊用一條分隔線跟單位隔開。寬度固定在四位數（含千分位）的位置 */
 .shoprate {
+  width: 48px;
+  flex: none;
+  text-align: right;
   color: var(--warn);
   font-weight: 600;
 }
