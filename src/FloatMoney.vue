@@ -69,9 +69,11 @@ onUnmounted(() => {
 
 function onDown(e: MouseEvent) {
   if (e.button !== 0) return;
-  // 欄位以外的地方都能拖。只留頂端那一條的話抓不到——它太細，
-  // 而這個視窗大部分面積都不是欄位。欄位本身要留給打字與選字。
-  if ((e.target as HTMLElement).closest("input")) return;
+  // 欄位與按鈕以外的地方都能拖。只留頂端那一條的話抓不到——它太細，
+  // 而這個視窗大部分面積都不是欄位。
+  // ★按鈕一定要排除：mousedown 一旦開始拖視窗就把後面的 click 吃掉了，
+  // 症狀是按鈕要按兩次才有反應。
+  if ((e.target as HTMLElement).closest("input, button")) return;
   void appWin.startDragging();
 }
 </script>
@@ -211,14 +213,14 @@ function onDown(e: MouseEvent) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.3em;
-  padding: 0.5em 0.7em 0.5em 0;
+  gap: 0.35em;
+  padding: 0.5em 0.8em 0.5em 0;
 }
 .modes button {
-  width: 1.9em;
-  height: 1.7em;
+  width: 2.3em;
+  height: 2.1em;
   padding: 0;
-  font-size: 0.85em;
+  font-size: 1em;
   font-weight: 700;
   color: var(--text-dim);
   background: var(--wash-strong);
