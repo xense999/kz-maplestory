@@ -129,7 +129,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
             <div class="inner">
               <div class="rows sellrows">
                 <label class="row">
-                  <span class="rlabel">楓幣</span>
+                  <span class="rlabel">持有楓幣</span>
                   <input
                     class="rval"
                     :class="{ derived: money.sellAnchor === 'ntd' }"
@@ -143,7 +143,7 @@ const ntd = computed(() => (money.deal ? formatNtd(money.deal.ntd) : DASH));
                 </label>
 
                 <label class="row">
-                  <span class="rlabel">台幣</span>
+                  <span class="rlabel">約當台幣</span>
                   <input
                     class="rval"
                     :class="{ derived: money.sellAnchor === 'meso' }"
